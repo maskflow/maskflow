@@ -50,8 +50,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: npm run build -w @maskflow/detection
-      - run: npm test -w @maskflow/detection
+      - run: npm run build -w maskflow-detection
+      - run: npm test -w maskflow-detection
 
   sdk-python:
     needs: changes

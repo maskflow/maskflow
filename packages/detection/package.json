@@ -1,5 +1,5 @@
 {
-  "name": "@maskflow/detection",
+  "name": "maskflow-detection",
   "version": "0.1.0",
   "description": "PII detection and reversible masking -- regex/structural detectors, TypeScript port of maskflow-core's non-NER layer",
   "license": "MIT",

@@ -1,10 +1,10 @@
-# @maskflow/detection
+# maskflow-detection
 
 PII detection and reversible masking, in TypeScript. A port of `core`'s regex/structural
 detection layer -- shares the same API shape as the Python SDK.
 
 ```ts
-import { mask, unmask } from "@maskflow/detection";
+import { mask, unmask } from "maskflow-detection";
 
 const result = mask("Email me at alice@example.com or call 415-555-0132.");
 result.maskedText; // "Email me at <EMAIL_1> or call <PHONE_1>."
@@ -34,5 +34,5 @@ regenerates `tests/fixtures.json` from the Python source of truth), so both impl
 held to the same accuracy bar.
 
 ```bash
-npm test -w @maskflow/detection
+npm test -w maskflow-detection
 ```
