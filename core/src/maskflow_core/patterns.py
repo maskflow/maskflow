@@ -18,7 +18,7 @@ SSN_DASHED_RE = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
 SSN_PLAIN_RE = re.compile(r"(?<!\d)\d{9}(?!\d)")
 
 CREDIT_CARD_RE = re.compile(
-    r"(?<!\d)(?:\d[ -]?){13,19}(?!\d)"
+    r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)"
 )
 
 IPV4_RE = re.compile(

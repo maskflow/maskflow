@@ -1,6 +1,6 @@
 /** Pure, stateless mask/unmask. No storage -- the caller owns persisting the mapping.
  * Ported from core/src/maskflow_core/masking.py. */
-import { DEFAULT_MIN_CONFIDENCE, detect } from "./detection";
+import { DEFAULT_MIN_CONFIDENCE, detect } from "./detection.js";
 
 export interface MaskResult {
   maskedText: string;

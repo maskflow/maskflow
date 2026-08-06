@@ -5,7 +5,7 @@
  * high-confidence on their own. Ambiguous matches (a bare 9-digit number, a
  * street-shaped line of text) need a nearby keyword to be trusted.
  */
-import { PIIType } from "./entities";
+import { PIIType } from "./entities.js";
 
 const WINDOW = 40;
 

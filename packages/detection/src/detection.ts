@@ -1,9 +1,9 @@
 /** Orchestrates the regex pass into one deduplicated finding list. Ported from
  * core/src/maskflow_core/detection.py -- the NER pass (person names, dates) has
  * no browser-side equivalent and isn't part of this package. */
-import { applyContextBoost } from "./context";
-import { Finding, PIIType } from "./entities";
-import { PATTERNS } from "./patterns";
+import { applyContextBoost } from "./context.js";
+import { Finding, PIIType } from "./entities.js";
+import { PATTERNS } from "./patterns.js";
 
 export const DEFAULT_MIN_CONFIDENCE = 0.5;
 

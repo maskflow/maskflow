@@ -6,7 +6,7 @@
  * `validator(value) -> number | null` returns an adjusted confidence, or null to
  * reject the match entirely (e.g. a 16-digit number that fails the Luhn check).
  */
-import { PIIType } from "./entities";
+import { PIIType } from "./entities.js";
 
 export type Validator = (value: string) => number | null;
 
@@ -23,7 +23,7 @@ const PHONE_RE = /(?<!\d)(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}
 const SSN_DASHED_RE = /(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)/;
 const SSN_PLAIN_RE = /(?<!\d)\d{9}(?!\d)/;
 
-const CREDIT_CARD_RE = /(?<!\d)(?:\d[ -]?){13,19}(?!\d)/;
+const CREDIT_CARD_RE = /(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)/;
 
 const IPV4_RE = /\b(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b/;
 const IPV6_RE = /\b(?:[A-Fa-f0-9]{1,4}:){7}[A-Fa-f0-9]{1,4}\b/;
