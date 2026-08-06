@@ -11,6 +11,7 @@ jobs:
     outputs:
       core: ${{ steps.filter.outputs.core }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
+      detection_js: ${{ steps.filter.outputs.detection_js }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -22,6 +23,8 @@ jobs:
             sdk_python:
               - 'sdk/python/**'
               - 'core/**'
+            detection_js:
+              - 'packages/detection/**'
 
   core:
     needs: changes
@@ -36,6 +39,19 @@ jobs:
       - run: uv sync --extra dev
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest -q
+
+  detection-js:
+    needs: changes
+    if: needs.changes.outputs.detection_js == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build -w @maskflow/detection
+      - run: npm test -w @maskflow/detection
 
   sdk-python:
     needs: changes

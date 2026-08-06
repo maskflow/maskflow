@@ -1,0 +1,779 @@
+{
+  "positive": [
+    {
+      "text": "You can reach me at alice@example.com anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "alice@example.com"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at bob.smith@company.co.uk anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "bob.smith@company.co.uk"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at jane_doe123@sub.domain.org anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "jane_doe123@sub.domain.org"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at test.user+tag@gmail.com anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "test.user+tag@gmail.com"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at contact@my-startup.io anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "contact@my-startup.io"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at first.last@corp-mail.net anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "first.last@corp-mail.net"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at support@helpdesk.com anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "support@helpdesk.com"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at dev.ops@cloud-provider.io anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "dev.ops@cloud-provider.io"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at maria.garcia@university.edu anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "maria.garcia@university.edu"
+        }
+      ]
+    },
+    {
+      "text": "You can reach me at info@nonprofit.org anytime.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "info@nonprofit.org"
+        }
+      ]
+    },
+    {
+      "text": "Call me at (415) 555-0132 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "(415) 555-0132"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 415-555-0147 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "415-555-0147"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 415.555.0198 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "415.555.0198"
+        }
+      ]
+    },
+    {
+      "text": "Call me at +1 415 555 0173 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "+1 415 555 0173"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 1-800-555-0199 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "1-800-555-0199"
+        }
+      ]
+    },
+    {
+      "text": "Call me at (212) 867-5309 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "(212) 867-5309"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 650-555-0111 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "650-555-0111"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 212.555.0180 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "212.555.0180"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 310-555-0166 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "310-555-0166"
+        }
+      ]
+    },
+    {
+      "text": "Call me at 303-555-0184 when you're free.",
+      "expected": [
+        {
+          "type": "PHONE",
+          "value": "303-555-0184"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 245-11-2222.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "245-11-2222"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 312-45-6789.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "312-45-6789"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 560-22-3344.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "560-22-3344"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 134-56-7890.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "134-56-7890"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 478-90-1234.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "478-90-1234"
+        }
+      ]
+    },
+    {
+      "text": "Employee SSN on file: 601-23-4567.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "601-23-4567"
+        }
+      ]
+    },
+    {
+      "text": "My SSN is 234567890 for verification.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "234567890"
+        }
+      ]
+    },
+    {
+      "text": "Please confirm your social security number 345678901 on file.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "345678901"
+        }
+      ]
+    },
+    {
+      "text": "SSN: 456789012 was provided by the applicant.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "456789012"
+        }
+      ]
+    },
+    {
+      "text": "The applicant's ssn 567890123 matches our records.",
+      "expected": [
+        {
+          "type": "SSN",
+          "value": "567890123"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 4111111111111111.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "4111111111111111"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 5555555555554444.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "5555555555554444"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 378282246310005.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "378282246310005"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 6011000000000004.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "6011000000000004"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 3566002020360505.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "3566002020360505"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 30569309025904.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "30569309025904"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 5105105105105100.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "5105105105105100"
+        }
+      ]
+    },
+    {
+      "text": "Charge the card ending in this number: 4012888888881881.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "4012888888881881"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 192.168.1.1.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "192.168.1.1"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 10.0.0.254.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "10.0.0.254"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 8.8.8.8.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "8.8.8.8"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 172.16.254.1.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "172.16.254.1"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 203.0.113.42.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "203.0.113.42"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 198.51.100.23.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "198.51.100.23"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from 2001:0db8:85a3:0000:0000:8a2e:0370:7334.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+        }
+      ]
+    },
+    {
+      "text": "The request originated from fe80:0000:0000:0000:0202:b3ff:fe1e:8329.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "fe80:0000:0000:0000:0202:b3ff:fe1e:8329"
+        }
+      ]
+    },
+    {
+      "text": "Found exposed key AKIAIOSFODNN7EXAMPLE in the logs.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "AKIAIOSFODNN7EXAMPLE"
+        }
+      ]
+    },
+    {
+      "text": "Found exposed key AKIAJEXAMPLE12345678 in the logs.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "AKIAJEXAMPLE12345678"
+        }
+      ]
+    },
+    {
+      "text": "Found exposed key ASIAQWERTYUIOPASDFGH in the logs.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "ASIAQWERTYUIOPASDFGH"
+        }
+      ]
+    },
+    {
+      "text": "Found exposed key AKIAZXCVBNMLKJHGFDSA in the logs.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "AKIAZXCVBNMLKJHGFDSA"
+        }
+      ]
+    },
+    {
+      "text": "Found exposed key AKIA1234567890ABCDEF in the logs.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "AKIA1234567890ABCDEF"
+        }
+      ]
+    },
+    {
+      "text": "The integration uses sk-ant-api03-abcdefghijklmnopqrstuvwxYZ0123456789 as its token.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "sk-ant-api03-abcdefghijklmnopqrstuvwxYZ0123456789"
+        }
+      ]
+    },
+    {
+      "text": "The integration uses sk-proj-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd as its token.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "sk-proj-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
+        }
+      ]
+    },
+    {
+      "text": "The integration uses ghp_1234567890abcdefghijklmnopqrstuvwxyz as its token.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+        }
+      ]
+    },
+    {
+      "text": "The integration uses xoxb-1234567890-abcdefghijklmnopqrstuvwx as its token.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "xoxb-1234567890-abcdefghijklmnopqrstuvwx"
+        }
+      ]
+    },
+    {
+      "text": "The integration uses AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz0123456 as its token.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz0123456"
+        }
+      ]
+    },
+    {
+      "text": "Please rotate secret_token=zX9pQ7mK2vN4wL8rT1yB immediately.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "zX9pQ7mK2vN4wL8rT1yB"
+        }
+      ]
+    },
+    {
+      "text": "Set api_key=aB3dE5fG7hJ9kL1mN3pQ in the .env file.",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "aB3dE5fG7hJ9kL1mN3pQ"
+        }
+      ]
+    },
+    {
+      "text": "password: Tr0ub4dor3xtraLongPass99",
+      "expected": [
+        {
+          "type": "API_KEY",
+          "value": "Tr0ub4dor3xtraLongPass99"
+        }
+      ]
+    },
+    {
+      "text": "Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+      "expected": [
+        {
+          "type": "JWT",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        }
+      ]
+    },
+    {
+      "text": "Authorization header: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiYWRtaW4ifQ.4f8h2kd9s0aLpQ7zR3xTvY1bN6mWc5eUj",
+      "expected": [
+        {
+          "type": "JWT",
+          "value": "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiYWRtaW4ifQ.4f8h2kd9s0aLpQ7zR3xTvY1bN6mWc5eUj"
+        }
+      ]
+    },
+    {
+      "text": "Authorization header: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMTIzIn0.abcdefGHIJKL1234567890_-mnopqr",
+      "expected": [
+        {
+          "type": "JWT",
+          "value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ1c2VyMTIzIn0.abcdefGHIJKL1234567890_-mnopqr"
+        }
+      ]
+    },
+    {
+      "text": "Authorization header: Bearer eyJhbGciOiJSUzI1NiJ9.eyJyb2xlIjoiYWRtaW4ifQ.QWxhZGRpbjpvcGVuIHNlc2FtZQ_ZZZ",
+      "expected": [
+        {
+          "type": "JWT",
+          "value": "eyJhbGciOiJSUzI1NiJ9.eyJyb2xlIjoiYWRtaW4ifQ.QWxhZGRpbjpvcGVuIHNlc2FtZQ_ZZZ"
+        }
+      ]
+    },
+    {
+      "text": "Please wire the funds to GB29NWBK60161331926819.",
+      "expected": [
+        {
+          "type": "IBAN",
+          "value": "GB29NWBK60161331926819"
+        }
+      ]
+    },
+    {
+      "text": "Please wire the funds to DE89370400440532013000.",
+      "expected": [
+        {
+          "type": "IBAN",
+          "value": "DE89370400440532013000"
+        }
+      ]
+    },
+    {
+      "text": "Please wire the funds to FR1420041010050500013M02606.",
+      "expected": [
+        {
+          "type": "IBAN",
+          "value": "FR1420041010050500013M02606"
+        }
+      ]
+    },
+    {
+      "text": "Please wire the funds to NL91ABNA0417164300.",
+      "expected": [
+        {
+          "type": "IBAN",
+          "value": "NL91ABNA0417164300"
+        }
+      ]
+    },
+    {
+      "text": "Please wire the funds to BE68539007547034.",
+      "expected": [
+        {
+          "type": "IBAN",
+          "value": "BE68539007547034"
+        }
+      ]
+    },
+    {
+      "text": "I live at 123 Main Street.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "123 Main Street"
+        }
+      ]
+    },
+    {
+      "text": "I live at 456 Oak Avenue, Apt 2B.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "456 Oak Avenue, Apt 2B"
+        }
+      ]
+    },
+    {
+      "text": "I live at 789 Elm Road.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "789 Elm Road"
+        }
+      ]
+    },
+    {
+      "text": "I live at 1600 Pennsylvania Avenue.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "1600 Pennsylvania Avenue"
+        }
+      ]
+    },
+    {
+      "text": "I live at 42 Baker Street.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "42 Baker Street"
+        }
+      ]
+    },
+    {
+      "text": "I live at 10 Downing Street.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "10 Downing Street"
+        }
+      ]
+    },
+    {
+      "text": "I live at 350 Fifth Avenue, Suite 100.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "350 Fifth Avenue, Suite 100"
+        }
+      ]
+    },
+    {
+      "text": "I live at 77 Massachusetts Avenue.",
+      "expected": [
+        {
+          "type": "ADDRESS",
+          "value": "77 Massachusetts Avenue"
+        }
+      ]
+    },
+    {
+      "text": "Hi, this is Jane Doe. My email is jane.doe@example.com and my phone is 415-555-0198. My SSN is 245-11-2222 for the background check.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "jane.doe@example.com"
+        },
+        {
+          "type": "PHONE",
+          "value": "415-555-0198"
+        },
+        {
+          "type": "SSN",
+          "value": "245-11-2222"
+        }
+      ]
+    },
+    {
+      "text": "Contact: Mark Rivera, mark.rivera@company.com, (312) 555-0142. He lives at 789 Elm Road.",
+      "expected": [
+        {
+          "type": "EMAIL",
+          "value": "mark.rivera@company.com"
+        },
+        {
+          "type": "PHONE",
+          "value": "(312) 555-0142"
+        },
+        {
+          "type": "ADDRESS",
+          "value": "789 Elm Road"
+        }
+      ]
+    },
+    {
+      "text": "AWS incident: key AKIAIOSFODNN7EXAMPLE was exposed in a commit by Alice Nguyen. Her email alice.nguyen@dev.io was notified.",
+      "expected": [
+        {
+          "type": "AWS_KEY",
+          "value": "AKIAIOSFODNN7EXAMPLE"
+        },
+        {
+          "type": "EMAIL",
+          "value": "alice.nguyen@dev.io"
+        }
+      ]
+    },
+    {
+      "text": "Customer card 4111111111111111 was charged; confirmation sent to billing@shop.com and 650-555-0177.",
+      "expected": [
+        {
+          "type": "CREDIT_CARD",
+          "value": "4111111111111111"
+        },
+        {
+          "type": "EMAIL",
+          "value": "billing@shop.com"
+        },
+        {
+          "type": "PHONE",
+          "value": "650-555-0177"
+        }
+      ]
+    },
+    {
+      "text": "Server 10.0.0.254 issued token sk-proj-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd for user Chris Park at chris.park@ops.com.",
+      "expected": [
+        {
+          "type": "IP_ADDRESS",
+          "value": "10.0.0.254"
+        },
+        {
+          "type": "API_KEY",
+          "value": "sk-proj-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
+        },
+        {
+          "type": "EMAIL",
+          "value": "chris.park@ops.com"
+        }
+      ]
+    }
+  ],
+  "negative": [
+    "Order number 123456789 was shipped today.",
+    "Reference code: 4111111111111112 does not match our records.",
+    "Invoice total due: 378282246310006 dollars.",
+    "Please review the quarterly report before Friday.",
+    "The stock price rose by 4.5 percent today.",
+    "Meeting is scheduled for next Tuesday at the main office.",
+    "Our server uptime this month was 99.98 percent.",
+    "The temperature reached 72 degrees this afternoon."
+  ]
+}
