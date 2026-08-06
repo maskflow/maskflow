@@ -11,7 +11,12 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 cd core
 uv sync --extra dev
+uv run python -m spacy download en_core_web_sm
 ```
+
+The spaCy model is a separate download rather than a pip dependency -- PyPI doesn't allow packages
+to declare a direct URL as a dependency, and this is the standard pattern for any spaCy-based
+package.
 
 ## Usage
 

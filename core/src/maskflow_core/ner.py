@@ -15,7 +15,13 @@ DATE_OF_BIRTH_THRESHOLD = 0.6
 
 @lru_cache(maxsize=1)
 def _get_nlp():
-    return spacy.load(MODEL_NAME)
+    try:
+        return spacy.load(MODEL_NAME)
+    except OSError as exc:
+        raise OSError(
+            f"spaCy model '{MODEL_NAME}' isn't installed. Run: "
+            f"python -m spacy download {MODEL_NAME}"
+        ) from exc
 
 
 def detect_ner(text: str) -> list[Finding]:

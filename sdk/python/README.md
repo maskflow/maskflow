@@ -24,6 +24,7 @@ response = mask_and_call(
 
 ```bash
 pip install maskflow-sdk
+python -m spacy download en_core_web_sm
 ```
 
 ## Why this shape
