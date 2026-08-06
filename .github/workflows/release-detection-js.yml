@@ -18,7 +18,7 @@ jobs:
           node-version: 22
           registry-url: "https://registry.npmjs.org"
       - run: npm ci
-      - run: npm run build -w maskflow-detection
-      - run: npm publish --provenance -w maskflow-detection
+      - run: npm run build -w @maskflow/detection
+      - run: npm publish --access public --provenance -w @maskflow/detection
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
