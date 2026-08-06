@@ -1,5 +1,5 @@
 [project]
-name = "maskflow"
+name = "maskflow-sdk"
 version = "0.1.0"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"

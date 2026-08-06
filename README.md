@@ -12,4 +12,4 @@ response = mask_and_call(prompt, call_fn)
 ## Packages
 
 - [`core/`](core) — the detection and masking engine
-- [`sdk/python/`](sdk/python) — the Python SDK (`pip install maskflow`), see its README for usage
+- [`sdk/python/`](sdk/python) — the Python SDK (`pip install maskflow-sdk`), see its README for usage

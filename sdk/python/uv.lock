@@ -615,27 +615,6 @@ wheels = [
 ]
 
 [[package]]
-name = "maskflow"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "maskflow-core" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "maskflow-core", editable = "../../core" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "maskflow-core"
 version = "0.1.0"
 source = { editable = "../../core" }
@@ -653,6 +632,27 @@ requires-dist = [
     { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "spacy", specifier = ">=3.7,<4" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "maskflow-sdk"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "maskflow-core" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest", version = "8.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "pytest", version = "9.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "maskflow-core", editable = "../../core" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
 provides-extras = ["dev"]
 

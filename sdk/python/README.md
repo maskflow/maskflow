@@ -23,7 +23,7 @@ response = mask_and_call(
 ## Install
 
 ```bash
-pip install maskflow
+pip install maskflow-sdk
 ```
 
 ## Why this shape
