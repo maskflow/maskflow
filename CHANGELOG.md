@@ -9,6 +9,17 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+## [sdk 0.1.1] - 2026-08-20
+
+### Changed
+
+- `maskflow-sdk`: now depends on `maskflow-core>=0.2.0,<0.3` and
+  `maskflow-pack-intl>=0.1.0,<0.2` (previously `maskflow-core>=0.1.0,<0.2` with
+  recognizers bundled directly into core). No public API change --
+  `mask()`/`unmask()`/`mask_and_call()` are identical -- this just moves
+  `pip install maskflow-sdk` onto the split core/pack-intl architecture
+  published in `core 0.2.0, pack-intl 0.1.0` below.
+
 ## [core 0.2.0, pack-intl 0.1.0] - 2026-08-19
 
 ### Changed
@@ -80,6 +91,7 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   calling any LLM, and unmasking the response.
 - `@maskflow/detection`: TypeScript port of the regex/structural detection layer.
 
-[unreleased]: https://github.com/maskflow/maskflow/compare/core-v0.2.0...HEAD
+[unreleased]: https://github.com/maskflow/maskflow/compare/sdk-py-v0.1.1...HEAD
+[sdk 0.1.1]: https://github.com/maskflow/maskflow/compare/sdk-py-v0.1.0...sdk-py-v0.1.1
 [core 0.2.0, pack-intl 0.1.0]: https://github.com/maskflow/maskflow/compare/core-v0.1.1...core-v0.2.0
 [0.1.0]: https://github.com/maskflow/maskflow/releases/tag/v0.1.0
