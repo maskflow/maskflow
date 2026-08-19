@@ -1,0 +1,67 @@
+name: False positive (wrongly flagged)
+description: MaskFlow detected/masked something that isn't actually PII
+labels: ["false-positive", "detection-accuracy"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a false positive — these help us tighten detection without breaking
+        other cases.
+
+        ## ⚠️ SYNTHETIC EXAMPLE ONLY — do not paste real PII
+        Even though the flagged text isn't PII, please still fabricate the example rather than
+        pasting real text from your logs/code, in case it contains adjacent sensitive data.
+
+  - type: textarea
+    id: flagged_text
+    attributes:
+      label: The wrongly-flagged text (SYNTHETIC example only)
+      description: A fabricated example reproducing the false positive.
+      placeholder: "e.g. \"Email me at your convenience\" — \"Email\" was tagged as a PERSON_NAME"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: flagged_as
+    attributes:
+      label: What entity type was it flagged as?
+      options:
+        - Email
+        - Phone
+        - SSN
+        - Credit card
+        - IP address (v4/v6)
+        - AWS access key
+        - API key / generic secret
+        - JWT
+        - IBAN
+        - Street address
+        - Person name
+        - Date of birth
+        - Other / unsure
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      placeholder: "maskflow-core / maskflow-sdk / @maskflow/detection"
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "maskflow-core 0.1.1, Python 3.11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: How often this occurs, and any pattern you've noticed in what triggers it.
+    validations:
+      required: false

@@ -1,0 +1,53 @@
+name: New entity type request
+description: Request support for a PII/sensitive-data type MaskFlow doesn't detect yet
+labels: ["enhancement", "new-entity"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        MaskFlow currently detects: email, phone, SSN, credit card, IP address (v4/v6), AWS access
+        key, API key/generic secret, JWT, IBAN, street address, person name, and date of birth.
+
+        If what you need is one of those but in a format that's being missed, please use the
+        **False negative** template instead — this one is for entirely new entity types.
+
+  - type: input
+    id: entity_name
+    attributes:
+      label: Proposed entity type
+      placeholder: "e.g. National insurance number (UK), passport number, bank account/routing number"
+    validations:
+      required: true
+
+  - type: textarea
+    id: format
+    attributes:
+      label: Format / pattern
+      description: Describe the structure (fixed length, checksum, regional variants, etc.). A SYNTHETIC example is welcome; do not paste a real value.
+      placeholder: "e.g. 9 digits, format AA123456A, one checksum letter"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does this matter?
+      description: What's the risk if this leaks into an LLM prompt/log unmasked?
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Which package(s) should support this?
+      placeholder: "maskflow-core / maskflow-sdk / @maskflow/detection / all"
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to official format specs/standards, if any.
+    validations:
+      required: false
