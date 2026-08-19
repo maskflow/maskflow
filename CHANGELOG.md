@@ -14,6 +14,9 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
   output, and test-failure messages no longer interpolate raw sample text or
   matched values -- closes a PII leak surface in test/debug output. Registered
   the `benchmark`/`leak` pytest markers referenced by CLAUDE.md's commands.
+- `maskflow-core` / `@maskflow/detection`: bounded the two unbounded `\w*`
+  quantifiers in the generic-secret-assignment regex (was O(n^2) on long
+  word-runs with no `:`/`=`).
 
 ## [0.1.0] - 2026-08-06
 

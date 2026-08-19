@@ -37,7 +37,10 @@ API_KEY_RE = re.compile(
 )
 
 GENERIC_SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?i)\b\w*(?:key|secret|token|password|credential)\w*"
+    # \w* bounded to \w{0,40} -- unbounded quantifiers flanking an alternation,
+    # scanned via finditer from every offset, are O(n^2) on a long word-run
+    # with no ":"/"=" (e.g. a big pasted alnum/base64 blob). See test_regex_safety.py.
+    r"(?i)\b\w{0,40}(?:key|secret|token|password|credential)\w{0,40}"
     r"\s*[:=]\s*['\"]?([A-Za-z0-9_\-/+]{16,})['\"]?"
 )
 
@@ -48,6 +51,9 @@ JWT_RE = re.compile(
 IBAN_RE = re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")
 
 ADDRESS_RE = re.compile(
+    # The outer {1,4} must stay bounded -- it caps backtracking on the nested
+    # unbounded [a-zA-Z]* inside it. Widening to {1,} would make this pattern
+    # vulnerable to catastrophic backtracking.
     r"\b\d{1,6}\s+(?:[A-Z][a-zA-Z]*\s){1,4}"
     r"(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|"
     r"Drive|Dr|Court|Ct|Way|Place|Pl|Terrace|Ter)\.?\b"
