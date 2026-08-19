@@ -9,6 +9,8 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+## [core 0.2.0, pack-intl 0.1.0] - 2026-08-19
+
 ### Changed
 
 - **Workspace restructure**: the repo is now a real [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/)
@@ -78,5 +80,6 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   calling any LLM, and unmasking the response.
 - `@maskflow/detection`: TypeScript port of the regex/structural detection layer.
 
-[unreleased]: https://github.com/maskflow/maskflow/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/maskflow/maskflow/compare/core-v0.2.0...HEAD
+[core 0.2.0, pack-intl 0.1.0]: https://github.com/maskflow/maskflow/compare/core-v0.1.1...core-v0.2.0
 [0.1.0]: https://github.com/maskflow/maskflow/releases/tag/v0.1.0

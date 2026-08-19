@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 dependencies = [
-    "maskflow-core>=0.1.0,<0.2",
+    # register_ner_recognizer()/register_pattern() plumbing maskflow-pack-intl
+    # relies on only exists from core 0.2.0.
+    "maskflow-core>=0.2.0,<0.3",
     "maskflow-pack-intl>=0.1.0,<0.2",
 ]
 
