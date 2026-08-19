@@ -5,24 +5,33 @@ but every issue and PR gets read.
 
 ## Project layout
 
-- [`core/`](core) — `maskflow-core`, the Python detection/masking engine (Python, uv).
-- [`sdk/python/`](sdk/python) — `maskflow-sdk`, the Python SDK built on `core` (Python, uv).
-- [`packages/detection/`](packages/detection) — `@maskflow/detection`, the TypeScript port of the
-  regex/structural detection layer (npm workspace).
+MaskFlow is a [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/) (Python)
+plus an npm workspace (TypeScript), rooted in the same repo:
+
+- [`packages/maskflow-core/`](packages/maskflow-core) — `maskflow-core`, the detection/masking
+  engine. Ships **zero recognizers** — no PII type is built in, packs register them.
+- [`packs/maskflow-pack-intl/`](packs/maskflow-pack-intl) — `maskflow-pack-intl`, the original
+  12 intl/US-shaped recognizers (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN,
+  address, person name, date of birth), registered against `maskflow-core` on import.
+- [`packages/maskflow-sdk/`](packages/maskflow-sdk) — `maskflow-sdk`, the Python SDK, built on
+  `maskflow-core` + `maskflow-pack-intl`.
+- [`packages/maskflow-js/`](packages/maskflow-js) — `@maskflow/detection`, the TypeScript port of
+  the regex/structural detection layer (npm workspace; package name unchanged despite the
+  directory name).
 
 ## Setup
 
-### Python packages (`core/`, `sdk/python/`)
+### Python packages (`packages/maskflow-core`, `packs/maskflow-pack-intl`, `packages/maskflow-sdk`)
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/). Run from the **repo root** — it's a single uv
+workspace with one shared lockfile:
 
 ```bash
-cd core   # or sdk/python
-uv sync --extra dev
+uv sync --all-extras
 uv run python -m spacy download en_core_web_sm
 ```
 
-### TypeScript package (`packages/detection/`)
+### TypeScript package (`packages/maskflow-js`)
 
 From the repo root (it's an npm workspace):
 
@@ -34,15 +43,21 @@ npm run build -w @maskflow/detection
 ## Running tests
 
 ```bash
-# core
-cd core && uv run pytest
+# maskflow-core
+uv run pytest packages/maskflow-core/tests
 
-# sdk/python
-cd sdk/python && uv run pytest
+# maskflow-pack-intl
+uv run pytest packs/maskflow-pack-intl/tests
+
+# maskflow-sdk
+uv run pytest packages/maskflow-sdk/tests
 
 # @maskflow/detection
 npm test -w @maskflow/detection
 ```
+
+Also run `ruff check .`, `ruff format --check .`, and `mypy packages/maskflow-core --strict`
+before pushing — `pre-commit install` wires up ruff/mypy/gitleaks to run automatically on commit.
 
 CI runs these same commands per package, only on paths that changed (see
 `.github/workflows/ci.yml`).
@@ -71,7 +86,8 @@ PII — not yours, not a coworker's, not "public" data scraped from somewhere.**
 
 This applies to:
 
-- Test fixtures (e.g. `core/tests/fixtures/pii_samples.py`, `packages/detection/tests/fixtures.json`)
+- Test fixtures (e.g. `packs/maskflow-pack-intl/tests/fixtures/pii_samples.py`,
+  `packages/maskflow-js/tests/fixtures.json`)
 - Inline examples in code, docstrings, and READMEs
 - Issue and PR descriptions (see the issue templates' synthetic-data warnings)
 

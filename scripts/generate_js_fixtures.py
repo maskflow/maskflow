@@ -1,23 +1,35 @@
-"""Regenerate packages/detection/tests/fixtures.json from core's Python fixtures.
+"""Regenerate packages/maskflow-js/tests/fixtures.json from maskflow-pack-intl's
+Python fixtures.
 
-Run this whenever core/tests/fixtures/pii_samples.py changes, so the JS port's
-test suite stays honest against the same source of truth as the Python tests.
-Only the regex/structural types the JS port covers are included (PERSON_NAME
-and DATE_OF_BIRTH need spaCy NER, which has no JS equivalent here).
+Run via `uv run python scripts/generate_js_fixtures.py` (from the repo root)
+whenever packs/maskflow-pack-intl/tests/fixtures/pii_samples.py changes, so
+the JS port's test suite stays honest against the same source of truth as the
+Python tests. Only the regex/structural types the JS port covers are included
+(PERSON_NAME and DATE_OF_BIRTH need spaCy NER, which has no JS equivalent
+here).
 """
+
 import json
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "core" / "src"))
-sys.path.insert(0, str(ROOT / "core" / "tests"))
+sys.path.insert(0, str(ROOT / "packs" / "maskflow-pack-intl" / "tests"))
 
+import maskflow_pack_intl  # noqa: E402,F401 -- registers the 12 recognizers
 from fixtures import pii_samples  # noqa: E402
 
 JS_SUPPORTED_TYPES = {
-    "EMAIL", "PHONE", "SSN", "CREDIT_CARD", "IP_ADDRESS",
-    "AWS_KEY", "API_KEY", "JWT", "IBAN", "ADDRESS",
+    "EMAIL",
+    "PHONE",
+    "SSN",
+    "CREDIT_CARD",
+    "IP_ADDRESS",
+    "AWS_KEY",
+    "API_KEY",
+    "JWT",
+    "IBAN",
+    "ADDRESS",
 }
 
 positive = []
@@ -35,6 +47,9 @@ output = {
     "negative": list(pii_samples.NEGATIVE_SAMPLES),
 }
 
-out_path = ROOT / "packages" / "detection" / "tests" / "fixtures.json"
+out_path = ROOT / "packages" / "maskflow-js" / "tests" / "fixtures.json"
 out_path.write_text(json.dumps(output, indent=2) + "\n")
-print(f"Wrote {len(positive)} positive samples, {len(output['negative'])} negative samples to {out_path}")
+print(
+    f"Wrote {len(positive)} positive samples, "
+    f"{len(output['negative'])} negative samples to {out_path}"
+)

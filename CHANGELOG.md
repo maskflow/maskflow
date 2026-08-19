@@ -4,11 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detection`).
+for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
+`@maskflow/detection`).
 
 ## [Unreleased]
 
+### Changed
+
+- **Workspace restructure**: the repo is now a real [uv workspace](https://docs.astral.sh/uv/concepts/projects/workspaces/)
+  rooted at `pyproject.toml`, with members under `packages/*` and `packs/*`. `core/` moved to
+  `packages/maskflow-core`, `sdk/python/` moved to `packages/maskflow-sdk`, and
+  `packages/detection/` moved to `packages/maskflow-js` (npm package name unchanged --
+  still publishes as `@maskflow/detection`). No published-artifact behavior changes; import
+  paths (`from maskflow_core import ...`, `from maskflow import ...`) are unaffected.
+- `maskflow-core` no longer ships any recognizers -- `patterns.py` and the PERSON_NAME/
+  DATE_OF_BIRTH NER logic moved to a new package, **`maskflow-pack-intl`**, which registers
+  all 12 original types (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN, address,
+  person name, date of birth) against core on import. `maskflow-sdk` now depends on
+  `maskflow-pack-intl` automatically, so `pip install maskflow-sdk` behaves identically to
+  before -- this only matters for code importing `maskflow_core` directly without a pack.
+- `maskflow-core`: `registry.py` gained `register_ner_recognizer()` alongside the existing
+  `register_pattern()`, so spaCy-label-based recognizers (like PERSON_NAME/DATE_OF_BIRTH) are
+  now pack content too, registered the same way regex-based ones are. Both registration
+  functions accept an optional `context_keywords` argument, replacing the previously-hardcoded
+  `CONTEXT_KEYWORDS` table.
+- `maskflow-core`: spaCy moved from a required dependency to an optional one
+  (`maskflow-core[nlp]`). Without it installed, the NER pass is skipped with a single warning
+  and pattern-based recognizers are unaffected.
+
 ### Fixed
+
+- `maskflow-core` / `maskflow-pack-intl`: fixed a latent Python 3.9 incompatibility (`X | None`
+  return/parameter annotations evaluated eagerly instead of deferred) that would have broken
+  on 3.9 the first time CI actually tested that version -- added `from __future__ import
+  annotations` to the affected modules.
 
 - `maskflow-core`: `Finding.value` no longer appears in default `repr()`
   output, and test-failure messages no longer interpolate raw sample text or

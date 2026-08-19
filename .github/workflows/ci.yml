@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       core: ${{ steps.filter.outputs.core }}
+      pack_intl: ${{ steps.filter.outputs.pack_intl }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
     steps:
@@ -19,26 +20,100 @@ jobs:
         with:
           filters: |
             core:
-              - 'core/**'
+              - 'packages/maskflow-core/**'
+              - 'pyproject.toml'
+            pack_intl:
+              - 'packs/maskflow-pack-intl/**'
+              - 'packages/maskflow-core/**'
+              - 'pyproject.toml'
             sdk_python:
-              - 'sdk/python/**'
-              - 'core/**'
+              - 'packages/maskflow-sdk/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'pyproject.toml'
             detection_js:
-              - 'packages/detection/**'
+              - 'packages/maskflow-js/**'
 
   core:
     needs: changes
     if: needs.changes.outputs.core == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: core
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # spaCy's `blis` dependency has no prebuilt wheel for Windows + 3.9
+          # and fails building from source (clang rejects an obsolete AVX512
+          # flag in blis's vendored build) -- an upstream/toolchain gap, not
+          # something fixable here. `uv sync --all-extras` still pulls spacy
+          # transitively (core -> sdk -> pack-intl -> core[nlp]) even for the
+          # core job, so this exclusion applies to all three Python jobs.
+          - os: windows-latest
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --extra dev
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run ruff check packages/maskflow-core
+      - run: uv run ruff format --check packages/maskflow-core
+      - run: uv run mypy packages/maskflow-core --strict
+      - run: >
+          uv run pytest packages/maskflow-core/tests -q
+          --cov=maskflow_core --cov-report=term-missing --cov-fail-under=85
+
+  pack-intl:
+    needs: changes
+    if: needs.changes.outputs.pack_intl == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # See the core job's exclude comment: no Windows + 3.9 wheel for
+          # spaCy's `blis` dependency.
+          - os: windows-latest
+            python-version: "3.9"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
       - run: uv run python -m spacy download en_core_web_sm
-      - run: uv run pytest -q
+      - run: uv run ruff check packs/maskflow-pack-intl
+      - run: uv run ruff format --check packs/maskflow-pack-intl
+      - run: uv run pytest packs/maskflow-pack-intl/tests -q
+
+  sdk-python:
+    needs: changes
+    if: needs.changes.outputs.sdk_python == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # See the core job's exclude comment: no Windows + 3.9 wheel for
+          # spaCy's `blis` dependency.
+          - os: windows-latest
+            python-version: "3.9"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-sdk
+      - run: uv run ruff format --check packages/maskflow-sdk
+      - run: uv run pytest packages/maskflow-sdk/tests -q
 
   detection-js:
     needs: changes
@@ -48,21 +123,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
       - run: npm ci
       - run: npm run build -w @maskflow/detection
       - run: npm test -w @maskflow/detection
 
-  sdk-python:
+  pip-audit:
     needs: changes
-    if: needs.changes.outputs.sdk_python == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.sdk_python == 'true'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: sdk/python
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --extra dev
-      - run: uv run python -m spacy download en_core_web_sm
-      - run: uv run pytest -q
+      - run: uv sync --all-extras
+      - run: uv export --no-hashes --all-extras -o requirements.txt
+      - run: uvx pip-audit -r requirements.txt
