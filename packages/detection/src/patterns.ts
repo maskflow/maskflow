@@ -33,13 +33,17 @@ const AWS_KEY_RE = /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/;
 const API_KEY_RE =
   /\b(?:sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[A-Za-z0-9_-]{35})\b/;
 
+// \w* bounded to \w{0,40} -- unbounded quantifiers flanking an alternation,
+// scanned across every offset, are O(n^2) on a long word-run with no ":"/"=".
 const GENERIC_SECRET_ASSIGNMENT_RE =
-  /\b\w*(?:key|secret|token|password|credential)\w*\s*[:=]\s*['"]?([A-Za-z0-9_\-/+]{16,})['"]?/i;
+  /\b\w{0,40}(?:key|secret|token|password|credential)\w{0,40}\s*[:=]\s*['"]?([A-Za-z0-9_\-/+]{16,})['"]?/i;
 
 const JWT_RE = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/;
 
 const IBAN_RE = /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/;
 
+// The outer {1,4} must stay bounded -- it caps backtracking on the nested
+// unbounded [a-zA-Z]* inside it. Widening to {1,} risks catastrophic backtracking.
 const ADDRESS_RE =
   /\b\d{1,6}\s+(?:[A-Z][a-zA-Z]*\s){1,4}(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct|Way|Place|Pl|Terrace|Ter)\.?\b(?:,?\s+(?:Apt|Suite|Ste|Unit)\.?\s*#?\w+)?/;
 
