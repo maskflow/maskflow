@@ -44,10 +44,12 @@ function regexPass(text: string): Finding[] {
         }
 
         let confidence = rule.baseConfidence;
+        let validated = false;
         if (rule.validator) {
           const adjusted = rule.validator(value);
           if (adjusted === null) continue;
           confidence = adjusted;
+          validated = true;
         }
 
         confidence = applyContextBoost(text, start, end, piiType, confidence);
@@ -57,6 +59,7 @@ function regexPass(text: string): Finding[] {
           start,
           end,
           confidence: Math.round(confidence * 100) / 100,
+          validated,
         });
       }
     }
@@ -71,7 +74,15 @@ function spansOverlap(a: Finding, b: Finding): boolean {
 
 function mergeOverlaps(candidates: Finding[]): Finding[] {
   const accepted: Finding[] = [];
-  const sorted = [...candidates].sort((a, b) => b.confidence - a.confidence);
+  // validated desc, confidence desc, length desc, start asc -- a
+  // checksum-validated span always beats an overlapping unvalidated one,
+  // regardless of raw confidence.
+  const sorted = [...candidates].sort((a, b) => {
+    if (a.validated !== b.validated) return a.validated ? -1 : 1;
+    if (a.confidence !== b.confidence) return b.confidence - a.confidence;
+    if (a.value.length !== b.value.length) return b.value.length - a.value.length;
+    return a.start - b.start;
+  });
   for (const finding of sorted) {
     if (!accepted.some((kept) => spansOverlap(finding, kept))) {
       accepted.push(finding);
@@ -82,6 +93,6 @@ function mergeOverlaps(candidates: Finding[]): Finding[] {
 
 export function detect(text: string, minConfidence: number = DEFAULT_MIN_CONFIDENCE): Finding[] {
   const candidates = regexPass(text);
-  const merged = mergeOverlaps(candidates);
-  return merged.filter((f) => f.confidence >= minConfidence);
+  const aboveThreshold = candidates.filter((f) => f.confidence >= minConfidence);
+  return mergeOverlaps(aboveThreshold);
 }

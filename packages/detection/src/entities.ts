@@ -17,4 +17,8 @@ export interface Finding {
   start: number;
   end: number;
   confidence: number;
+  // True only when a structural validator ran and confirmed the match
+  // (checksum-valid Luhn card, mod-97 IBAN, ...). Used to give validated
+  // spans priority over unvalidated ones during overlap resolution.
+  validated: boolean;
 }

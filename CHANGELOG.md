@@ -26,6 +26,11 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
 
 - `maskflow-core` / `@maskflow/detection`: unicode/emoji/RTL/zero-width
   round-trip test coverage for `mask()`/`unmask()`.
+- `maskflow-core` / `@maskflow/detection`: `Finding.validated` -- true when a
+  structural validator (Luhn, IBAN mod-97, SSN area-code check) confirmed the
+  match. Central overlap resolution now sorts by (validated desc, confidence
+  desc, length desc, start asc), so a checksum-validated span always beats an
+  overlapping unvalidated one.
 
 ## [0.1.0] - 2026-08-06
 
