@@ -18,6 +18,10 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
   quantifiers in the generic-secret-assignment regex (was O(n^2) on long
   word-runs with no `:`/`=`).
 
+- `maskflow-core` / `@maskflow/detection`: `mask()` now pre-scans input text
+  for placeholder-lookalike substrings (e.g. a prompt that already contains
+  `<EMAIL_1>`) and falls back to a nonce-suffixed token on collision.
+
 ### Added
 
 - `maskflow-core` / `@maskflow/detection`: unicode/emoji/RTL/zero-width
