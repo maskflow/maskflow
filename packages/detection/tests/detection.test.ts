@@ -71,6 +71,34 @@ describe("mask()/unmask()", () => {
     expect(result.mapping["<EMAIL_1>"]).toBe("alice@example.com");
     expect(result.mapping["<EMAIL_2>"]).toBe("bob@example.com");
   });
+
+  it("round-trips exactly with emoji adjacent to PII", () => {
+    const text = "📧 Email me at alice@example.com 👍 or call 415-555-0132 📞 thanks!";
+    const result = mask(text);
+    expect(unmask(result.maskedText, result.mapping)).toBe(text);
+  });
+
+  it("round-trips exactly with RTL text surrounding PII", () => {
+    const text = "مرحبا بك، راسلني على alice@example.com من فضلك";
+    const result = mask(text);
+    expect(unmask(result.maskedText, result.mapping)).toBe(text);
+  });
+
+  it("round-trips exactly with zero-width characters near PII", () => {
+    const zwsp = "​";
+    const zwj = "‍";
+    const text = `Contact${zwsp} me at alice@example.com${zwj} please reach out`;
+    const result = mask(text);
+    expect(unmask(result.maskedText, result.mapping)).toBe(text);
+  });
+
+  it("round-trips exactly with mixed unicode and multiple entities", () => {
+    const zwsp = "​";
+    const zwj = "‍";
+    const text = `👋 مرحبا${zwsp} Email: alice@example.com${zwj} Phone: 415-555-0132 🎉`;
+    const result = mask(text);
+    expect(unmask(result.maskedText, result.mapping)).toBe(text);
+  });
 });
 
 describe("PIIType", () => {
