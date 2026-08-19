@@ -16,6 +16,7 @@ separate follow-up work. This gives packs something to call today.
 
 from __future__ import annotations
 
+import random
 import re
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -30,6 +31,15 @@ Validator = Callable[[str], Optional[float]]
 
 # type -> [(regex, base_confidence, validator), ...], appended to by register_pattern()
 PATTERNS: dict[PIIType, list[tuple[re.Pattern[str], float, Validator | None]]] = {}
+
+# (original span text, rng) -> a plausible fake value of the same shape,
+# e.g. drawn from a reserved/invalid range real issuers never assign.
+SurrogateGenerator = Callable[[str, random.Random], str]
+
+# type -> (generator, note), appended to by register_surrogate_generator().
+# Strategy.SURROGATE falls back to Strategy.REPLACE for any type with no
+# entry here -- see strategies.py / masking.py.
+SURROGATE_GENERATORS: dict[PIIType, tuple[SurrogateGenerator, str]] = {}
 
 
 @dataclass(frozen=True)
@@ -78,4 +88,19 @@ def register_ner_recognizer(
     NER_RECOGNIZERS[spacy_label] = NerMapping(registered_type, base_confidence, threshold)
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
+    return registered_type
+
+
+def register_surrogate_generator(
+    pii_type: str,
+    generator: SurrogateGenerator,
+    note: str,
+) -> PIIType:
+    """Register a Strategy.SURROGATE fake-value generator for `pii_type`,
+    registering the PIIType itself first if it isn't already known. `note`
+    documents the reserved/invalid range or corpus the generator draws from
+    (e.g. "RFC 2606 reserved example.com/example.org domains") -- surfaced
+    in docs, never parsed."""
+    registered_type = PIIType.register(pii_type)
+    SURROGATE_GENERATORS[registered_type] = (generator, note)
     return registered_type

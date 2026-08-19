@@ -40,6 +40,28 @@ it directly unless they're using `maskflow-core` standalone.
 Email, phone, SSN, credit card, IP address (v4/v6), AWS access key, API key / generic secret,
 JWT, IBAN, street address, person name, date of birth.
 
+## Surrogate generators (`Strategy.SURROGATE`)
+
+`maskflow-core`'s `mask_with_policy(text, MaskPolicy(default_strategy=Strategy.SURROGATE))` needs a
+fake-value generator per type (see `maskflow-core`'s README) — this pack registers one for every
+type where a genuinely plausible, guaranteed-non-colliding fake makes sense:
+
+| Type | Reserved/invalid range or corpus |
+|---|---|
+| `EMAIL` | RFC 2606 reserved `example.com`/`.org`/`.net` domains |
+| `PHONE` | NANP fictional range: exchange `555`, subscriber `0100`-`0199` |
+| `SSN` | SSA-reserved-invalid area numbers `900`-`999` |
+| `CREDIT_CARD` | publicly documented payment-industry test numbers (Stripe/Visa/Mastercard/Amex) |
+| `IBAN` | mod-97-valid, with a synthetic `9`-prefixed bank code |
+| `PERSON_NAME` | embedded synthetic first/last name corpus (`surrogates.py`, not real people) |
+| `ADDRESS` | embedded synthetic street name corpus (`surrogates.py`) |
+
+`AWS_KEY`, `API_KEY`, `JWT`, and `IP_ADDRESS` have no bespoke generator — there's no meaningful
+"plausible fake" for an opaque secret, and a fabricated IP is no safer than a real one might be
+misleading. `DATE_OF_BIRTH` is skipped too: it's detected via spaCy NER rather than a fixed regex,
+so input date formats vary too widely to fake safely in the same shape without a date-parsing
+dependency. All four fall back to `Strategy.REPLACE` automatically.
+
 ## Tests
 
 ```bash

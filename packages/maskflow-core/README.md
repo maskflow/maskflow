@@ -58,9 +58,68 @@ the mapping is the caller's responsibility (the CLI and SDK phases handle that).
   boosted by nearby keywords.
 - `register_ner_recognizer(spacy_label, pii_type, base_confidence, threshold=0.0, context_keywords=None)`
   — maps one spaCy entity label onto a PII type.
+- `register_surrogate_generator(pii_type, generator, note)` — a `Strategy.SURROGATE` fake-value
+  generator for a type (see below); `note` documents the reserved/invalid range or corpus it
+  draws from.
 
-Both register the `PIIType` itself first if it isn't already known, and are idempotent-safe to
-call from any installed pack's `__init__.py`.
+All three register the `PIIType` itself first if it isn't already known, and are idempotent-safe
+to call from any installed pack's `__init__.py`.
+
+## Masking strategies
+
+`mask()`/`unmask()` (above) are frozen as `maskflow-sdk`'s public API and always use
+`Strategy.REPLACE` — a typed `<TYPE_n>` placeholder, fully reversible. For more control, use
+`mask_with_policy()` alongside them:
+
+```python
+from maskflow_core import MaskPolicy, PIIType, Strategy, mask_with_policy, unmask
+
+policy = MaskPolicy(
+    default_strategy=Strategy.REPLACE,
+    per_entity_strategy={PIIType.register("SSN"): Strategy.REDACT},
+)
+result = mask_with_policy("Contact WID-123456, SSN 245-11-2222.", policy)
+result.masked_text  # "Contact <WIDGET_ID_1>, SSN [REDACTED_SSN]."
+unmask(result.masked_text, result.mapping)  # SSN stays redacted -- see below
+```
+
+Five strategies, selected per entity type via `MaskPolicy`:
+
+| Strategy | Output | Reversible via `unmask()`? |
+|---|---|---|
+| `REPLACE` (default) | typed placeholder, e.g. `<EMAIL_1>` | yes |
+| `SURROGATE` | a plausible fake of the same type/shape (falls back to `REPLACE` if no generator is registered for that type) | yes |
+| `REDACT` | a constant `[REDACTED_TYPE]` marker | no |
+| `MASK` | partial reveal, e.g. `XXXX XXXX 9012` (`MaskConfig(reveal_last, mask_char)`) | no |
+| `HASH` | HMAC-SHA256 hex digest, stable per value (`HashConfig(key=...)` or `MASKFLOW_HASH_KEY` env, hex-encoded) | no |
+
+`REPLACE` and `SURROGATE` substitute a unique per-instance value the LLM will echo back verbatim,
+so `unmask()` can find and restore it. `REDACT`/`MASK`/`HASH` are intentionally lossy — the
+`MappingEntry` still records the original for audit purposes, but `unmask()` leaves that
+substituted text as-is rather than guessing which original it came from.
+
+`mask_with_policy()` returns a `PolicyMaskResult` whose `.mapping` is a `Mapping` (token ->
+`MappingEntry`, not a plain dict) — `MappingEntry.original` is repr-excluded, same discipline as
+`Span.text`.
+
+## Mapping persistence
+
+`mask()`/`mask_with_policy()` are pure — the mapping never touches disk on its own. To persist one
+across requests/processes, use a `MappingStore`:
+
+```python
+from maskflow_core import EncryptedFileMappingStore, InMemoryMappingStore
+
+store = InMemoryMappingStore(ttl_seconds=3600)  # default: process-local, TTL-expiring
+store.save("session-123", result.mapping)
+store.load("session-123")
+
+# AES-GCM at rest -- requires `maskflow-core[store]`, key from MASKFLOW_MAPPING_KEY (hex) or passed explicitly
+store = EncryptedFileMappingStore("/var/run/maskflow-mappings")
+```
+
+`RedisMappingStore` exists as an interface-only stub (constructor + method shapes only) — every
+method raises `NotImplementedError` until a real implementation ships.
 
 ## Tests
 
