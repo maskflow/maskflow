@@ -20,7 +20,7 @@ class MaskResult(NamedTuple):
 def mask(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> MaskResult:
     """Replace detected PII with `<TYPE_n>` tokens, returning the masked text and a
     {token: original_value} mapping the caller can use to unmask a later response."""
-    findings = detect(text, min_confidence=min_confidence)
+    spans = detect(text, min_confidence=min_confidence)
 
     mapping: dict[str, str] = {}
     counters: dict[str, int] = {}
@@ -31,16 +31,17 @@ def mask(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> MaskResul
     # we assign -- track everything already claimed, real or lookalike.
     reserved: set[str] = set(_RESERVED_TOKEN_RE.findall(text))
 
-    for finding in findings:  # detect() returns non-overlapping findings sorted by start
-        counters[finding.type.value] = counters.get(finding.type.value, 0) + 1
-        token = f"<{finding.type.value}_{counters[finding.type.value]}>"
+    for span in spans:  # detect() returns non-overlapping spans sorted by start
+        entity_type = span.entity_type.value
+        counters[entity_type] = counters.get(entity_type, 0) + 1
+        token = f"<{entity_type}_{counters[entity_type]}>"
         while token in reserved:
-            token = f"<{finding.type.value}_{counters[finding.type.value]}_{secrets.token_hex(2)}>"
-        mapping[token] = finding.value
+            token = f"<{entity_type}_{counters[entity_type]}_{secrets.token_hex(2)}>"
+        mapping[token] = span.text
         reserved.add(token)
-        pieces.append(text[cursor : finding.start])
+        pieces.append(text[cursor : span.start])
         pieces.append(token)
-        cursor = finding.end
+        cursor = span.end
 
     pieces.append(text[cursor:])
     return MaskResult("".join(pieces), mapping)

@@ -47,8 +47,8 @@ def test_register_pattern_extends_detection_without_touching_patterns_module() -
     assert widget_type == "WIDGET_ID"
 
     text = "Please reference widget WID-123456 in your reply."
-    findings = detect(text)
-    assert any(f.type == "WIDGET_ID" and f.value == "WID-123456" for f in findings)
+    spans = detect(text)
+    assert any(s.entity_type == "WIDGET_ID" and s.text == "WID-123456" for s in spans)
 
     result = mask(text)
     assert "WID-123456" not in result.masked_text
@@ -59,4 +59,4 @@ def test_register_pattern_extends_detection_without_touching_patterns_module() -
     gadget_re = re.compile(r"\bGAD-\d{4}\b")
     register_pattern("GADGET_ID", gadget_re, 0.9)
     existing = detect("Contact us about gadget GAD-1234 for details.")
-    assert any(f.type == "GADGET_ID" and f.value == "GAD-1234" for f in existing)
+    assert any(s.entity_type == "GADGET_ID" and s.text == "GAD-1234" for s in existing)

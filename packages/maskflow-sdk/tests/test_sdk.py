@@ -1,4 +1,4 @@
-from maskflow import Finding, MaskResult, PIIType, detect, mask, mask_and_call, unmask
+from maskflow import MaskResult, PIIType, Span, detect, mask, mask_and_call, unmask
 
 
 def test_mask_and_call_never_exposes_pii_to_call_fn():
@@ -47,5 +47,5 @@ def test_sdk_reexports_core_primitives():
 
     assert isinstance(result, MaskResult)
     assert unmask(result.masked_text, result.mapping) == text
-    assert detect(text)[0].type == PIIType.EMAIL
-    assert isinstance(detect(text)[0], Finding)
+    assert detect(text)[0].entity_type == PIIType.EMAIL
+    assert isinstance(detect(text)[0], Span)

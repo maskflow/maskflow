@@ -73,7 +73,7 @@ def register_ner_recognizer(
 ) -> PIIType:
     """Map a spaCy entity label (e.g. "PERSON") onto `pii_type`, registering the
     PIIType itself first if it isn't already known. ner.py's generic NER pass
-    reads NER_RECOGNIZERS to turn matching doc.ents into Findings."""
+    reads NER_RECOGNIZERS to turn matching doc.ents into Spans."""
     registered_type = PIIType.register(pii_type)
     NER_RECOGNIZERS[spacy_label] = NerMapping(registered_type, base_confidence, threshold)
     if context_keywords:

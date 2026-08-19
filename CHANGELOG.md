@@ -9,6 +9,25 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Changed
+
+- `maskflow-core`: replaced the ad hoc per-recognizer overlap merge with a
+  central `SpanSet.resolve(config)` pipeline (`maskflow_core.spanset`).
+  `Finding` is renamed `Span` (`type`/`value` fields renamed
+  `entity_type`/`text`); every span now also carries `recognizer` and an
+  `explanation` trail. Overlap resolution supports a configurable per-entity
+  policy -- `STRICT` (default, no overlaps survive), `CONTAINED` (a more
+  specific nested span wins over a same-status containing one), `MERGE`
+  (adjacent same-type spans separated by whitespace/a punctuation character
+  join into one) -- while the existing invariant is unchanged: a
+  checksum-validated span never loses to an overlapping unvalidated one.
+  Detection now runs a tier-0 excision pass -- confidently-resolved regex
+  spans are blanked out (same-length filler, so char offsets are preserved)
+  before the NER pass runs over the remainder, rather than NER scanning raw
+  PII text. No change to `mask()`/`unmask()`/`mask_and_call()` signatures or
+  behavior. `maskflow-sdk` and `maskflow-pack-intl` updated accordingly
+  (`Finding` -> `Span` in `maskflow-sdk`'s exports too).
+
 ## [sdk 0.1.1] - 2026-08-20
 
 ### Changed

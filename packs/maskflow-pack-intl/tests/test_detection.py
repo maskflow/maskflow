@@ -11,7 +11,7 @@ ACCURACY_TARGET = 0.95
 
 
 def _found_pairs(text: str) -> set[tuple]:
-    return {(f.type, f.value) for f in detect(text)}
+    return {(s.entity_type, s.text) for s in detect(text)}
 
 
 def test_all_positive_samples_are_detected():
@@ -40,9 +40,9 @@ def test_all_positive_samples_are_detected():
 def test_negative_samples_produce_no_findings():
     false_positives = []
     for idx, text in enumerate(NEGATIVE_SAMPLES):
-        findings = detect(text)
-        if findings:
-            false_positives.append((idx, [f.type for f in findings]))
+        spans = detect(text)
+        if spans:
+            false_positives.append((idx, [s.entity_type for s in spans]))
 
     assert not false_positives, (
         "False positives on PII-free / invalid text "
@@ -56,6 +56,6 @@ def test_findings_are_non_overlapping_and_sorted():
         "Hi, this is Jane Doe. My email is jane.doe@example.com and my phone is "
         "415-555-0198. My SSN is 245-11-2222 for the background check."
     )
-    findings = detect(text)
-    for a, b in zip(findings, findings[1:]):
-        assert a.end <= b.start, f"Overlapping or unsorted findings: {a} and {b}"
+    spans = detect(text)
+    for a, b in zip(spans, spans[1:]):
+        assert a.end <= b.start, f"Overlapping or unsorted spans: {a} and {b}"
