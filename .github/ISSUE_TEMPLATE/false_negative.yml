@@ -1,0 +1,73 @@
+name: False negative (missed PII)
+description: MaskFlow failed to detect/mask PII that it should have caught
+labels: ["false-negative", "detection-accuracy"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a miss — these reports directly improve detection accuracy and are
+        genuinely valuable.
+
+        ## ⚠️ SYNTHETIC EXAMPLE ONLY — do not paste real PII
+        Fabricate an example that reproduces the same *shape* of the miss (same format, same
+        surrounding context) using fake data. Never paste a real person's actual email, phone
+        number, SSN, card number, address, or name here — issues are public.
+
+        Good: `Reach me at jordan.k.smith@example.com or 555-0134.`
+        Bad: a real coworker's actual email and phone number.
+
+  - type: textarea
+    id: missed_pattern
+    attributes:
+      label: The missed pattern (SYNTHETIC example only)
+      description: Paste a fabricated example showing the text that should have been detected. No real PII.
+      placeholder: "e.g. \"Call me at +44 7911 123456\" — the UK-format phone number wasn't detected"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: expected_entity
+    attributes:
+      label: Expected entity type
+      description: What PII type should this have been classified as?
+      options:
+        - Email
+        - Phone
+        - SSN
+        - Credit card
+        - IP address (v4/v6)
+        - AWS access key
+        - API key / generic secret
+        - JWT
+        - IBAN
+        - Street address
+        - Person name
+        - Date of birth
+        - Other / not currently supported (consider "New entity request" instead)
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      placeholder: "maskflow-core / maskflow-sdk / @maskflow/detection"
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Package version, and language/runtime version.
+      placeholder: "maskflow-core 0.1.1, Python 3.11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything about the surrounding text, locale, or format that might explain the miss.
+    validations:
+      required: false
