@@ -36,3 +36,31 @@ def test_mask_is_idempotent_on_clean_text():
 
     assert result.masked_text == text
     assert result.mapping == {}
+
+
+def test_unmask_round_trips_with_emoji():
+    text = "📧 Email me at alice@example.com 👍 or call 415-555-0132 📞 thanks!"
+    result = mask(text)
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_with_rtl_text():
+    text = "مرحبا بك، راسلني على alice@example.com من فضلك"
+    result = mask(text)
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_with_zero_width_characters():
+    zwsp = "​"  # zero-width space
+    zwj = "‍"  # zero-width joiner
+    text = f"Contact{zwsp} me at alice@example.com{zwj} please reach out"
+    result = mask(text)
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_with_mixed_unicode_and_multiple_entities():
+    zwsp = "​"
+    zwj = "‍"
+    text = f"👋 مرحبا{zwsp} Email: alice@example.com{zwj} Phone: 415-555-0132 🎉"
+    result = mask(text)
+    assert unmask(result.masked_text, result.mapping) == text

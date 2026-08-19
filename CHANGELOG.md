@@ -18,6 +18,11 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
   quantifiers in the generic-secret-assignment regex (was O(n^2) on long
   word-runs with no `:`/`=`).
 
+### Added
+
+- `maskflow-core` / `@maskflow/detection`: unicode/emoji/RTL/zero-width
+  round-trip test coverage for `mask()`/`unmask()`.
+
 ## [0.1.0] - 2026-08-06
 
 ### Added
