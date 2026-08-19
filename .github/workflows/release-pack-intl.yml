@@ -21,5 +21,5 @@ jobs:
       - run: uv build --package maskflow-pack-intl
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packs/maskflow-pack-intl/dist
+          packages-dir: dist
           skip-existing: true
