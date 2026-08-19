@@ -13,6 +13,12 @@ dev = [
     "pytest>=8.0",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "benchmark: performance / regex-safety checks (opt-in via -m benchmark)",
+    "leak: guards against PII reaching logs, exceptions, repr, or test output",
+]
+
 [tool.uv]
 package = true
 

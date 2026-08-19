@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 
@@ -20,7 +20,10 @@ class PIIType(str, Enum):
 @dataclass(frozen=True)
 class Finding:
     type: PIIType
-    value: str
+    # repr=False: raw PII must never surface via default dataclass repr --
+    # logger.debug(finding), an unhandled traceback, or a debugger repr() call
+    # would otherwise print it verbatim.
+    value: str = field(repr=False)
     start: int
     end: int
     confidence: float

@@ -18,30 +18,35 @@ def test_all_positive_samples_are_detected():
     misses = []
     total_expected = 0
 
-    for sample in POSITIVE_SAMPLES:
+    for idx, sample in enumerate(POSITIVE_SAMPLES):
         found = _found_pairs(sample.text)
         for expected in sample.expected:
             total_expected += 1
             if expected not in found:
-                misses.append((sample.text, expected))
+                # Report the sample index + entity type only -- never the raw
+                # sample text or matched value, which may be real PII once
+                # someone reproduces a bug report with a real-world string.
+                misses.append((idx, expected[0]))
 
     accuracy = 1 - (len(misses) / total_expected)
     assert accuracy >= ACCURACY_TARGET, (
         f"Detection accuracy {accuracy:.2%} below {ACCURACY_TARGET:.0%} target. "
-        f"Misses:\n" + "\n".join(f"  {text!r} -> expected {exp}" for text, exp in misses)
+        f"Misses (index into POSITIVE_SAMPLES, expected type):\n"
+        + "\n".join(f"  POSITIVE_SAMPLES[{idx}] -> {pii_type}" for idx, pii_type in misses)
     )
 
 
 def test_negative_samples_produce_no_findings():
     false_positives = []
-    for text in NEGATIVE_SAMPLES:
+    for idx, text in enumerate(NEGATIVE_SAMPLES):
         findings = detect(text)
         if findings:
-            false_positives.append((text, findings))
+            false_positives.append((idx, [f.type for f in findings]))
 
     assert not false_positives, (
-        "False positives on PII-free / invalid text:\n"
-        + "\n".join(f"  {text!r} -> {findings}" for text, findings in false_positives)
+        "False positives on PII-free / invalid text "
+        "(index into NEGATIVE_SAMPLES, types found):\n"
+        + "\n".join(f"  NEGATIVE_SAMPLES[{idx}] -> {types}" for idx, types in false_positives)
     )
 
 
