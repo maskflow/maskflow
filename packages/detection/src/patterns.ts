@@ -102,9 +102,17 @@ function validateSsnDashed(value: string): number | null {
   return 0.95;
 }
 
-function validateSsnPlain(_value: string): number | null {
+function validateSsnPlain(value: string): number | null {
   // Bare 9-digit numbers are ambiguous (order IDs, unformatted phone numbers,
-  // etc.) -- start low, let context.ts decide if it's really an SSN.
+  // etc.) -- start low, let context.ts decide if it's really an SSN. Still
+  // apply the same area-code structural check as the dashed form, so this
+  // validator can actually reject something (a no-op validator that never
+  // returns null isn't a real structural check, and shouldn't be able to
+  // claim `validated: true` priority during overlap resolution).
+  const area = value.slice(0, 3);
+  if (area === "000" || area === "666" || area.startsWith("9")) {
+    return null;
+  }
   return 0.35;
 }
 

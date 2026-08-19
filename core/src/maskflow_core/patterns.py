@@ -105,6 +105,13 @@ def _validate_ssn_dashed(value: str) -> float | None:
 def _validate_ssn_plain(value: str) -> float | None:
     # Bare 9-digit numbers are ambiguous (order IDs, phone numbers without
     # formatting, etc.) -- start low, let context.py decide if it's really an SSN.
+    # Still apply the same area-code structural check as the dashed form, so
+    # this validator can actually reject something (a no-op validator that
+    # never returns None isn't a real structural check, and shouldn't be able
+    # to claim `validated=True` priority during overlap resolution).
+    area = value[:3]
+    if area in ("000", "666") or area.startswith("9"):
+        return None
     return 0.35
 
 

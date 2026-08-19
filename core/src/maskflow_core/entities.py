@@ -27,6 +27,10 @@ class Finding:
     start: int
     end: int
     confidence: float
+    # True only when a structural validator ran and confirmed the match
+    # (checksum-valid Luhn card, mod-97 IBAN, ...). Used to give validated
+    # spans priority over unvalidated ones during overlap resolution.
+    validated: bool = False
 
     @property
     def span(self) -> tuple[int, int]:
