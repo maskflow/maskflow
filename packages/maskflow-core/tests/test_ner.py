@@ -1,7 +1,7 @@
 """register_ner_recognizer() and the spaCy-optional degrade path -- new engine
 surface introduced by this restructure (PERSON_NAME/DATE_OF_BIRTH used to be
 hardcoded in core's ner.py; now any pack can register a spaCy label the same
-way). The "label -> Finding" dispatch is tested against a fake spaCy doc so it
+way). The "label -> Span" dispatch is tested against a fake spaCy doc so it
 doesn't depend on the real model's linguistic judgment; the spaCy-absent path
 is tested by making `import spacy` genuinely fail.
 """
@@ -34,9 +34,9 @@ def test_register_ner_recognizer_dispatches_a_matching_label(
     fake_doc = _FakeDoc([_FakeEnt("TEST_LABEL", "Testville", 10, 19)])
     monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
 
-    findings = ner_module.detect_ner("I live in Testville today.")
+    spans = ner_module.detect_ner("I live in Testville today.")
 
-    assert any(f.type == "TEST_PLACE" and f.value == "Testville" for f in findings)
+    assert any(s.entity_type == "TEST_PLACE" and s.text == "Testville" for s in spans)
 
 
 def test_register_ner_recognizer_ignores_unmapped_labels(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -44,9 +44,9 @@ def test_register_ner_recognizer_ignores_unmapped_labels(monkeypatch: pytest.Mon
     fake_doc = _FakeDoc([_FakeEnt("SOME_OTHER_LABEL", "Whatever", 0, 8)])
     monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
 
-    findings = ner_module.detect_ner("Whatever happens next.")
+    spans = ner_module.detect_ner("Whatever happens next.")
 
-    assert findings == []
+    assert spans == []
 
 
 def test_ner_threshold_drops_low_confidence_matches(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -54,9 +54,9 @@ def test_ner_threshold_drops_low_confidence_matches(monkeypatch: pytest.MonkeyPa
     fake_doc = _FakeDoc([_FakeEnt("TEST_LOW_LABEL", "Something", 0, 9)])
     monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
 
-    findings = ner_module.detect_ner("Something happened.")
+    spans = ner_module.detect_ner("Something happened.")
 
-    assert findings == []
+    assert spans == []
 
 
 def test_get_nlp_warns_once_and_disables_ner_when_spacy_is_absent(
@@ -68,9 +68,9 @@ def test_get_nlp_warns_once_and_disables_ner_when_spacy_is_absent(
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        findings = ner_module.detect_ner("Some text that would otherwise be scanned.")
+        spans = ner_module.detect_ner("Some text that would otherwise be scanned.")
 
-    assert findings == []
+    assert spans == []
     spacy_warnings = [w for w in caught if "spaCy isn't installed" in str(w.message)]
     assert len(spacy_warnings) == 1
 

@@ -38,7 +38,7 @@ from maskflow_core.registry import register_pattern
 register_pattern("WIDGET_ID", re.compile(r"\bWID-\d{6}\b"), base_confidence=0.9)
 
 detect("Reference WID-123456 in your reply.")
-# [Finding(type='WIDGET_ID', ...)]
+# [Span(entity_type='WIDGET_ID', ...)]
 
 result = mask("Reference WID-123456 in your reply.")
 result.masked_text  # "Reference <WIDGET_ID_1> in your reply."

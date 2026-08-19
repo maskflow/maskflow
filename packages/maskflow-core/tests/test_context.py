@@ -21,15 +21,15 @@ register_pattern(
 
 def test_context_keyword_boosts_confidence_when_nearby() -> None:
     text = "Please note the marker code AMBIG-1234 below."
-    findings = detect(text, min_confidence=0.0)
+    spans = detect(text, min_confidence=0.0)
 
-    finding = next(f for f in findings if f.type == "AMBIGUOUS_MARKER")
-    assert finding.confidence > 0.4
+    span = next(s for s in spans if s.entity_type == "AMBIGUOUS_MARKER")
+    assert span.score > 0.4
 
 
 def test_missing_context_keyword_leaves_confidence_unboosted() -> None:
     text = "Nothing relevant here: AMBIG-5678 appears alone."
-    findings = detect(text, min_confidence=0.0)
+    spans = detect(text, min_confidence=0.0)
 
-    finding = next(f for f in findings if f.type == "AMBIGUOUS_MARKER")
-    assert finding.confidence == 0.4
+    span = next(s for s in spans if s.entity_type == "AMBIGUOUS_MARKER")
+    assert span.score == 0.4

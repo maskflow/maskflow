@@ -1,15 +1,26 @@
-"""Orchestrates the regex, context, and NER passes into one deduplicated finding list."""
+"""Orchestrates the regex, tier-0 excision, and NER passes into one resolved,
+non-overlapping Span list. See CLAUDE.md 'Design decisions' #1-2 and
+spanset.py for the resolution algorithm itself.
+"""
 
 from .context import apply_context_boost
-from .entities import Finding, PIIType
+from .entities import PIIType, Span
 from .ner import detect_ner
 from .registry import PATTERNS
+from .spanset import ResolveConfig, SpanSet
 
 DEFAULT_MIN_CONFIDENCE = 0.5
 
+# A single fixed filler character, repeated to preserve length/char offsets,
+# used to blank out tier-0 (already-resolved, high-confidence) regions before
+# the NER pass runs. Non-word so spaCy's tokenizer never mistakes a run of it
+# for a name/number; length-preserving so every downstream NER char offset
+# still lines up with the original text.
+_EXCISION_CHAR = "█"
 
-def _regex_pass(text: str) -> list[Finding]:
-    candidates: list[Finding] = []
+
+def _pattern_pass(text: str) -> list[Span]:
+    candidates: list[Span] = []
 
     for pii_type, rules in PATTERNS.items():
         for regex, base_confidence, validator in rules:
@@ -32,36 +43,54 @@ def _regex_pass(text: str) -> list[Finding]:
 
                 confidence = apply_context_boost(text, start, end, pii_type, confidence)
                 candidates.append(
-                    Finding(pii_type, value, start, end, round(confidence, 2), validated)
+                    Span(
+                        start=start,
+                        end=end,
+                        entity_type=pii_type,
+                        score=round(confidence, 2),
+                        recognizer=f"pattern:{pii_type}",
+                        text=value,
+                        validated=validated,
+                    )
                 )
 
     return candidates
 
 
-def _spans_overlap(a: Finding, b: Finding) -> bool:
-    return a.start < b.end and b.start < a.end
+def _excise(text: str, spans: list[Span]) -> str:
+    """Blank out `spans`' character ranges with a same-length filler, so the
+    NER pass never re-detects (or gets confused by) PII already claimed by
+    tier-0, while every char offset it produces still lines up with `text`.
+    """
+    if not spans:
+        return text
+    chars = list(text)
+    for span in spans:
+        for i in range(span.start, span.end):
+            chars[i] = _EXCISION_CHAR
+    return "".join(chars)
 
 
-def _merge_overlaps(candidates: list[Finding]) -> list[Finding]:
-    accepted: list[Finding] = []
-    # validated desc, confidence desc, length desc, start asc -- a
-    # checksum-validated span always beats an overlapping unvalidated one,
-    # regardless of raw confidence.
-    ordered = sorted(
-        candidates,
-        key=lambda f: (not f.validated, -f.confidence, -len(f.value), f.start),
-    )
-    for finding in ordered:
-        if not any(_spans_overlap(finding, kept) for kept in accepted):
-            accepted.append(finding)
-    return sorted(accepted, key=lambda f: f.start)
+def detect(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> list[Span]:
+    """Detect PII in `text`, returning non-overlapping Spans sorted by position."""
+    config = ResolveConfig(default_threshold=min_confidence)
+
+    pattern_candidates = _pattern_pass(text)
+
+    # Tier-0 excision: a provisional, regex-only resolve decides which regions
+    # are already confidently claimed, so the NER pass runs on text with those
+    # regions blanked out. This provisional pass exists only to build that
+    # mask -- it is not the final answer, and its winners are not the only
+    # candidates that get to compete below.
+    tier0 = SpanSet(text, tuple(pattern_candidates)).resolve(config)
+    excised_text = _excise(text, tier0)
+
+    ner_candidates = detect_ner(excised_text)
+
+    # The one authoritative resolution: every regex candidate (not just
+    # tier0's winners) plus every NER candidate, resolved together exactly
+    # once.
+    return SpanSet(text, tuple(pattern_candidates + ner_candidates)).resolve(config)
 
 
-def detect(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> list[Finding]:
-    """Detect PII in `text`, returning non-overlapping Findings sorted by position."""
-    candidates = _regex_pass(text) + detect_ner(text)
-    above_threshold = [f for f in candidates if f.confidence >= min_confidence]
-    return _merge_overlaps(above_threshold)
-
-
-__all__ = ["detect", "Finding", "PIIType"]
+__all__ = ["detect", "Span", "PIIType"]

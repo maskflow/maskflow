@@ -25,7 +25,7 @@ import maskflow_pack_intl  # noqa: F401 -- registers EMAIL, PHONE, SSN, ...
 from maskflow_core import detect, mask, unmask
 
 detect("Email me at alice@example.com or call 415-555-0132.")
-# [Finding(type=PIIType.EMAIL, value='alice@example.com', ...), Finding(type=PIIType.PHONE, ...)]
+# [Span(entity_type=PIIType.EMAIL, text='alice@example.com', ...), Span(entity_type=PIIType.PHONE, ...)]
 
 result = mask("Email me at alice@example.com or call 415-555-0132.")
 result.masked_text  # "Email me at <EMAIL_1> or call <PHONE_1>."
