@@ -32,6 +32,11 @@ dev = [
     "pip-audit>=2.7",
     "pre-commit>=3.8",
     "hypothesis>=6.100",
+    # Not a maskflow-core runtime dependency (that's the optional
+    # maskflow-core[store] extra) -- listed here purely so CI/dev environments
+    # can exercise EncryptedFileMappingStore, the same way pack-intl pulling
+    # maskflow-core[nlp] is what makes spacy available to the `core` CI job.
+    "cryptography>=42",
 ]
 
 [tool.ruff]
@@ -59,6 +64,13 @@ warn_unused_configs = true
 module = "spacy"
 ignore_missing_imports = true
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+# `cryptography` is optional (maskflow-core[store], used only inside
+# EncryptedFileMappingStore's lazily-imported try/except) -- CI's `core` job
+# doesn't install it, same as spacy above.
+module = "cryptography.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 markers = [
