@@ -99,6 +99,15 @@ describe("mask()/unmask()", () => {
     const result = mask(text);
     expect(unmask(result.maskedText, result.mapping)).toBe(text);
   });
+
+  it("avoids colliding with placeholder-lookalike text already in the input", () => {
+    const text = "Please keep the literal token <EMAIL_1> as-is. Contact bob@example.com.";
+    const result = mask(text);
+
+    expect(result.mapping["<EMAIL_1>"]).toBeUndefined();
+    expect(result.maskedText).not.toContain("bob@example.com");
+    expect(unmask(result.maskedText, result.mapping)).toBe(text);
+  });
 });
 
 describe("PIIType", () => {

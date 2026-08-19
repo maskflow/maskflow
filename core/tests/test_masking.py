@@ -64,3 +64,14 @@ def test_unmask_round_trips_with_mixed_unicode_and_multiple_entities():
     text = f"👋 مرحبا{zwsp} Email: alice@example.com{zwj} Phone: 415-555-0132 🎉"
     result = mask(text)
     assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_mask_avoids_colliding_with_placeholder_lookalike_text():
+    text = "Please keep the literal token <EMAIL_1> as-is. Contact bob@example.com."
+    result = mask(text)
+
+    # The real email's assigned token must not be the colliding "<EMAIL_1>" --
+    # it must fall back to a nonce form instead.
+    assert "<EMAIL_1>" not in result.mapping
+    assert "bob@example.com" not in result.masked_text
+    assert unmask(result.masked_text, result.mapping) == text
