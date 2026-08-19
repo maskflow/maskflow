@@ -57,6 +57,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - run: uv sync --all-extras --python ${{ matrix.python-version }}
       - run: uv run ruff check packages/maskflow-core
       - run: uv run ruff format --check packages/maskflow-core
@@ -84,6 +85,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - run: uv sync --all-extras --python ${{ matrix.python-version }}
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run ruff check packs/maskflow-pack-intl
@@ -109,6 +111,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - run: uv sync --all-extras --python ${{ matrix.python-version }}
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run ruff check packages/maskflow-sdk
@@ -135,6 +138,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
       - run: uv sync --all-extras
       - run: uv export --no-hashes --all-extras -o requirements.txt
       - run: uvx pip-audit -r requirements.txt
