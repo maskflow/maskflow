@@ -18,12 +18,15 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 from .context import CONTEXT_KEYWORDS
 from .entities import PIIType
 
-Validator = Callable[[str], float | None]
+# A plain type-alias assignment, not an annotation -- `from __future__ import
+# annotations` defers annotation evaluation but not this, so `float | None`
+# here (unlike everywhere else in this file) would still break on Python 3.9.
+Validator = Callable[[str], Optional[float]]
 
 # type -> [(regex, base_confidence, validator), ...], appended to by register_pattern()
 PATTERNS: dict[PIIType, list[tuple[re.Pattern[str], float, Validator | None]]] = {}
