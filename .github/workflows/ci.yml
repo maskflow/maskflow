@@ -43,6 +43,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # spaCy's `blis` dependency has no prebuilt wheel for Windows + 3.9
+          # and fails building from source (clang rejects an obsolete AVX512
+          # flag in blis's vendored build) -- an upstream/toolchain gap, not
+          # something fixable here. `uv sync --all-extras` still pulls spacy
+          # transitively (core -> sdk -> pack-intl -> core[nlp]) even for the
+          # core job, so this exclusion applies to all three Python jobs.
+          - os: windows-latest
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -65,6 +74,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # See the core job's exclude comment: no Windows + 3.9 wheel for
+          # spaCy's `blis` dependency.
+          - os: windows-latest
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -85,6 +99,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.9", "3.11", "3.13"]
+        exclude:
+          # See the core job's exclude comment: no Windows + 3.9 wheel for
+          # spaCy's `blis` dependency.
+          - os: windows-latest
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
