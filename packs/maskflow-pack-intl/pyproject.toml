@@ -5,7 +5,10 @@ description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone,
 requires-python = ">=3.9"
 license = { text = "MIT" }
 dependencies = [
-    "maskflow-core[nlp]>=0.1.1,<0.2",
+    # register_ner_recognizer() and the empty-by-default PATTERNS/NER_RECOGNIZERS
+    # registry only exist from 0.2.0 -- this pack cannot register anything
+    # against an older core.
+    "maskflow-core[nlp]>=0.2.0,<0.3",
 ]
 
 [tool.uv.sources]
