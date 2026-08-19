@@ -8,6 +8,13 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
 
 ## [Unreleased]
 
+### Fixed
+
+- `maskflow-core`: `Finding.value` no longer appears in default `repr()`
+  output, and test-failure messages no longer interpolate raw sample text or
+  matched values -- closes a PII leak surface in test/debug output. Registered
+  the `benchmark`/`leak` pytest markers referenced by CLAUDE.md's commands.
+
 ## [0.1.0] - 2026-08-06
 
 ### Added
