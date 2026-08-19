@@ -15,9 +15,10 @@ before reporting, if practical.
 
 In scope:
 
-- This repository (`core/`, `sdk/python/`, `packages/detection/`, CI/release workflows).
-- All packages published from it: `maskflow-core` and `maskflow-sdk` on PyPI, `@maskflow/detection`
-  on npm.
+- This repository (`packages/maskflow-core/`, `packages/maskflow-sdk/`, `packs/maskflow-pack-intl/`,
+  `packages/maskflow-js/`, CI/release workflows).
+- All packages published from it: `maskflow-core`, `maskflow-pack-intl`, and `maskflow-sdk` on
+  PyPI, `@maskflow/detection` on npm.
 - Detection accuracy issues with security impact — e.g. a class of PII that reliably fails to be
   masked (false negative), or a masking/unmasking bug that could reconstruct or leak original PII
   it shouldn't.

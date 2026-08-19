@@ -3,7 +3,7 @@
 Indian PII detection and reversible masking for LLM pipelines. Aadhaar, PAN, GSTIN, UPI, IFSC,
 names — masked before a prompt leaves your process, restored in the response.
 
-[![CI](https://img.shields.io/badge/CI-pending-lightgrey)](#)
+[![CI](https://github.com/maskflow/maskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/maskflow/maskflow/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/maskflow-sdk)](https://pypi.org/project/maskflow-sdk/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -64,6 +64,6 @@ where competitors beat us.
 ## Links
 
 - Site: [maskflow.in](https://maskflow.in)
-- Docs: [sdk/python/README.md](sdk/python/README.md)
+- Docs: [packages/maskflow-sdk/README.md](packages/maskflow-sdk/README.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)

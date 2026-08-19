@@ -1,0 +1,22 @@
+[project]
+name = "maskflow-pack-intl"
+version = "0.1.0"
+description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN, address, person name, date of birth)"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "maskflow-core[nlp]>=0.1.1,<0.2",
+]
+
+[tool.uv.sources]
+maskflow-core = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_pack_intl"]

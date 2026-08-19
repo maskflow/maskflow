@@ -1,9 +1,9 @@
-name: Release SDK (Python)
+name: Release Pack (Intl)
 
 on:
   push:
     tags:
-      - "sdk-py-v*"
+      - "pack-intl-v*"
 
 jobs:
   publish:
@@ -17,9 +17,9 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
-      - run: uv run pytest packages/maskflow-sdk/tests -q
-      - run: uv build --package maskflow-sdk
+      - run: uv run pytest packs/maskflow-pack-intl/tests -q
+      - run: uv build --package maskflow-pack-intl
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/maskflow-sdk/dist
+          packages-dir: packs/maskflow-pack-intl/dist
           skip-existing: true

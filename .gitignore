@@ -10,3 +10,6 @@ build/
 .DS_Store
 .pytest_cache/
 .idea/
+.coverage
+.mypy_cache/
+.ruff_cache/
