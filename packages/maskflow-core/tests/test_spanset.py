@@ -27,9 +27,7 @@ DEFAULT_CONFIG = ResolveConfig(default_threshold=0.0)
 
 
 @st.composite
-def _span(
-    draw: st.DrawFn, entity_types: tuple[PIIType, ...] = (TYPE_A, TYPE_B)
-) -> Span:
+def _span(draw: st.DrawFn, entity_types: tuple[PIIType, ...] = (TYPE_A, TYPE_B)) -> Span:
     start = draw(st.integers(min_value=0, max_value=len(TEXT) - 2))
     end = draw(st.integers(min_value=start + 1, max_value=len(TEXT)))
     entity_type = draw(st.sampled_from(entity_types))
@@ -125,8 +123,9 @@ def test_nested_specific_span_wins_over_a_longer_unvalidated_run() -> None:
     containment algorithm being pinned down, independent of any particular
     pack's pattern accidentally producing this shape."""
     text = "ref 91234567890123 on file"
-    outer_start, outer_end = text.index("91234567890123"), text.index("91234567890123") + len(
-        "91234567890123"
+    outer_start, outer_end = (
+        text.index("91234567890123"),
+        text.index("91234567890123") + len("91234567890123"),
     )
     inner_start, inner_end = outer_start + 1, outer_start + 13  # the embedded 12-digit run
 
@@ -162,8 +161,9 @@ def test_contained_policy_prefers_the_more_specific_span_when_validation_is_equa
     of the default length-desc tiebreak) -- e.g. a specific structural match
     nested inside a generic catch-all match, neither of them validated."""
     text = "token: abc123XYZ789 please rotate"
-    outer_start, outer_end = text.index("abc123XYZ789"), text.index("abc123XYZ789") + len(
-        "abc123XYZ789"
+    outer_start, outer_end = (
+        text.index("abc123XYZ789"),
+        text.index("abc123XYZ789") + len("abc123XYZ789"),
     )
     inner_start, inner_end = outer_start + 3, outer_start + 9  # "123XYZ", the specific part
 
