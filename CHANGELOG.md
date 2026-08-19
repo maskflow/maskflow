@@ -31,6 +31,11 @@ for each published package (`maskflow-core`, `maskflow-sdk`, `@maskflow/detectio
   match. Central overlap resolution now sorts by (validated desc, confidence
   desc, length desc, start asc), so a checksum-validated span always beats an
   overlapping unvalidated one.
+- `maskflow-core`: `PIIType` is now an open registry (`PIIType.register(...)`)
+  instead of a closed `Enum`, and `register_pattern()` lets a future pack
+  (e.g. `maskflow-pack-india`) add new PII types and recognizer rules without
+  editing `maskflow-core` itself. Existing built-in types and their `.value`/
+  equality/`isinstance` behavior are unchanged.
 
 ## [0.1.0] - 2026-08-06
 
