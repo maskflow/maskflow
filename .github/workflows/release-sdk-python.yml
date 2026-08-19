@@ -21,5 +21,5 @@ jobs:
       - run: uv build --package maskflow-sdk
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: packages/maskflow-sdk/dist
+          packages-dir: dist
           skip-existing: true
