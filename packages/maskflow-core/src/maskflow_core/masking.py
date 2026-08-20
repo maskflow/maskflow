@@ -13,7 +13,7 @@ in this codebase.
 
 import re
 import secrets
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
 from .detection import DEFAULT_MIN_CONFIDENCE, detect
 from .entities import PIIType, Span
@@ -181,7 +181,7 @@ def _surrogate_substitute(span: Span, reserved: set[str], fallback_token: str) -
     return _unique(fallback_token, reserved)
 
 
-def unmask(masked_text: str, mapping: Union[dict[str, str], Mapping]) -> str:
+def unmask(masked_text: str, mapping: dict[str, str] | Mapping) -> str:
     """Restore original values from a mapping produced by `mask()` or
     `mask_with_policy()`. For a Mapping (mask_with_policy()'s return type),
     only entries where `reversible` is true are restored -- REDACT/MASK/HASH

@@ -52,7 +52,7 @@ def _key(spans: list[Span]) -> list[tuple[int, int, PIIType, float, bool]]:
 @settings(max_examples=200)
 def test_no_overlap(candidates: list[Span]) -> None:
     result = resolve(candidates, TEXT, DEFAULT_CONFIG)
-    for a, b in zip(result, result[1:]):
+    for a, b in zip(result, result[1:], strict=False):
         assert a.end <= b.start, f"Overlapping resolved spans: {a} and {b}"
 
 
@@ -284,5 +284,5 @@ def test_email_and_upi_shaped_handle_resolve_independently(
 
     assert email_matches[0].entity_type != upi_matches[0].entity_type
 
-    for a, b in zip(spans, spans[1:]):
+    for a, b in zip(spans, spans[1:], strict=False):
         assert a.end <= b.start

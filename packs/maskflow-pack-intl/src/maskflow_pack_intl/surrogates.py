@@ -93,7 +93,9 @@ def _fill_digits(original: str, digits: str, rng: random.Random) -> str:
     pad = len(positions) - len(digits)
     filler = "".join(str(rng.randint(1, 9)) for _ in range(max(0, pad)))
     full = (filler + digits)[-len(positions) :] if pad > 0 else digits[-len(positions) :]
-    for i, ch in zip(positions, full):
+    # strict=True: `full` is sliced to exactly len(positions) characters
+    # above -- a length mismatch here would mean that invariant broke.
+    for i, ch in zip(positions, full, strict=True):
         chars[i] = ch
     return "".join(chars)
 

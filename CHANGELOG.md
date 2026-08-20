@@ -9,6 +9,20 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Changed
+
+- `maskflow-core` / `maskflow-sdk` / `maskflow-pack-intl`: raised the minimum
+  supported Python from 3.9 to 3.10 (`requires-python = ">=3.10"`). Python
+  3.9 reached upstream end-of-life on 2025-10-05 and no longer receives
+  security patches; it was also the direct cause of CI's slowest jobs
+  (~15 min) -- spaCy's `blis` dependency has no prebuilt wheel for 3.9 on
+  several platforms, forcing a from-source build every run. `ci.yml`'s test
+  matrix drops 3.9 (and the Windows+3.9 exclude workaround it needed) in
+  favor of 3.10/3.11/3.13; `ruff`'s `target-version` and ambient code style
+  move to `py310` accordingly (e.g. `Union[X, Y]` -> `X | Y`, `zip()` calls
+  now specify `strict=` explicitly, newly enforceable now that all
+  supported versions have it).
+
 ### Added
 
 - `maskflow-core`: `mask_with_policy(text, policy, min_confidence)` alongside

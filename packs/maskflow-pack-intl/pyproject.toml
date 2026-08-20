@@ -2,7 +2,7 @@
 name = "maskflow-pack-intl"
 version = "0.1.0"
 description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN, address, person name, date of birth)"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     # register_ner_recognizer() and the empty-by-default PATTERNS/NER_RECOGNIZERS
