@@ -1285,7 +1285,7 @@ requires-dist = [{ name = "maskflow-core", extras = ["nlp"], editable = "package
 
 [[package]]
 name = "maskflow-sdk"
-version = "0.1.1"
+version = "0.2.0"
 source = { editable = "packages/maskflow-sdk" }
 dependencies = [
     { name = "maskflow-core" },
