@@ -57,5 +57,5 @@ def test_findings_are_non_overlapping_and_sorted():
         "415-555-0198. My SSN is 245-11-2222 for the background check."
     )
     spans = detect(text)
-    for a, b in zip(spans, spans[1:]):
+    for a, b in zip(spans, spans[1:], strict=False):
         assert a.end <= b.start, f"Overlapping or unsorted spans: {a} and {b}"

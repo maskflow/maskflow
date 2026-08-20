@@ -3,7 +3,7 @@ name = "maskflow-sdk"
 version = "0.1.1"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     # register_ner_recognizer()/register_pattern() plumbing maskflow-pack-intl

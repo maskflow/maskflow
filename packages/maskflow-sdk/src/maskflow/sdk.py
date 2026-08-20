@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 from maskflow_core import mask, unmask
 from maskflow_core.detection import DEFAULT_MIN_CONFIDENCE

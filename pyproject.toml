@@ -2,7 +2,7 @@
 name = "maskflow-workspace"
 version = "0.0.0"
 description = "MaskFlow uv workspace root -- not published, see packages/* and packs/*"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 # Virtual root: not a real package, but declaring the workspace members here
 # is what makes a plain `uv sync` at the repo root actually install all of
 # them (editable) into the shared venv -- otherwise nothing in the workspace
@@ -41,21 +41,19 @@ dev = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
-# Installed mypy no longer supports checking against a 3.9 target (dropped in
-# recent releases) even though packages/maskflow-core itself still declares
-# requires-python = ">=3.9" -- actual 3.9 runtime compatibility is verified by
-# ci.yml's real 3.9 interpreter matrix, not by this static-analysis version.
-# 3.12 (not 3.10) because numpy's installed stub (pulled in transitively via
-# spacy) uses a PEP 695 `type` statement that only parses under a 3.12+
-# target -- per-module follow_imports="skip" for spacy/numpy did not avoid
-# this (mypy still parses skipped modules' stub files to build their public
-# interface), so matching the target version was the reliable fix.
+# 3.12 (not the 3.10 requires-python floor) because numpy's installed stub
+# (pulled in transitively via spacy) uses a PEP 695 `type` statement that
+# only parses under a 3.12+ target -- per-module follow_imports="skip" for
+# spacy/numpy did not avoid this (mypy still parses skipped modules' stub
+# files to build their public interface), so matching the target version
+# was the reliable fix. Actual 3.10 runtime compatibility is verified by
+# ci.yml's real interpreter matrix, not by this static-analysis version.
 python_version = "3.12"
 strict = true
 warn_unused_configs = true
