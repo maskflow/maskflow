@@ -6,6 +6,8 @@ coverage using the real EMAIL/PHONE/etc. recognizers.
 
 import re
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from maskflow_core.masking import mask, unmask
 from maskflow_core.registry import register_pattern
 
@@ -87,3 +89,67 @@ def test_mask_avoids_colliding_with_placeholder_lookalike_text() -> None:
     assert "<TEST_MARKER_A_1>" not in result.mapping
     assert "MARK-A-1111" not in result.masked_text
     assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_mask_avoids_colliding_with_lookalike_immediately_adjacent() -> None:
+    # The lookalike token butts right up against the real match (no
+    # whitespace boundary) -- an adversarial variant of the collision case
+    # above, checking the reserved-token scan isn't relying on word
+    # boundaries around the lookalike to find it.
+    text = "<TEST_MARKER_A_1>MARK-A-1111"
+    result = mask(text)
+
+    assert "<TEST_MARKER_A_1>" not in result.mapping
+    assert "MARK-A-1111" not in result.masked_text
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_mask_reuses_the_same_token_for_a_repeated_value() -> None:
+    text = "Ref MARK-A-1111, again MARK-A-1111, and MARK-B-2222."
+    result = mask(text)
+
+    assert result.masked_text.count("<TEST_MARKER_A_1>") == 2
+    assert "<TEST_MARKER_A_2>" not in result.masked_text
+    assert result.mapping == {
+        "<TEST_MARKER_A_1>": "MARK-A-1111",
+        "<TEST_MARKER_B_1>": "MARK-B-2222",
+    }
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_empty_string() -> None:
+    result = mask("")
+    assert unmask(result.masked_text, result.mapping) == ""
+
+
+def test_unmask_round_trips_pii_at_index_zero() -> None:
+    text = "MARK-A-1111 is the reference to quote back."
+    result = mask(text)
+    assert result.masked_text.startswith("<TEST_MARKER_A_1>")
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_pii_at_final_index() -> None:
+    text = "Please quote this reference back: MARK-A-1111"
+    result = mask(text)
+    assert result.masked_text.endswith("<TEST_MARKER_A_1>")
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+def test_unmask_round_trips_with_combining_characters() -> None:
+    # "é" as base "e" + combining acute accent (U+0301), not the precomposed
+    # form -- a byte-offset scheme would risk splitting this apart.
+    combining_e = "é"
+    text = f"Référence {combining_e}: MARK-A-1111 {combining_e} merci"
+    result = mask(text)
+    assert unmask(result.masked_text, result.mapping) == text
+
+
+@settings(max_examples=10_000)
+@given(st.text())
+def test_roundtrip_property(t: str) -> None:
+    """CLAUDE.md rule 5, 'round-trip sacred': unmask(mask(t).masked_text,
+    mapping) == t exactly, for any input text at all -- not just the
+    hand-picked cases above."""
+    r = mask(t)
+    assert unmask(r.masked_text, r.mapping) == t

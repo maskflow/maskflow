@@ -9,8 +9,60 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Added
+
+- `maskflow-core`: `mask_with_policy(text, policy, min_confidence)` alongside
+  the untouched `mask()`/`unmask()`/`mask_and_call()` (`maskflow-sdk`'s
+  0.1.0 API is unchanged -- new capability lives entirely in new functions).
+  Five substitution strategies, selected per entity type via
+  `MaskPolicy(default_strategy, per_entity_strategy)`: `REPLACE` (the
+  existing typed-placeholder behavior), `REDACT` (constant
+  `[REDACTED_TYPE]` marker), `MASK` (partial reveal, e.g. `XXXX XXXX 9012`,
+  configurable via `MaskConfig`), `HASH` (HMAC-SHA256, stable per value,
+  keyed via `HashConfig` or `MASKFLOW_HASH_KEY`), and `SURROGATE` (a
+  plausible fake of the same type, via `register_surrogate_generator()`;
+  falls back to `REPLACE` for any type with no registered generator).
+  `REPLACE`/`SURROGATE` are reversible via the same `unmask()`; `REDACT`/
+  `MASK`/`HASH` are intentionally one-way. `mask_with_policy()` returns a
+  `PolicyMaskResult` whose mapping is a `Mapping` (token -> `MappingEntry`),
+  not a plain dict -- `MappingEntry.original` is repr-excluded like
+  `Span.text` (rule 1).
+- `maskflow-core`: `MappingStore` protocol plus `InMemoryMappingStore`
+  (TTL-expiring, process-local, the default), `EncryptedFileMappingStore`
+  (AES-GCM at rest, key from `MASKFLOW_MAPPING_KEY` or passed explicitly --
+  requires the new optional `maskflow-core[store]` extra), and
+  `RedisMappingStore` (interface-only stub this round -- every method
+  raises `NotImplementedError`). Masking itself stays pure/stateless; a
+  `MappingStore` is an opt-in way for a caller to persist a `Mapping`
+  across requests/processes.
+- `maskflow-core`: 10,000-example Hypothesis property test
+  (`unmask(mask(t).masked_text, mapping) == t` for arbitrary `st.text()`)
+  plus explicit empty-string/index-0/final-index/combining-character cases,
+  proving CLAUDE.md's "round-trip sacred" guarantee (rule 5) rather than
+  just asserting it. Offsets are documented as Python `str` code-point
+  offsets throughout (`detect()`/`mask()`/`mask_with_policy()`), not byte
+  offsets -- consistent, and safe for non-ASCII PII.
+- `maskflow-core` / `maskflow-pack-intl`: whole-session leak gate
+  (`maskflow_core.testing`, `pytest -m leak`) -- captures every log record
+  and exception raised during a package's test session and asserts none of
+  its known PII fixture values ever appeared in either, in addition to the
+  existing per-class repr checks. Runs as part of each package's normal
+  `pytest` step in CI (the marker doesn't exclude, so no separate CI job
+  was needed).
+- `maskflow-pack-intl`: `Strategy.SURROGATE` generators for EMAIL, PHONE,
+  SSN, CREDIT_CARD, IBAN, PERSON_NAME, and ADDRESS, each drawing from a
+  documented reserved/invalid range or embedded synthetic corpus (see the
+  package README's surrogate table) so a generated value never collides
+  with something a real issuer could plausibly assign.
+
 ### Changed
 
+- `maskflow-core`: `mask()` now reuses the same `<TYPE_n>` token for a
+  repeated identical PII value within one call, instead of minting a new
+  numbered token for every occurrence (CLAUDE.md design decision #3,
+  "same value -> same token per session"). Round-trip behavior is
+  unaffected either way (`str.replace()` already restores every occurrence
+  of a token); output for text with no repeated values is unchanged.
 - `maskflow-core`: replaced the ad hoc per-recognizer overlap merge with a
   central `SpanSet.resolve(config)` pipeline (`maskflow_core.spanset`).
   `Finding` is renamed `Span` (`type`/`value` fields renamed

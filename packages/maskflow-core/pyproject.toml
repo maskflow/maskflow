@@ -11,6 +11,9 @@ dependencies = [
 nlp = [
     "spacy>=3.7,<4",
 ]
+store = [
+    "cryptography>=42",
+]
 
 [tool.uv]
 package = true

@@ -5,9 +5,13 @@ side effect that makes detect()/mask()/unmask() aware of these types -- see
 maskflow_core.registry.register_pattern / register_ner_recognizer.
 """
 
-from maskflow_core.registry import register_ner_recognizer, register_pattern
+from maskflow_core.registry import (
+    register_ner_recognizer,
+    register_pattern,
+    register_surrogate_generator,
+)
 
-from . import ner, patterns
+from . import ner, patterns, surrogates
 
 register_pattern("EMAIL", patterns.EMAIL_RE, 0.95)
 
@@ -82,6 +86,38 @@ register_ner_recognizer(
     ner.DATE_BASE_CONFIDENCE,
     threshold=ner.DATE_OF_BIRTH_THRESHOLD,
     context_keywords=("dob", "date of birth", "born on", "birthdate"),
+)
+
+# Strategy.SURROGATE fake-value generators -- see surrogates.py for the
+# reserved/invalid range or corpus each one draws from. AWS_KEY, API_KEY,
+# JWT, and IP_ADDRESS have no bespoke generator: there's no meaningful
+# "plausible fake" concept for an opaque secret, and a fake IP is no safer
+# to fabricate than a real one might be misleading -- SURROGATE falls back
+# to REPLACE for these. DATE_OF_BIRTH is skipped too: input date formats
+# vary too widely (spaCy NER, not a fixed regex) to fake safely in the same
+# shape as the original without a date-parsing dependency.
+register_surrogate_generator(
+    "EMAIL", surrogates.email_surrogate, "RFC 2606 reserved example.com/.org/.net domains"
+)
+register_surrogate_generator(
+    "PHONE", surrogates.phone_surrogate, "NANP fictional range: exchange 555, subscriber 0100-0199"
+)
+register_surrogate_generator(
+    "SSN", surrogates.ssn_surrogate, "SSA-reserved-invalid area numbers 900-999"
+)
+register_surrogate_generator(
+    "CREDIT_CARD",
+    surrogates.credit_card_surrogate,
+    "publicly documented payment-industry test numbers (Stripe/Visa/Mastercard/Amex)",
+)
+register_surrogate_generator(
+    "IBAN", surrogates.iban_surrogate, "mod-97-valid with a synthetic '9'-prefixed bank code"
+)
+register_surrogate_generator(
+    "PERSON_NAME", surrogates.person_name_surrogate, "embedded synthetic first/last name corpus"
+)
+register_surrogate_generator(
+    "ADDRESS", surrogates.address_surrogate, "embedded synthetic street name corpus"
 )
 
 __all__: list[str] = []
