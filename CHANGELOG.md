@@ -9,6 +9,28 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Added
+
+- `maskflow-sdk`: `maskflow.session()` / `maskflow.async_session()` --
+  session-scoped masking for multi-turn/multi-tool-call agents. Unlike
+  `mask()` (counters and value->token identity reset every call), a
+  `Session` keeps that identity stable for its whole lifetime, so the same
+  PII value always gets the same `<TYPE_n>` token across separate
+  `.mask()`/`.mask_json()` calls instead of each call independently
+  restarting its own numbering (see `docs/agent-sessions.md` for the
+  concrete before/after). `Session.mask_json()` walks a nested
+  dict/list/tuple structure, masking string leaf *values* only -- dict keys
+  are never touched, and a PII-shaped integer leaf is replaced with a
+  same-digit-count integer surrogate rather than a schema-breaking string,
+  so a masked tool-call payload keeps its original JSON shape. Sessions are
+  closeable (`with maskflow.session() as s: ...`, or `s.close()`) and
+  TTL-bounded (`ttl_seconds`, default 3600); either purges the mapping, and
+  any further call raises the new `SessionClosedError` instead of silently
+  no-op'ing. `AsyncSession`/`async_session()` wrap the same `Session` via
+  `asyncio.to_thread` with no changes to core. Neither `Session` nor
+  `AsyncSession` is thread-safe -- documented explicitly rather than
+  silently assumed. No change to `mask()`/`unmask()`/`mask_and_call()`.
+
 ### Fixed
 
 - `maskflow-core`: `pytest -m leak` run on its own used to deselect every
