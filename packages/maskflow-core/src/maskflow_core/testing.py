@@ -21,16 +21,27 @@ and a single test (marked `@pytest.mark.leak`, so it's ordered last) that
 calls `assert_no_leaks(LEAK_POOL, known_pii_values)` once everything else in
 the session has run. `test_leak_guards.py` covers the "repr" leg of rule 1
 directly (per-class assertions); this module covers "log record"/"exception".
+
+`pytest_configure` also neutralizes any `-m`/markexpr that mentions "leak"
+(see its body) -- the gate needs the whole session to run to mean anything,
+so `pytest -m leak` runs everything rather than deselecting down to just the
+leak-gate test and trivially passing against an empty pool.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import pytest
+
+# Matches "leak" as a whole marker name inside a `-m`/markexpr string (e.g.
+# "leak", "leak or benchmark", "not leak") -- not as a substring of some
+# other marker that happens to contain the letters "leak".
+_LEAK_MARKER_RE = re.compile(r"\bleak\b")
 
 
 class _CapturingHandler(logging.Handler):
@@ -56,6 +67,19 @@ def pytest_configure(config: pytest.Config) -> None:
     if _handler not in root_logger.handlers:
         root_logger.addHandler(_handler)
     root_logger.setLevel(min(root_logger.level or logging.WARNING, logging.DEBUG))
+
+    # `pytest -m leak` alone would otherwise deselect every OTHER test before
+    # any of them run -- and LEAK_POOL only ever fills from whatever ran
+    # earlier in this same process, so the correctly-ordered-last leak test
+    # would then check an empty pool and trivially pass, even with an active
+    # PII leak elsewhere in the code it never got a chance to see. The "leak"
+    # marker exists for ordering (pytest_collection_modifyitems below) and
+    # identification, not selection, so a markexpr that mentions it gets
+    # neutralized here -- the whole session still runs, same as if no -m
+    # flag had been passed at all.
+    markexpr = getattr(config.option, "markexpr", "") or ""
+    if _LEAK_MARKER_RE.search(markexpr):
+        config.option.markexpr = ""
 
 
 def pytest_exception_interact(node: Any, call: Any, report: Any) -> None:
