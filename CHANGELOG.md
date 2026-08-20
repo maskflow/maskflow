@@ -9,6 +9,18 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Fixed
+
+- `maskflow-core`: `pytest -m leak` run on its own used to deselect every
+  test except the leak-gate assertion itself, so `LEAK_POOL` -- filled only
+  by whatever ran earlier in the same process -- stayed empty and the gate
+  passed trivially even with an active PII leak elsewhere in the code
+  (verified: adding a deliberate `logger.debug(span.text)` to a recognizer
+  and running `pytest -m leak` alone did not fail). `pytest_configure` in
+  `maskflow_core.testing` now neutralizes any `-m`/markexpr mentioning
+  "leak" so the whole session still runs -- the marker is for ordering
+  (leak-gate test runs last) and identification, not selection.
+
 ### Changed
 
 - `maskflow-core` / `maskflow-sdk` / `maskflow-pack-intl`: raised the minimum
