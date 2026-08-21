@@ -4,12 +4,13 @@ docstring: AsyncSession is a non-invasive asyncio.to_thread wrapper around
 the sync Session, so its behavior is identical modulo the extra await)."""
 
 import asyncio
+from typing import Any
 
 import pytest
 from maskflow import SessionClosedError, async_session
 
 
-def test_same_value_gets_same_token_across_separate_calls():
+def test_same_value_gets_same_token_across_separate_calls() -> None:
     async def scenario() -> tuple[str, str]:
         async with async_session() as s:
             first = await s.mask("Call me at 415-555-0132.")
@@ -21,7 +22,7 @@ def test_same_value_gets_same_token_across_separate_calls():
     assert "<PHONE_1>" in second
 
 
-def test_mask_round_trips_through_unmask():
+def test_mask_round_trips_through_unmask() -> None:
     text = "Email me at alice@example.com."
 
     async def scenario() -> str:
@@ -32,8 +33,8 @@ def test_mask_round_trips_through_unmask():
     assert asyncio.run(scenario()) == text
 
 
-def test_mask_json_preserves_keys_and_types():
-    async def scenario() -> dict:
+def test_mask_json_preserves_keys_and_types() -> None:
+    async def scenario() -> Any:
         async with async_session() as s:
             return await s.mask_json({"email": "alice@example.com", "count": 3})
 
@@ -43,7 +44,7 @@ def test_mask_json_preserves_keys_and_types():
     assert result["count"] == 3
 
 
-def test_close_purges_the_mapping_and_blocks_further_use():
+def test_close_purges_the_mapping_and_blocks_further_use() -> None:
     async def scenario() -> None:
         s = async_session()
         await s.mask("Email me at alice@example.com.")
@@ -58,7 +59,7 @@ def test_close_purges_the_mapping_and_blocks_further_use():
     asyncio.run(scenario())
 
 
-def test_context_manager_closes_on_exit():
+def test_context_manager_closes_on_exit() -> None:
     async def scenario() -> int:
         async with async_session() as s:
             await s.mask("Email me at alice@example.com.")

@@ -7,12 +7,12 @@ CLAUDE.md rule 1: never log/print PII).
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from typing import Any
 
 import tomli_w
-
-from .merge import flatten_leaves
-from .resolve import ResolvedConfig
+from maskflow_core.config.merge import flatten_leaves
+from maskflow_core.config.resolve import ResolvedConfig
 
 _SECTION_ORDER = {"maskflow": 0, "entities": 1, "custom": 2, "exclusions": 3}
 
@@ -33,7 +33,7 @@ def _sort_key(path: tuple[str, ...]) -> tuple[Any, ...]:
 
 def format_resolved(resolved: ResolvedConfig) -> str:
     """One aligned line per leaf field: `path = value   (origin)`."""
-    leaves = flatten_leaves(resolved.config.model_dump(mode="json"))
+    leaves = flatten_leaves(asdict(resolved.config))
     leaves.sort(key=lambda item: _sort_key(item[0]))
 
     rows: list[tuple[str, str, str]] = []
@@ -71,7 +71,7 @@ def format_show(resolved: ResolvedConfig) -> str:
     not guaranteed round-trippable: exclusions.values is redacted, so it
     won't read back as the original values, and unset fields (None) are
     omitted rather than serialized."""
-    data = resolved.config.model_dump(mode="json")
+    data = asdict(resolved.config)
     if data.get("exclusions", {}).get("values"):
         data["exclusions"]["values"] = _redact_values_list(data["exclusions"]["values"])
     return tomli_w.dumps(_strip_none(data))

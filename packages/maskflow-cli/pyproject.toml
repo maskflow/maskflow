@@ -6,16 +6,17 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    # Strategy enum reuse (schema.py) -- no other maskflow-core import.
-    "maskflow-core>=0.2.0,<0.3",
+    # The config engine (schema/discovery/merge/validate) lives in
+    # maskflow_core.config -- [yaml] since the CLI, unlike the SDK, should
+    # accept a YAML .maskflowrc out of the box (it's already a heavier,
+    # more optional install than the SDK).
+    "maskflow-core[yaml]>=0.2.0,<0.3",
     # maskflow_pack_intl is imported (side-effect only, to populate the
     # PIIType registry) for `maskflow config validate`'s soft entity-name
-    # cross-check -- see config/resolve.py.
+    # cross-check -- see app.py.
     "maskflow-pack-intl>=0.1.0,<0.2",
-    "pydantic>=2.0",
     "typer>=0.12",
-    "pyyaml>=6.0",
-    "tomli>=2.0; python_version < '3.11'",
+    # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",
 ]
 

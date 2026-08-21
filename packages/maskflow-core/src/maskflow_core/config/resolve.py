@@ -1,8 +1,8 @@
 """Ties file discovery, environment variables, and CLI overrides together
 into one resolved, validated RootConfig with full provenance. This is what
-`maskflow config validate`/`show` call; also usable as a library entry
-point by anything that wants a resolved config without going through the
-CLI.
+`maskflow config validate`/`show` (maskflow-cli) call, and what
+maskflow-sdk's ambient config cache calls too; also usable directly by
+anything that wants a resolved config without going through either.
 
 Precedence, lowest to highest: schema defaults < user file < project file
 (or --config, which takes the project file's slot) < environment < CLI
@@ -15,18 +15,17 @@ import difflib
 import json
 import os
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
-
+from ..entities import PIIType
 from . import discovery
-from .errors import ConfigError, build_error_report, format_error_report
+from .errors import ConfigError, finalize_errors, format_error_report
 from .formats import load_raw
 from .linemap import build_linemap, lookup_line
 from .merge import Layer, Provenance, Source, flatten_leaves, merge_layers
-from .schema import RootConfig
+from .schema import RootConfig, validate_root_config
 
 ENV_PREFIX = "MASKFLOW_"
 # Existing envs owned by maskflow_core (strategies.py / mapping_store.py)
@@ -164,14 +163,15 @@ def _check_entity_names(config: RootConfig) -> list[ConfigWarning]:
     """Soft, best-effort cross-check against currently-registered PIITypes.
     A miss is a WARNING, never a hard failure -- the pack that would
     register a name (e.g. maskflow-pack-india) may simply not be installed
-    yet, which is a legitimate state, not a config bug."""
-    try:
-        import maskflow_pack_intl  # noqa: F401
-    except ImportError:
-        pass
+    yet, which is a legitimate state, not a config bug.
 
-    from maskflow_core.entities import PIIType
-
+    Deliberately does NOT import any pack itself: maskflow-pack-intl (and
+    any other pack) depends on maskflow-core, so core importing a pack
+    back would be a circular dependency. This just reads whatever's
+    already registered -- callers (maskflow-cli's app.py, maskflow-sdk's
+    __init__.py) are responsible for importing their packs first, which
+    both already do for their own reasons.
+    """
     known = {str(t) for t in PIIType.values()}
     warnings: list[ConfigWarning] = []
     for section, names in (("entities", config.entities), ("custom", config.custom)):
@@ -231,12 +231,11 @@ def resolve_config(
 
     merged, provenance = merge_layers(layers)
 
-    try:
-        config = RootConfig.model_validate(merged)
-    except ValidationError as exc:
-        raise ConfigResolutionError(build_error_report(exc, provenance)) from exc
+    config, issues = validate_root_config(merged)
+    if issues:
+        raise ConfigResolutionError(finalize_errors(issues, provenance))
 
-    for leaf_path, _value in flatten_leaves(config.model_dump(mode="json")):
+    for leaf_path, _value in flatten_leaves(asdict(config)):
         provenance.setdefault(leaf_path, Provenance(source="default"))
 
     return ResolvedConfig(

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from maskflow_cli.config import redos
-from maskflow_cli.config.redos import (
+from maskflow_core.config import redos
+from maskflow_core.config.redos import (
     UnsafePatternError,
     check_pattern_safety,
     check_pattern_safety_with_probe,

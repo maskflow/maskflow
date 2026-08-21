@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import typer
+from maskflow_core.config.resolve import ConfigResolutionError, ResolvedConfig, resolve_config
 
-from ..config.render import format_resolved, format_show
-from ..config.resolve import ConfigResolutionError, ResolvedConfig, resolve_config
+from ..render import format_resolved, format_show
 
 app = typer.Typer(help="Inspect and validate .maskflowrc configuration.")
 

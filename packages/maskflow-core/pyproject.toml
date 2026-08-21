@@ -5,6 +5,10 @@ description = "PII detection and reversible masking engine for MaskFlow"
 requires-python = ">=3.10"
 dependencies = [
     "click>=8.0",
+    # .maskflowrc's primary format is TOML, so it must always work without
+    # an extra -- tomllib is stdlib from 3.11, tomli fills the gap on the
+    # 3.10 floor.
+    "tomli>=2.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
@@ -13,6 +17,13 @@ nlp = [
 ]
 store = [
     "cryptography>=42",
+]
+# .maskflowrc also accepts YAML, but most users will never write it (TOML
+# is documented as primary) -- pyyaml is only imported when a .yaml/.yml
+# file is actually read (maskflow_core/config/formats.py, linemap.py), so
+# a bare install never pays for it.
+yaml = [
+    "pyyaml>=6.0",
 ]
 
 [tool.uv]

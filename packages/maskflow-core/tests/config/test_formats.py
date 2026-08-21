@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from maskflow_cli.config.formats import format_for_path, load_raw
+from maskflow_core.config.formats import format_for_path, load_raw
 
 
 @pytest.mark.parametrize(

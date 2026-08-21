@@ -1,7 +1,9 @@
 import maskflow_pack_intl  # noqa: F401 -- import side effect registers the 12 recognizers
-from maskflow_core import MaskResult, PIIType, Span, detect, mask, unmask
+from maskflow_core import MaskResult, PIIType, Span, detect, unmask
+from maskflow_core.config import ConfigResolutionError, RootConfig
 
-from .sdk import mask_and_call
+from ._config import reload_config
+from .sdk import mask, mask_and_call
 from .session import AsyncSession, Session, SessionClosedError, async_session, session
 
 __all__ = [
@@ -17,4 +19,7 @@ __all__ = [
     "Session",
     "AsyncSession",
     "SessionClosedError",
+    "RootConfig",
+    "ConfigResolutionError",
+    "reload_config",
 ]

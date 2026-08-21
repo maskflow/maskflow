@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from maskflow_cli.config.formats import load_raw
-from maskflow_cli.config.linemap import build_linemap, lookup_line
+from maskflow_core.config.formats import load_raw
+from maskflow_core.config.linemap import build_linemap, lookup_line
 
 
 @pytest.mark.parametrize("filename", ["valid.toml", "valid.yaml", "valid.json"])

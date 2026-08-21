@@ -13,7 +13,7 @@ from functools import lru_cache
 from typing import Any
 
 from .context import apply_context_boost
-from .entities import Span
+from .entities import PIIType, Span
 from .registry import NER_RECOGNIZERS
 
 MODEL_NAME = "en_core_web_sm"
@@ -44,7 +44,7 @@ def _get_nlp() -> Any:
         ) from exc
 
 
-def detect_ner(text: str) -> list[Span]:
+def detect_ner(text: str, disabled_types: frozenset[PIIType] = frozenset()) -> list[Span]:
     if not NER_RECOGNIZERS:
         # Nothing registered a spaCy label -- skip loading the model entirely,
         # so a core-only install with no [nlp]/pack never even tries to import
@@ -61,6 +61,8 @@ def detect_ner(text: str) -> list[Span]:
     for ent in doc.ents:
         mapping = NER_RECOGNIZERS.get(ent.label_)
         if mapping is None:
+            continue
+        if mapping.pii_type in disabled_types:
             continue
 
         confidence = apply_context_boost(

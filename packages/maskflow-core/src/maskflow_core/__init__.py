@@ -7,7 +7,14 @@ from .mapping_store import (
     MappingStore,
     RedisMappingStore,
 )
-from .masking import MaskResult, PolicyMaskResult, mask, mask_with_policy, unmask
+from .masking import (
+    MaskResult,
+    PolicyMaskResult,
+    mask,
+    mask_with_policy,
+    surrogate_substitute,
+    unmask,
+)
 from .policy import MaskPolicy
 from .registry import register_ner_recognizer, register_pattern, register_surrogate_generator
 from .spanset import OverlapPolicy, ResolveConfig, SpanSet
@@ -22,6 +29,7 @@ __all__ = [
     "PIIType",
     "MaskResult",
     "PolicyMaskResult",
+    "surrogate_substitute",
     "register_pattern",
     "register_ner_recognizer",
     "register_surrogate_generator",

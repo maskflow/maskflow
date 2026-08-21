@@ -1,0 +1,17 @@
+[maskflow]
+packs = ["india"]
+default_strategy = "replace"
+
+[entities.AADHAAR]
+enabled = true
+threshold = 0.6
+strategy = "mask"
+
+[custom.EMPLOYEE_ID]
+pattern = '\bEMP-\d{6}\b'
+score = 0.9
+context = ["employee"]
+
+[exclusions]
+values = ["test@example.com"]
+patterns = ['\bDEMO-\d+\b']

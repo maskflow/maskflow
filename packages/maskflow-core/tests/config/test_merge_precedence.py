@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from maskflow_cli.config.resolve import resolve_config
+from maskflow_core.config.resolve import resolve_config
 
 
 def _write(path: Path, text: str) -> None:

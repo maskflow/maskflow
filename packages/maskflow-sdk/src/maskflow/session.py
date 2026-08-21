@@ -21,8 +21,13 @@ import secrets
 import time
 from typing import Any
 
-from maskflow_core import Mapping, MappingEntry, PIIType, Strategy, detect, unmask
+from maskflow_core import Mapping, MappingEntry, PIIType, Span, Strategy, detect, unmask
+from maskflow_core.config import CompiledConfig, RootConfig, compile_config
 from maskflow_core.detection import DEFAULT_MIN_CONFIDENCE
+from maskflow_core.masking import surrogate_substitute
+from maskflow_core.strategies import apply_strategy
+
+from ._config import get_ambient_config
 
 # Same collision rule masking.py's mask() applies: input text that already
 # contains a placeholder-lookalike substring (e.g. someone's prompt literally
@@ -74,6 +79,7 @@ class Session:
         *,
         ttl_seconds: float | None = 3600,
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+        config: RootConfig | None = None,
     ) -> None:
         self._ttl_seconds = ttl_seconds
         self._min_confidence = min_confidence
@@ -88,7 +94,19 @@ class Session:
         # (cached as "<PHONE_1>") could be looked up again from the numeric
         # path and fed into int(), which would raise.
         self._numeric_tokens: dict[tuple[PIIType, str], str] = {}
+        # REDACT/MASK/HASH substitutes -- deterministic (or constant) per
+        # value, so caching here is a recomputation avoidance, not a
+        # correctness requirement (mirrors mask_with_policy()'s
+        # substitute_cache).
+        self._policy_substitute_cache: dict[tuple[PIIType, Strategy, str], str] = {}
         self._reserved: set[str] = set()
+        # Compiled once at construction, not per .mask() call -- a session
+        # is long-lived, and re-registering custom patterns/recompiling
+        # regex on every call would be wasteful. config=None uses whatever
+        # the process-level ambient .maskflowrc cache resolves to.
+        self._compiled: CompiledConfig = compile_config(
+            config if config is not None else get_ambient_config().config
+        )
 
     def __enter__(self) -> Session:
         return self
@@ -102,6 +120,7 @@ class Session:
         self._counters.clear()
         self._value_tokens.clear()
         self._numeric_tokens.clear()
+        self._policy_substitute_cache.clear()
         self._reserved.clear()
 
     def _check_open(self) -> None:
@@ -137,26 +156,91 @@ class Session:
         )
         return token
 
+    def _surrogate_for(self, span: Span) -> str:
+        """Session-scoped SURROGATE identity, mirroring _substitute_for()'s
+        REPLACE identity: the same (entity_type, value) pair always
+        returns the same surrogate for the life of the session. Sharing
+        _value_tokens' key space with REPLACE is safe -- self._compiled's
+        strategy-per-entity-type is fixed for the session's whole
+        lifetime, so a given entity_type only ever routes through one
+        strategy branch, never both."""
+        cache_key = (span.entity_type, span.text)
+        token = self._value_tokens.get(cache_key)
+        if token is not None:
+            return token
+        self._counters[span.entity_type] = self._counters.get(span.entity_type, 0) + 1
+        fallback_candidate = f"<{span.entity_type.value}_{self._counters[span.entity_type]}>"
+        substitute = surrogate_substitute(span, self._reserved, fallback_candidate)
+        self._reserved.add(substitute)
+        self._value_tokens[cache_key] = substitute
+        self._mapping[substitute] = MappingEntry(
+            token=substitute,
+            entity_type=span.entity_type,
+            strategy=Strategy.SURROGATE,
+            reversible=True,
+            original=span.text,
+        )
+        return substitute
+
+    def _policy_substitute_for(self, span: Span, strategy: Strategy) -> str:
+        """REDACT/MASK/HASH: not addressable in masked_text (may repeat
+        across distinct originals by design), recorded in self._mapping
+        under a distinct audit_token for audit purposes only -- mirrors
+        mask_with_policy()'s non-REPLACE/SURROGATE branch, sharing the
+        same per-entity-type counter REPLACE/SURROGATE already use."""
+        cache_key = (span.entity_type, strategy, span.text)
+        substitute = self._policy_substitute_cache.get(cache_key)
+        if substitute is not None:
+            return substitute
+        self._counters[span.entity_type] = self._counters.get(span.entity_type, 0) + 1
+        audit_token = f"<{span.entity_type.value}_{self._counters[span.entity_type]}>"
+        substitute = apply_strategy(
+            span, strategy, self._compiled.policy.mask_config, self._compiled.policy.hash_config
+        )
+        self._policy_substitute_cache[cache_key] = substitute
+        self._mapping[audit_token] = MappingEntry(
+            token=audit_token,
+            entity_type=span.entity_type,
+            strategy=strategy,
+            reversible=False,
+            original=span.text,
+        )
+        return substitute
+
+    def _substitute_for_span(self, span: Span) -> str:
+        strategy = self._compiled.policy.strategy_for(span.entity_type)
+        if strategy is Strategy.REPLACE:
+            return self._substitute_for(span.entity_type, span.text)
+        if strategy is Strategy.SURROGATE:
+            return self._surrogate_for(span)
+        return self._policy_substitute_for(span, strategy)
+
     def mask(self, text: str, *, min_confidence: float | None = None) -> str:
         self._check_open()
         threshold = self._min_confidence if min_confidence is None else min_confidence
         self._reserved.update(_RESERVED_TOKEN_RE.findall(text))
 
-        spans = detect(text, min_confidence=threshold)
+        spans = detect(text, min_confidence=threshold, **self._compiled.detect_kwargs())
         pieces: list[str] = []
         cursor = 0
         for span in spans:  # detect() returns non-overlapping spans sorted by start
-            token = self._substitute_for(span.entity_type, span.text)
+            substitute = self._substitute_for_span(span)
             pieces.append(text[cursor : span.start])
-            pieces.append(token)
+            pieces.append(substitute)
             cursor = span.end
         pieces.append(text[cursor:])
         return "".join(pieces)
 
     def _mask_numeric_leaf(self, value: int, threshold: float) -> int:
+        # Threshold/disabled/custom/exclusions apply here same as string
+        # leaves -- but the numeric-surrogate scheme itself is used
+        # regardless of the entity's configured strategy: swapping a JSON
+        # int leaf for a string would break mask_json()'s documented
+        # "leaf's JSON type never changes" invariant. Deliberate scope
+        # boundary, not an oversight.
         sign = "-" if value < 0 else ""
         digits = str(abs(value))
-        spans = detect(digits, min_confidence=threshold)
+        spans = detect(digits, min_confidence=threshold, **self._compiled.detect_kwargs())
         if len(spans) != 1 or spans[0].start != 0 or spans[0].end != len(digits):
             return value  # no single span covers the whole number -- leave it alone
 
@@ -236,8 +320,11 @@ class AsyncSession:
         *,
         ttl_seconds: float | None = 3600,
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+        config: RootConfig | None = None,
     ) -> None:
-        self._session = Session(ttl_seconds=ttl_seconds, min_confidence=min_confidence)
+        self._session = Session(
+            ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config
+        )
 
     async def __aenter__(self) -> AsyncSession:
         return self
@@ -275,6 +362,7 @@ def session(
     *,
     ttl_seconds: float | None = 3600,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+    config: RootConfig | None = None,
 ) -> Session:
     """Open a session-scoped masking context: value->placeholder identity is
     stable for as long as it's open (or until ttl_seconds elapses). Use as a
@@ -284,14 +372,20 @@ def session(
             prompt = s.mask(user_input)
             args = s.mask_json(tool_args)
             reply = s.unmask(response)
+
+    `config=None` (the default) uses the ambient .maskflowrc config
+    discovered from the filesystem, compiled once when the session opens.
+    Passing `config=` explicitly bypasses discovery entirely -- see
+    `maskflow.mask()`'s docstring for what a resolved config can change.
     """
-    return Session(ttl_seconds=ttl_seconds, min_confidence=min_confidence)
+    return Session(ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config)
 
 
 def async_session(
     *,
     ttl_seconds: float | None = 3600,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+    config: RootConfig | None = None,
 ) -> AsyncSession:
     """Async counterpart to session() -- see AsyncSession."""
-    return AsyncSession(ttl_seconds=ttl_seconds, min_confidence=min_confidence)
+    return AsyncSession(ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config)

@@ -11,26 +11,59 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- `maskflow-cli` (new package, 0.1.0): `.maskflowrc` configuration file
-  support -- TOML (primary), YAML, and JSON, with `maskflow config
-  validate` and `maskflow config show [--resolved]`. Config resolves
+- `maskflow-core`: `.maskflowrc` configuration file support --
+  `maskflow_core.config`, TOML (primary, stdlib `tomllib`/`tomli`), YAML
+  (optional `maskflow-core[yaml]` extra), and JSON. Config resolves
   through five precedence levels (schema defaults < user file
   `~/.config/maskflow/config.toml` < project file, discovered by walking up
   from cwd and stopping at the repo root < environment variables
-  (`MASKFLOW_*`) < CLI `--set`/`--config`), tracking per-field provenance
-  so `show --resolved` can annotate every value with where it came from.
-  Pydantic validation rejects unknown keys with a did-you-mean suggestion
-  (`entities.PAN.threshod` -> "did you mean 'threshold'?") and reports
-  every problem found in one pass, annotated with file:line when known.
-  User-supplied regex (`custom.<NAME>.pattern`, `exclusions.patterns`) goes
-  through a ReDoS safety check (static shape check + timeboxed adversarial
-  probe) before being accepted. `exclusions.values` is redacted in all CLI
-  output. See `docs/configuration.md` for the full schema and precedence
-  reference. This release only ships the config engine and CLI --
-  `mask()`/`mask_and_call()`/`session()` do not read `.maskflowrc` yet.
+  (`MASKFLOW_*`) < CLI `--set`/`--config`), tracking per-field provenance.
+  Validation (hand-rolled dataclasses + validators -- no pydantic, to keep
+  core's footprint essentially unchanged) rejects unknown keys with a
+  did-you-mean suggestion (`entities.PAN.threshod` -> "did you mean
+  'threshold'?") and reports every problem found in one pass, annotated
+  with file:line when known. User-supplied regex (`custom.<NAME>.pattern`,
+  `exclusions.patterns`) goes through a ReDoS safety check (static shape
+  check + timeboxed adversarial probe) before being accepted. See
+  `docs/configuration.md` for the full schema and precedence reference.
+- `maskflow-core`: `detect()` and `mask_with_policy()` gain five
+  keyword-only params (`per_entity_threshold`, `disabled_types`,
+  `extra_patterns`, `exclusion_values`, `exclusion_patterns`) -- how
+  resolved `.maskflowrc` config reaches detection/masking
+  (`maskflow_core.config.engine.compile_config()`). Every one defaults to
+  "no effect", so existing calls are unmodified both in output and in the
+  code path they run; `maskflow_core.masking.mask()` itself is untouched.
+  Also exports `surrogate_substitute` (renamed from the former private
+  `_surrogate_substitute`, no behavior change).
+- `maskflow-cli` (new package, 0.1.0): `maskflow config validate` and
+  `maskflow config show [--resolved]`, built on `maskflow_core.config`.
+  `exclusions.values` is redacted in all CLI output.
 - `maskflow-core`/`maskflow-pack-intl`: added `py.typed` markers (PEP 561)
-  so downstream packages (starting with `maskflow-cli`) can be type-checked
-  against them without `ignore_missing_imports` -- no behavior change.
+  so downstream packages can be type-checked against them without
+  `ignore_missing_imports` -- no behavior change.
+- `maskflow-sdk`: `mask()`, `mask_and_call()`, `session()`/`async_session()`
+  all gain an optional `config=` parameter (a `maskflow_core.config.
+  RootConfig`) that changes which entities are detected
+  (threshold/enabled/custom patterns/exclusions) and how they're
+  substituted (strategy: replace/redact/mask/hash/surrogate).
+  `config=None` (the default) uses the ambient `.maskflowrc` discovered
+  from the filesystem, cached once per process -- a long-running server
+  doesn't re-stat the filesystem on every call; `maskflow.reload_config()`
+  forces a fresh discovery. Passing `config=` explicitly bypasses
+  discovery entirely, for a library embedded in someone else's
+  application. **With no `.maskflowrc` anywhere and no `config=` passed,
+  output is byte-identical to before this change** -- proven with a
+  10,000-example hypothesis property test
+  (`maskflow-core/tests/test_masking.py::
+  test_mask_with_policy_default_matches_mask`) asserting
+  `mask_with_policy(text, MaskPolicy())` is byte-identical to `mask(text)`
+  for arbitrary text and threshold, which is what the config-aware
+  `mask()` wrapper delegates to. Non-reversible substitutions
+  (redact/mask/hash) are simply omitted from `MaskResult.mapping` rather
+  than requiring a type change. `Session` compiles its config once at
+  construction (not per call); numeric `mask_json()` leaves keep their
+  numeric-surrogate scheme regardless of configured strategy, preserving
+  the documented "leaf's JSON type never changes" invariant.
 - `maskflow-sdk`: `maskflow.session()` / `maskflow.async_session()` --
   session-scoped masking for multi-turn/multi-tool-call agents. Unlike
   `mask()` (counters and value->token identity reset every call), a

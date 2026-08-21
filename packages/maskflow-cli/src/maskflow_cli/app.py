@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import maskflow_pack_intl  # noqa: F401 -- import side effect registers pack-intl's entity types
 import typer
 
 from .commands.config_cmd import app as config_app

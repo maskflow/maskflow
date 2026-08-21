@@ -8,7 +8,8 @@ import re
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from maskflow_core.masking import mask, unmask
+from maskflow_core.masking import mask, mask_with_policy, unmask
+from maskflow_core.policy import MaskPolicy
 from maskflow_core.registry import register_pattern
 
 MARKER_A_RE = re.compile(r"\bMARK-A-\d{4}\b")
@@ -153,3 +154,27 @@ def test_roundtrip_property(t: str) -> None:
     hand-picked cases above."""
     r = mask(t)
     assert unmask(r.masked_text, r.mapping) == t
+
+
+@settings(max_examples=10_000)
+@given(st.text(), st.floats(min_value=0.0, max_value=1.0))
+def test_mask_with_policy_default_matches_mask(t: str, min_confidence: float) -> None:
+    """The hard guarantee PR 2's .maskflowrc wiring leans on: an all-default
+    MaskPolicy() through mask_with_policy() must produce byte-identical
+    output to mask() -- for any text and any min_confidence, not just the
+    hand-picked cases above. This is what makes maskflow-sdk's config-aware
+    mask() wrapper safe to delegate to mask_with_policy() (Part 4) instead
+    of re-deriving mask()'s substitution/collision logic, and is also what
+    makes the "no .maskflowrc anywhere" byte-identical requirement hold for
+    an *explicitly* passed default config, not just the config=None case.
+    """
+    plain = mask(t, min_confidence=min_confidence)
+    policy_result = mask_with_policy(t, MaskPolicy(), min_confidence=min_confidence)
+
+    assert policy_result.masked_text == plain.masked_text
+    reversible_mapping = {
+        token: entry.original
+        for token, entry in policy_result.mapping.items()
+        if entry.reversible
+    }
+    assert reversible_mapping == plain.mapping

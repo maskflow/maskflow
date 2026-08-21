@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import re
 
-import yaml
-
 from .formats import Format
 
 _TOML_TABLE_RE = re.compile(r"^\s*\[([^\]]+)\]\s*(?:#.*)?$")
@@ -34,6 +32,12 @@ def _linemap_toml(raw_text: str) -> dict[tuple[str, ...], int]:
 
 
 def _linemap_yaml(raw_text: str) -> dict[tuple[str, ...], int]:
+    # Lazy import: linemap.py must be importable (and TOML/JSON linemaps
+    # must work) without pyyaml installed -- only reached when a .yaml file
+    # is actually being mapped, by which point load_raw() already required
+    # it to exist.
+    import yaml
+
     linemap: dict[tuple[str, ...], int] = {}
     root = yaml.compose(raw_text)
     if root is None:

@@ -3,10 +3,13 @@ non-overlapping Span list. See CLAUDE.md 'Design decisions' #1-2 and
 spanset.py for the resolution algorithm itself.
 """
 
+import re
+from collections.abc import Iterator, Mapping, Sequence
+
 from .context import apply_context_boost
 from .entities import PIIType, Span
 from .ner import detect_ner
-from .registry import PATTERNS
+from .registry import PATTERNS, Validator
 from .spanset import ResolveConfig, SpanSet
 
 DEFAULT_MIN_CONFIDENCE = 0.5
@@ -18,43 +21,87 @@ DEFAULT_MIN_CONFIDENCE = 0.5
 # still lines up with the original text.
 _EXCISION_CHAR = "█"
 
+# A defensive cap on how much text an exclusion pattern is asked to match
+# against -- independent of whatever safety-checked the pattern at config
+# validation time (maskflow_core.config.redos), since that check runs
+# against the pattern, not against arbitrary future input. Mirrors
+# config.redos.MAX_MATCH_LEN's spirit but is not imported from there:
+# detection.py must stay config-agnostic (config depends on detection's
+# types, never the reverse).
+_MAX_EXCLUSION_MATCH_LEN = 10_000
 
-def _pattern_pass(text: str) -> list[Span]:
+
+def _scan_pattern(
+    text: str,
+    pii_type: PIIType,
+    regex: re.Pattern[str],
+    base_confidence: float,
+    validator: Validator | None,
+) -> Iterator[Span]:
+    for match in regex.finditer(text):
+        if match.re.groups:
+            start, end = match.span(1)
+            value = match.group(1)
+        else:
+            start, end = match.span(0)
+            value = match.group(0)
+
+        confidence = base_confidence
+        validated = False
+        if validator is not None:
+            adjusted = validator(value)
+            if adjusted is None:
+                continue
+            confidence = adjusted
+            validated = True
+
+        confidence = apply_context_boost(text, start, end, pii_type, confidence)
+        yield Span(
+            start=start,
+            end=end,
+            entity_type=pii_type,
+            score=round(confidence, 2),
+            recognizer=f"pattern:{pii_type}",
+            text=value,
+            validated=validated,
+        )
+
+
+def _pattern_pass(
+    text: str,
+    disabled_types: frozenset[PIIType] = frozenset(),
+    extra_patterns: Sequence[tuple[PIIType, re.Pattern[str], float]] = (),
+) -> list[Span]:
     candidates: list[Span] = []
 
     for pii_type, rules in PATTERNS.items():
+        if pii_type in disabled_types:
+            continue
         for regex, base_confidence, validator in rules:
-            for match in regex.finditer(text):
-                if match.re.groups:
-                    start, end = match.span(1)
-                    value = match.group(1)
-                else:
-                    start, end = match.span(0)
-                    value = match.group(0)
+            candidates.extend(_scan_pattern(text, pii_type, regex, base_confidence, validator))
 
-                confidence = base_confidence
-                validated = False
-                if validator is not None:
-                    adjusted = validator(value)
-                    if adjusted is None:
-                        continue
-                    confidence = adjusted
-                    validated = True
-
-                confidence = apply_context_boost(text, start, end, pii_type, confidence)
-                candidates.append(
-                    Span(
-                        start=start,
-                        end=end,
-                        entity_type=pii_type,
-                        score=round(confidence, 2),
-                        recognizer=f"pattern:{pii_type}",
-                        text=value,
-                        validated=validated,
-                    )
-                )
+    # extra_patterns (from .maskflowrc's [custom.*]) are scanned the same
+    # way as registered patterns, just with no validator -- they're already
+    # ReDoS-checked before reaching here (maskflow_core.config.redos), not
+    # re-validated.
+    for pii_type, regex, base_confidence in extra_patterns:
+        if pii_type in disabled_types:
+            continue
+        candidates.extend(_scan_pattern(text, pii_type, regex, base_confidence, None))
 
     return candidates
+
+
+def _is_excluded(
+    span: Span,
+    exclusion_values: frozenset[str],
+    exclusion_patterns: Sequence[re.Pattern[str]],
+) -> bool:
+    if span.text in exclusion_values:
+        return True
+    if not exclusion_patterns or len(span.text) > _MAX_EXCLUSION_MATCH_LEN:
+        return False
+    return any(pattern.search(span.text) for pattern in exclusion_patterns)
 
 
 def _excise(text: str, spans: list[Span]) -> str:
@@ -71,11 +118,31 @@ def _excise(text: str, spans: list[Span]) -> str:
     return "".join(chars)
 
 
-def detect(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> list[Span]:
-    """Detect PII in `text`, returning non-overlapping Spans sorted by position."""
-    config = ResolveConfig(default_threshold=min_confidence)
+def detect(
+    text: str,
+    min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+    *,
+    per_entity_threshold: Mapping[PIIType, float] | None = None,
+    disabled_types: frozenset[PIIType] = frozenset(),
+    extra_patterns: Sequence[tuple[PIIType, re.Pattern[str], float]] = (),
+    exclusion_values: frozenset[str] = frozenset(),
+    exclusion_patterns: Sequence[re.Pattern[str]] = (),
+) -> list[Span]:
+    """Detect PII in `text`, returning non-overlapping Spans sorted by
+    position.
 
-    pattern_candidates = _pattern_pass(text)
+    The five keyword-only params are how .maskflowrc-driven config reaches
+    detection (see maskflow_core.config.engine.compile_config()) -- every
+    one of them defaults to "no effect", so a plain `detect(text)` or
+    `detect(text, min_confidence)` call is unmodified both in output and in
+    the code path it runs.
+    """
+    config = ResolveConfig(
+        default_threshold=min_confidence,
+        per_entity_threshold=dict(per_entity_threshold or {}),
+    )
+
+    pattern_candidates = _pattern_pass(text, disabled_types, extra_patterns)
 
     # Tier-0 excision: a provisional, regex-only resolve decides which regions
     # are already confidently claimed, so the NER pass runs on text with those
@@ -85,12 +152,16 @@ def detect(text: str, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> list[Sp
     tier0 = SpanSet(text, tuple(pattern_candidates)).resolve(config)
     excised_text = _excise(text, tier0)
 
-    ner_candidates = detect_ner(excised_text)
+    ner_candidates = detect_ner(excised_text, disabled_types=disabled_types)
 
     # The one authoritative resolution: every regex candidate (not just
     # tier0's winners) plus every NER candidate, resolved together exactly
     # once.
-    return SpanSet(text, tuple(pattern_candidates + ner_candidates)).resolve(config)
+    resolved = SpanSet(text, tuple(pattern_candidates + ner_candidates)).resolve(config)
+
+    if not exclusion_values and not exclusion_patterns:
+        return resolved
+    return [s for s in resolved if not _is_excluded(s, exclusion_values, exclusion_patterns)]
 
 
 __all__ = ["detect", "Span", "PIIType"]

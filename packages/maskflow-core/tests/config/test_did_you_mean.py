@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from maskflow_cli.config.resolve import ConfigResolutionError, resolve_config
+from maskflow_core.config.resolve import ConfigResolutionError, resolve_config
 
 
 def test_typo_entity_field_suggests_correction(fixtures_dir: Path, tmp_path: Path) -> None:

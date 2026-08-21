@@ -13,6 +13,8 @@ in this codebase.
 
 import re
 import secrets
+from collections.abc import Mapping as MappingABC
+from collections.abc import Sequence
 from typing import NamedTuple
 
 from .detection import DEFAULT_MIN_CONFIDENCE, detect
@@ -88,13 +90,31 @@ def mask_with_policy(
     text: str,
     policy: MaskPolicy = _DEFAULT_POLICY,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+    *,
+    per_entity_threshold: MappingABC[PIIType, float] | None = None,
+    disabled_types: frozenset[PIIType] = frozenset(),
+    extra_patterns: Sequence[tuple[PIIType, re.Pattern[str], float]] = (),
+    exclusion_values: frozenset[str] = frozenset(),
+    exclusion_patterns: Sequence[re.Pattern[str]] = (),
 ) -> PolicyMaskResult:
     """Like mask(), but each entity type can use any of Strategy.{REPLACE,
     REDACT, MASK, HASH, SURROGATE} per `policy` (see policy.py). Returns a
     Mapping (not a plain dict) recording, per substitution, whether unmask()
     can reverse it -- only REPLACE and SURROGATE can; REDACT/MASK/HASH are
-    intentionally lossy (see strategies.py's module docstring)."""
-    spans = detect(text, min_confidence=min_confidence)
+    intentionally lossy (see strategies.py's module docstring).
+
+    The five keyword-only params are forwarded straight to detect() -- see
+    its docstring; same "no effect at their defaults" guarantee applies
+    here."""
+    spans = detect(
+        text,
+        min_confidence=min_confidence,
+        per_entity_threshold=per_entity_threshold,
+        disabled_types=disabled_types,
+        extra_patterns=extra_patterns,
+        exclusion_values=exclusion_values,
+        exclusion_patterns=exclusion_patterns,
+    )
 
     entries: dict[str, MappingEntry] = {}
     counters: dict[PIIType, int] = {}
@@ -121,7 +141,7 @@ def mask_with_policy(
                 substitute = _unique(audit_token, reserved)
                 reserved.add(substitute)
             elif strategy is Strategy.SURROGATE:
-                substitute = _surrogate_substitute(span, reserved, audit_token)
+                substitute = surrogate_substitute(span, reserved, audit_token)
                 reserved.add(substitute)
             else:
                 substitute = apply_strategy(span, strategy, policy.mask_config, policy.hash_config)
@@ -158,7 +178,7 @@ def _unique(candidate: str, reserved: set[str]) -> str:
     return token
 
 
-def _surrogate_substitute(span: Span, reserved: set[str], fallback_token: str) -> str:
+def surrogate_substitute(span: Span, reserved: set[str], fallback_token: str) -> str:
     """A plausible fake value of the same type as `span`, or a REPLACE-style
     placeholder if no generator is registered for this entity type."""
     generator_entry = SURROGATE_GENERATORS.get(span.entity_type)

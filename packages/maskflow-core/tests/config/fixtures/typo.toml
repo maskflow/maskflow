@@ -1,0 +1,8 @@
+[maskflow]
+packs = ["india"]
+
+[entities.PAN]
+threshod = 0.5
+
+[exclusions]
+values = ["test@example.com"]

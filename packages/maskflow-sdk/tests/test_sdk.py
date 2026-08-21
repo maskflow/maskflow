@@ -1,7 +1,7 @@
 from maskflow import MaskResult, PIIType, Span, detect, mask, mask_and_call, unmask
 
 
-def test_mask_and_call_never_exposes_pii_to_call_fn():
+def test_mask_and_call_never_exposes_pii_to_call_fn() -> None:
     seen = {}
 
     def call_fn(masked_prompt: str) -> str:
@@ -15,7 +15,7 @@ def test_mask_and_call_never_exposes_pii_to_call_fn():
     assert "<EMAIL_1>" in seen["prompt"]
 
 
-def test_mask_and_call_restores_original_values_in_response():
+def test_mask_and_call_restores_original_values_in_response() -> None:
     def call_fn(masked_prompt: str) -> str:
         return f"Got it, confirming: {masked_prompt}"
 
@@ -26,7 +26,7 @@ def test_mask_and_call_restores_original_values_in_response():
     assert "<PHONE_1>" not in result
 
 
-def test_mask_and_call_is_provider_agnostic():
+def test_mask_and_call_is_provider_agnostic() -> None:
     """call_fn is just a plain callable -- swapping providers means swapping the
     closure, not touching mask_and_call itself."""
 
@@ -41,11 +41,11 @@ def test_mask_and_call_is_provider_agnostic():
     assert mask_and_call(prompt, fake_openai_call) == f"[gpt] {prompt}"
 
 
-def test_sdk_reexports_core_primitives():
+def test_sdk_reexports_core_primitives() -> None:
     text = "Reach me at carol@example.com."
     result = mask(text)
 
     assert isinstance(result, MaskResult)
     assert unmask(result.masked_text, result.mapping) == text
-    assert detect(text)[0].entity_type == PIIType.EMAIL
+    assert detect(text)[0].entity_type == PIIType("EMAIL")
     assert isinstance(detect(text)[0], Span)

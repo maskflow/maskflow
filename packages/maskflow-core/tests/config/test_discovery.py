@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from maskflow_cli.config.discovery import find_project_file, find_user_file
+from maskflow_core.config.discovery import find_project_file, find_user_file
 
 
 def test_find_user_file_none(tmp_path: Path) -> None:
