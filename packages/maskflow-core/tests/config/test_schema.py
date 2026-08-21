@@ -87,9 +87,7 @@ def test_custom_entity_unsafe_pattern_rejected() -> None:
 
 
 def test_collects_multiple_errors_at_once() -> None:
-    _config, issues = validate_root_config(
-        {"maskflw": {}, "entities": {"PAN": {"threshod": 0.5}}}
-    )
+    _config, issues = validate_root_config({"maskflw": {}, "entities": {"PAN": {"threshod": 0.5}}})
     assert len(issues) == 2
 
 

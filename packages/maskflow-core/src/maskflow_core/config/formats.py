@@ -29,8 +29,7 @@ _EXTENSION_FORMATS: dict[str, Format] = {
 }
 
 _YAML_EXTRA_HINT = (
-    "reading a YAML .maskflowrc requires the optional 'yaml' extra -- "
-    "install maskflow-core[yaml]"
+    "reading a YAML .maskflowrc requires the optional 'yaml' extra -- install maskflow-core[yaml]"
 )
 
 

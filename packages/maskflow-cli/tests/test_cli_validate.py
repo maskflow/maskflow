@@ -25,9 +25,7 @@ def test_validate_valid_fixture(fixtures_dir: Path) -> None:
 
 
 def test_validate_typo_exits_nonzero(fixtures_dir: Path) -> None:
-    result = runner.invoke(
-        app, ["config", "validate", "--config", str(fixtures_dir / "typo.toml")]
-    )
+    result = runner.invoke(app, ["config", "validate", "--config", str(fixtures_dir / "typo.toml")])
     assert result.exit_code == 1
     assert "did you mean 'threshold'?" in result.stderr
 

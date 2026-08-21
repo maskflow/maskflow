@@ -173,8 +173,6 @@ def test_mask_with_policy_default_matches_mask(t: str, min_confidence: float) ->
 
     assert policy_result.masked_text == plain.masked_text
     reversible_mapping = {
-        token: entry.original
-        for token, entry in policy_result.mapping.items()
-        if entry.reversible
+        token: entry.original for token, entry in policy_result.mapping.items() if entry.reversible
     }
     assert reversible_mapping == plain.mapping

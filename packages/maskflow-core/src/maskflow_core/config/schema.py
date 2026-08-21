@@ -151,9 +151,7 @@ def _check_pattern(value: str, path: tuple[str, ...], issues: list[RawIssue]) ->
         return False
 
 
-def _validate_maskflow(
-    data: Any, path: tuple[str, ...], issues: list[RawIssue]
-) -> MaskflowSection:
+def _validate_maskflow(data: Any, path: tuple[str, ...], issues: list[RawIssue]) -> MaskflowSection:
     if not isinstance(data, dict):
         issues.append(RawIssue(path, f"must be a table, got {_typename(data)}"))
         return MaskflowSection()
@@ -318,9 +316,7 @@ def validate_root_config(merged: dict[str, Any]) -> tuple[RootConfig, list[RawIs
         if "entities" in merged
         else {}
     )
-    custom = (
-        _validate_custom(merged["custom"], ("custom",), issues) if "custom" in merged else {}
-    )
+    custom = _validate_custom(merged["custom"], ("custom",), issues) if "custom" in merged else {}
     exclusions = (
         _validate_exclusions(merged["exclusions"], ("exclusions",), issues)
         if "exclusions" in merged

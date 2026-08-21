@@ -18,7 +18,7 @@ def test_linemap_resolves_nested_leaf(fixtures_dir: Path, filename: str) -> None
 
 
 def test_linemap_toml_table_and_key_lines() -> None:
-    raw = "[maskflow]\npacks = [\"india\"]\ndefault_strategy = \"replace\"\n"
+    raw = '[maskflow]\npacks = ["india"]\ndefault_strategy = "replace"\n'
     linemap = build_linemap(raw, "toml")
     assert linemap[("maskflow",)] == 1
     assert linemap[("maskflow", "packs")] == 2
