@@ -9,12 +9,14 @@ requires-python = ">=3.10"
 # depends on them and uv installs nothing but dev tooling.
 dependencies = [
     "maskflow-sdk",
+    "maskflow-cli",
 ]
 
 [tool.uv.sources]
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
 maskflow-sdk = { workspace = true }
+maskflow-cli = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -68,6 +70,13 @@ follow_imports = "skip"
 # EncryptedFileMappingStore's lazily-imported try/except) -- CI's `core` job
 # doesn't install it, same as spacy above.
 module = "cryptography.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# PyYAML doesn't ship inline types; used by maskflow-cli's config loader/
+# linemap (config/formats.py, config/linemap.py) for YAML .maskflowrc
+# support and yaml.compose()'s line-number marks.
+module = "yaml"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

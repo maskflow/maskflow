@@ -1,0 +1,42 @@
+[project]
+name = "maskflow-cli"
+version = "0.1.0"
+description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # Strategy enum reuse (schema.py) -- no other maskflow-core import.
+    "maskflow-core>=0.2.0,<0.3",
+    # maskflow_pack_intl is imported (side-effect only, to populate the
+    # PIIType registry) for `maskflow config validate`'s soft entity-name
+    # cross-check -- see config/resolve.py.
+    "maskflow-pack-intl>=0.1.0,<0.2",
+    "pydantic>=2.0",
+    "typer>=0.12",
+    "pyyaml>=6.0",
+    "tomli>=2.0; python_version < '3.11'",
+    "tomli-w>=1.0",
+]
+
+[project.scripts]
+maskflow = "maskflow_cli.app:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv.sources]
+maskflow-core = { workspace = true }
+maskflow-pack-intl = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_cli"]

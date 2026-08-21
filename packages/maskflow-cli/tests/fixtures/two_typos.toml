@@ -1,0 +1,5 @@
+[maskflw]
+packs = ["india"]
+
+[entities.PAN]
+threshod = 0.5

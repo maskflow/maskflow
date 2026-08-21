@@ -11,6 +11,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- `maskflow-cli` (new package, 0.1.0): `.maskflowrc` configuration file
+  support -- TOML (primary), YAML, and JSON, with `maskflow config
+  validate` and `maskflow config show [--resolved]`. Config resolves
+  through five precedence levels (schema defaults < user file
+  `~/.config/maskflow/config.toml` < project file, discovered by walking up
+  from cwd and stopping at the repo root < environment variables
+  (`MASKFLOW_*`) < CLI `--set`/`--config`), tracking per-field provenance
+  so `show --resolved` can annotate every value with where it came from.
+  Pydantic validation rejects unknown keys with a did-you-mean suggestion
+  (`entities.PAN.threshod` -> "did you mean 'threshold'?") and reports
+  every problem found in one pass, annotated with file:line when known.
+  User-supplied regex (`custom.<NAME>.pattern`, `exclusions.patterns`) goes
+  through a ReDoS safety check (static shape check + timeboxed adversarial
+  probe) before being accepted. `exclusions.values` is redacted in all CLI
+  output. See `docs/configuration.md` for the full schema and precedence
+  reference. This release only ships the config engine and CLI --
+  `mask()`/`mask_and_call()`/`session()` do not read `.maskflowrc` yet.
+- `maskflow-core`/`maskflow-pack-intl`: added `py.typed` markers (PEP 561)
+  so downstream packages (starting with `maskflow-cli`) can be type-checked
+  against them without `ignore_missing_imports` -- no behavior change.
 - `maskflow-sdk`: `maskflow.session()` / `maskflow.async_session()` --
   session-scoped masking for multi-turn/multi-tool-call agents. Unlike
   `mask()` (counters and value->token identity reset every call), a
