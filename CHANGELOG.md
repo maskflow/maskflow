@@ -9,6 +9,8 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+## [core 0.3.0, pack-intl 0.2.0, sdk 0.2.0] - 2026-08-21
+
 ### Added
 
 - `maskflow-core`: `.maskflowrc` configuration file support --

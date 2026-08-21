@@ -22,6 +22,28 @@ result.masked_text
 unmask(result.masked_text, result.mapping)  # original text, restored
 ```
 
+## Configuration
+
+Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
+entity, add a custom regex-based entity, exclude specific values, or change the substitution
+strategy (replace/redact/mask/hash/surrogate) — `mask()`/`mask_and_call()`/`session()` all pick it
+up automatically, with no `.maskflowrc` anywhere behaving exactly as before this existed:
+
+```toml
+[entities.PHONE]
+strategy = "mask"          # "415-555-0132" -> "XXX-XXX-0132" instead of "<PHONE_1>"
+
+[custom.EMPLOYEE_ID]
+pattern = '\bEMP-\d{6}\b'
+score = 0.9
+```
+
+```bash
+pip install maskflow-cli   # maskflow config validate / maskflow config show --resolved
+```
+
+See [`docs/configuration.md`](docs/configuration.md) for the full schema and precedence rules.
+
 ## What it detects today
 
 | Type | How |
@@ -64,6 +86,7 @@ where competitors beat us.
 ## Links
 
 - Site: [maskflow.in](https://maskflow.in)
-- Docs: [packages/maskflow-sdk/README.md](packages/maskflow-sdk/README.md)
+- Docs: [packages/maskflow-sdk/README.md](packages/maskflow-sdk/README.md),
+  [docs/configuration.md](docs/configuration.md) (`.maskflowrc`)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)

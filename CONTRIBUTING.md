@@ -15,13 +15,17 @@ plus an npm workspace (TypeScript), rooted in the same repo:
   address, person name, date of birth), registered against `maskflow-core` on import.
 - [`packages/maskflow-sdk/`](packages/maskflow-sdk) — `maskflow-sdk`, the Python SDK, built on
   `maskflow-core` + `maskflow-pack-intl`.
+- [`packages/maskflow-cli/`](packages/maskflow-cli) — `maskflow-cli`, the `maskflow config
+  validate`/`show` command line tool for `.maskflowrc` (the config engine itself --
+  schema/discovery/validation -- lives in `maskflow_core.config`, not here). Not yet published to
+  PyPI.
 - [`packages/maskflow-js/`](packages/maskflow-js) — `@maskflow/detection`, the TypeScript port of
   the regex/structural detection layer (npm workspace; package name unchanged despite the
   directory name).
 
 ## Setup
 
-### Python packages (`packages/maskflow-core`, `packs/maskflow-pack-intl`, `packages/maskflow-sdk`)
+### Python packages (`packages/maskflow-core`, `packs/maskflow-pack-intl`, `packages/maskflow-sdk`, `packages/maskflow-cli`)
 
 Requires [uv](https://docs.astral.sh/uv/). Run from the **repo root** — it's a single uv
 workspace with one shared lockfile:
@@ -51,6 +55,9 @@ uv run pytest packs/maskflow-pack-intl/tests
 
 # maskflow-sdk
 uv run pytest packages/maskflow-sdk/tests
+
+# maskflow-cli
+uv run pytest packages/maskflow-cli/tests
 
 # @maskflow/detection
 npm test -w @maskflow/detection

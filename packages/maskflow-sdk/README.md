@@ -46,9 +46,10 @@ response = mask_and_call(prompt, lambda masked: my_llm_client.generate(masked))
 
 ## Lower-level API
 
-For more control than the wrapper gives, `mask`/`unmask` are available directly and are pure,
-stateless functions -- no files, no database. Persisting the mapping between calls is your
-responsibility.
+For more control than the wrapper gives, `mask`/`unmask` are available directly. Persisting the
+mapping between calls is your responsibility -- neither function uses a database, but `mask()`
+does read a `.maskflowrc` if one is discovered (see "Configuration" below); pass `config=` to
+skip that lookup entirely.
 
 ```python
 from maskflow import mask, unmask
@@ -59,6 +60,51 @@ result.mapping  # {"<EMAIL_1>": "alice@example.com"}
 
 unmask(result.masked_text, result.mapping)  # original text, restored
 ```
+
+## Session-scoped masking
+
+`mask()` restarts its token numbering on every call, so two separate calls can each hand out
+`<PHONE_1>` for two *different* phone numbers -- fine for one-shot use, wrong for a multi-turn
+agent that needs the same value to keep the same token across calls. `session()` fixes that by
+keeping value->token identity stable for as long as it's open:
+
+```python
+import maskflow
+
+with maskflow.session() as s:
+    prompt = s.mask(user_input)
+    args = s.mask_json(tool_call_arguments)  # masks string leaves only, keys untouched
+    reply = s.unmask(llm_response)
+```
+
+Sessions are closeable (`with ... as s:` or `s.close()`) and TTL-bounded (`ttl_seconds`, default
+3600 seconds); either purges the mapping. `maskflow.async_session()` is the `asyncio` counterpart.
+Neither is thread-safe. See [`docs/agent-sessions.md`](../../docs/agent-sessions.md) for the
+concrete before/after this fixes.
+
+## Configuration (`.maskflowrc`)
+
+`mask()`, `mask_and_call()`, and `session()`/`async_session()` all read a `.maskflowrc` file
+automatically if one is discovered on disk -- no code change needed to adjust entity thresholds,
+disable an entity, add a custom regex-based entity, exclude specific values, or change the
+substitution strategy (replace/redact/mask/hash/surrogate). Pass `config=` to bypass discovery and
+supply one explicitly:
+
+```python
+import maskflow
+from maskflow_core.config import RootConfig, EntityConfig
+from maskflow_core.strategies import Strategy
+
+result = maskflow.mask(
+    "Reach me at alice@example.com.",
+    config=RootConfig(entities={"EMAIL": EntityConfig(strategy=Strategy.MASK)}),
+)
+```
+
+With no `.maskflowrc` anywhere and no `config=` passed, behavior is unchanged from before this
+feature existed. See [`docs/configuration.md`](../../docs/configuration.md) for the full schema,
+precedence rules, and `maskflow.reload_config()` (forces a fresh discovery in a long-running
+process, which otherwise caches the discovered config once per process).
 
 ## What gets detected
 

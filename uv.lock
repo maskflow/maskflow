@@ -1277,7 +1277,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-core"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "packages/maskflow-core" }
 dependencies = [
     { name = "click" },
@@ -1307,7 +1307,7 @@ provides-extras = ["nlp", "store", "yaml"]
 
 [[package]]
 name = "maskflow-pack-intl"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packs/maskflow-pack-intl" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },
@@ -1329,14 +1329,18 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+yaml = [
+    { name = "maskflow-core", extra = ["yaml"] },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "maskflow-core", editable = "packages/maskflow-core" },
+    { name = "maskflow-core", extras = ["yaml"], marker = "extra == 'yaml'", editable = "packages/maskflow-core" },
     { name = "maskflow-pack-intl", editable = "packs/maskflow-pack-intl" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "yaml"]
 
 [[package]]
 name = "maskflow-workspace"

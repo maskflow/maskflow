@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-core"
-version = "0.2.0"
+version = "0.3.0"
 description = "PII detection and reversible masking engine for MaskFlow"
 requires-python = ">=3.10"
 dependencies = [
