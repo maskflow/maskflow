@@ -46,6 +46,9 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 
 ## What it detects today
 
+`maskflow-sdk` bundles both `maskflow-pack-intl` and `maskflow-pack-india` — installing the SDK
+gets you everything below with no extra install step:
+
 | Type | How |
 |---|---|
 | Email | Regex |
@@ -60,14 +63,6 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 | Street address | Regex |
 | Person name | spaCy NER |
 | Date of birth | spaCy NER + keyword context |
-
-### India pack
-
-`packs/maskflow-pack-india` — checksum/structurally validated, not yet a dependency of
-`maskflow-sdk`/`maskflow-cli` (install it directly from the workspace to try it today):
-
-| Type | How |
-|---|---|
 | Aadhaar (UID + VID) | Regex + Verhoeff checksum |
 | Aadhaar (masked display form, e.g. `XXXX XXXX 9012`) | Regex, unvalidated, needs context |
 | PAN | Regex + holder-category structural check (no public final-letter checksum) |
@@ -75,13 +70,15 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 | IFSC | Regex + bank code against a bundled RBI code list |
 | UPI VPA | Regex + PSP handle against a bundled NPCI handle list |
 
-ABHA and Indian names/addresses are not yet implemented.
+ABHA and Indian names/addresses are not yet implemented. `maskflow-cli` currently bundles only
+`maskflow-pack-intl` directly (not `maskflow-pack-india` yet) — see
+[`packages/maskflow-cli/pyproject.toml`](packages/maskflow-cli/pyproject.toml).
 
 ## MaskFlow vs. alternatives
 
 |  | MaskFlow | Presidio | mask-privacy |
 |---|---|---|---|
-| Indian identifiers with checksums | Aadhaar, PAN, GSTIN, IFSC, UPI (pack shipped, not yet in `maskflow-sdk`) | No | No |
+| Indian identifiers with checksums | Aadhaar, PAN, GSTIN, IFSC, UPI (in `maskflow-sdk`) | No | No |
 | Session-consistent tokens (unmask later) | Yes | Via custom anonymizer config | Yes, today |
 | NER | spaCy | spaCy, Stanza, transformers | Regex-based, no NER |
 | Breadth / maturity | Narrow, early (12 types) | Broad, mature (Microsoft-backed, years of production use) | Narrow, early |

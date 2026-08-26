@@ -40,12 +40,6 @@ dev = [
     # can exercise EncryptedFileMappingStore, the same way pack-intl pulling
     # maskflow-core[nlp] is what makes spacy available to the `core` CI job.
     "cryptography>=42",
-    # maskflow-pack-india isn't a dependency of maskflow-sdk/cli yet (not
-    # wired into the published products in this work order) -- listed here
-    # purely so `uv sync` installs it for local dev/testing, and so its own
-    # tests can `import maskflow_pack_intl` for the cross-pack
-    # UPI_VPA-vs-EMAIL precision test (see test_upi_vpa.py).
-    "maskflow-pack-india",
 ]
 
 [tool.ruff]

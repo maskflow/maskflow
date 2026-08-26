@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-sdk"
-version = "0.2.0"
+version = "0.3.0"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,6 +14,11 @@ dependencies = [
     # didn't exist yet), unsatisfiable alongside core>=0.3.0 above -- 0.2.0
     # is the first version that requires (and works with) the new core.
     "maskflow-pack-intl>=0.2.0,<0.3",
+    # Adds AADHAAR/AADHAAR_MASKED/PAN/GSTIN/IFSC/UPI_VPA detection --
+    # registered the same side-effect-import way as pack-intl above (see
+    # maskflow/__init__.py). No [nlp] extra of its own; maskflow-core[nlp]
+    # is already pulled in transitively via pack-intl.
+    "maskflow-pack-india>=0.1.0,<0.2",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +35,7 @@ yaml = [
 [tool.uv.sources]
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
+maskflow-pack-india = { workspace = true }
 
 [tool.uv]
 package = true
