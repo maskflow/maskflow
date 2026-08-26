@@ -12,6 +12,7 @@ resolution-markers = [
 members = [
     "maskflow-cli",
     "maskflow-core",
+    "maskflow-pack-india",
     "maskflow-pack-intl",
     "maskflow-sdk",
     "maskflow-workspace",
@@ -1308,6 +1309,17 @@ requires-dist = [
 provides-extras = ["nlp", "store", "yaml"]
 
 [[package]]
+name = "maskflow-pack-india"
+version = "0.1.0"
+source = { editable = "packs/maskflow-pack-india" }
+dependencies = [
+    { name = "maskflow-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "maskflow-core", editable = "packages/maskflow-core" }]
+
+[[package]]
 name = "maskflow-pack-intl"
 version = "0.2.0"
 source = { editable = "packs/maskflow-pack-intl" }
@@ -1357,6 +1369,7 @@ dependencies = [
 dev = [
     { name = "cryptography" },
     { name = "hypothesis" },
+    { name = "maskflow-pack-india" },
     { name = "mypy" },
     { name = "pip-audit" },
     { name = "pre-commit" },
@@ -1375,6 +1388,7 @@ requires-dist = [
 dev = [
     { name = "cryptography", specifier = ">=42" },
     { name = "hypothesis", specifier = ">=6.100" },
+    { name = "maskflow-pack-india", editable = "packs/maskflow-pack-india" },
     { name = "mypy", specifier = ">=1.11" },
     { name = "pip-audit", specifier = ">=2.7" },
     { name = "pre-commit", specifier = ">=3.8" },

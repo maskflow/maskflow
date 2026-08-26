@@ -11,6 +11,22 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- New package `maskflow-pack-india` (`packs/maskflow-pack-india`, not yet a
+  dependency of `maskflow-sdk`/`maskflow-cli`): AADHAAR (12-digit UID and
+  16-digit VID, Verhoeff checksum), AADHAAR_MASKED (display-masked form,
+  e.g. `XXXX XXXX 9012`, unvalidated/context-gated), PAN (structural
+  holder-category check; no public checksum exists for the final letter),
+  GSTIN (state-code range + embedded-PAN structural check + base-36
+  checksum -- also emits the embedded PAN as its own candidate span, which
+  `spanset.py`'s containment resolution correctly drops in favor of the
+  longer GSTIN), IFSC (bank code checked against a bundled, documented-
+  refresh-procedure RBI code list), and UPI_VPA (PSP handle checked against
+  a bundled NPCI handle list; a `handle@domain.tld` that isn't a known PSP
+  handle is left alone so a general email recognizer claims it instead).
+  Positive context keywords are English, Hindi (Devanagari), and Hinglish
+  transliterations; core has no negative-context ("example"/"test"/"dummy"
+  suppression) mechanism yet, so that part of CLAUDE.md's confidence
+  formula isn't implemented for this pack either -- noted as follow-up work.
 - `maskflow-cli`: `maskflow doctor` -- checks installed maskflow-core/cli/pack
   versions, spaCy + `en_core_web_sm` model presence, `.maskflowrc` validity,
   and prints which entities are consequently enabled/disabled (an NER-backed

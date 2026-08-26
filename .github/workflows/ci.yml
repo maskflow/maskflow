@@ -11,6 +11,7 @@ jobs:
     outputs:
       core: ${{ steps.filter.outputs.core }}
       pack_intl: ${{ steps.filter.outputs.pack_intl }}
+      pack_india: ${{ steps.filter.outputs.pack_india }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
     steps:
@@ -25,6 +26,14 @@ jobs:
             pack_intl:
               - 'packs/maskflow-pack-intl/**'
               - 'packages/maskflow-core/**'
+              - 'pyproject.toml'
+            pack_india:
+              - 'packs/maskflow-pack-india/**'
+              - 'packages/maskflow-core/**'
+              # pack-india's cross-pack UPI_VPA-vs-EMAIL test imports
+              # maskflow_pack_intl (see tests/test_upi_vpa.py), so a change
+              # there can change this job's result too.
+              - 'packs/maskflow-pack-intl/**'
               - 'pyproject.toml'
             sdk_python:
               - 'packages/maskflow-sdk/**'
@@ -78,6 +87,31 @@ jobs:
       - run: uv run ruff format --check packs/maskflow-pack-intl
       - run: uv run pytest packs/maskflow-pack-intl/tests -q
 
+  pack-india:
+    needs: changes
+    if: needs.changes.outputs.pack_india == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      # maskflow-pack-india has no [nlp] dependency of its own, but
+      # detect() always runs the NER pass regardless of which pack
+      # registered which pattern -- uv sync pulls maskflow-core[nlp]
+      # transitively via maskflow-sdk, same as the pack-intl job above.
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packs/maskflow-pack-india
+      - run: uv run ruff format --check packs/maskflow-pack-india
+      - run: uv run pytest packs/maskflow-pack-india/tests -q
+
   sdk-python:
     needs: changes
     if: needs.changes.outputs.sdk_python == 'true'
@@ -114,7 +148,7 @@ jobs:
 
   pip-audit:
     needs: changes
-    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.sdk_python == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
