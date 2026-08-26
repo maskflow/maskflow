@@ -1,5 +1,5 @@
 from .detection import detect
-from .entities import PIIType, Span
+from .entities import ExplanationStep, PIIType, Span
 from .mapping import Mapping, MappingEntry
 from .mapping_store import (
     EncryptedFileMappingStore,
@@ -17,7 +17,7 @@ from .masking import (
 )
 from .policy import MaskPolicy
 from .registry import register_ner_recognizer, register_pattern, register_surrogate_generator
-from .spanset import OverlapPolicy, ResolveConfig, SpanSet
+from .spanset import OverlapPolicy, ResolveConfig, SpanSet, resolve_verbose
 from .strategies import HashConfig, MaskConfig, Strategy
 
 __all__ = [
@@ -26,6 +26,7 @@ __all__ = [
     "unmask",
     "mask_with_policy",
     "Span",
+    "ExplanationStep",
     "PIIType",
     "MaskResult",
     "PolicyMaskResult",
@@ -35,6 +36,7 @@ __all__ = [
     "register_surrogate_generator",
     "SpanSet",
     "ResolveConfig",
+    "resolve_verbose",
     "OverlapPolicy",
     "MaskPolicy",
     "Strategy",

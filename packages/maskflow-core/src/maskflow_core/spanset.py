@@ -27,7 +27,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from .entities import PIIType, Span
+from .entities import ExplanationStep, PIIType, Span
 
 # A single optional whitespace char, then a single optional punctuation char,
 # then a single optional whitespace char -- i.e. at most one separator
@@ -102,7 +102,9 @@ def _merge_adjacent(spans: list[Span], text: str, config: ResolveConfig) -> list
                 explanation=[
                     *prev.explanation,
                     *nxt.explanation,
-                    "merged: adjacent same-type spans",
+                    ExplanationStep(
+                        rule="merge", outcome="merged", detail="adjacent same-type spans"
+                    ),
                 ],
             )
         else:
@@ -145,7 +147,11 @@ def resolve(candidates: Sequence[Span], text: str, config: ResolveConfig) -> lis
             )
             if prefers_cand:
                 cand.explanation.append(
-                    f"contained: preferred over {kept.recognizer} span [{kept.start}:{kept.end}]"
+                    ExplanationStep(
+                        rule="overlap:contained",
+                        outcome="preferred",
+                        detail=f"over {kept.recognizer} span [{kept.start}:{kept.end}]",
+                    )
                 )
                 replaces.append(kept)
                 continue
@@ -161,6 +167,33 @@ def resolve(candidates: Sequence[Span], text: str, config: ResolveConfig) -> lis
     return _merge_adjacent(accepted, text, config)
 
 
+def resolve_verbose(
+    candidates: Sequence[Span], text: str, config: ResolveConfig
+) -> tuple[list[Span], list[Span]]:
+    """Like resolve(), but also returns the candidates dropped purely for
+    scoring below their entity type's threshold -- not spans that lost to
+    an overlapping competitor, only the threshold cut `resolve()` applies
+    before ordering/accepting anything. `accepted` is identical to what
+    `resolve(candidates, text, config)` alone returns.
+
+    This is the extra bookkeeping `maskflow explain`'s NEAREST MISSES needs
+    and nothing else calls for -- kept out of `resolve()` itself so the
+    normal detect()/mask() hot path (which never inspects rejected
+    candidates) doesn't pay for it.
+    """
+    accepted = resolve(candidates, text, config)
+    rejected = [c for c in candidates if c.score < config.threshold_for(c.entity_type)]
+    for span in rejected:
+        span.explanation.append(
+            ExplanationStep(
+                rule="threshold",
+                outcome="dropped",
+                detail=f"score {span.score} < threshold {config.threshold_for(span.entity_type)}",
+            )
+        )
+    return accepted, rejected
+
+
 @dataclass(frozen=True)
 class SpanSet:
     """A pool of candidate spans over one piece of text, ready for resolution."""
@@ -170,3 +203,6 @@ class SpanSet:
 
     def resolve(self, config: ResolveConfig) -> list[Span]:
         return resolve(self.spans, self.text, config)
+
+    def resolve_verbose(self, config: ResolveConfig) -> tuple[list[Span], list[Span]]:
+        return resolve_verbose(self.spans, self.text, config)

@@ -18,7 +18,7 @@ from collections.abc import Sequence
 from typing import NamedTuple
 
 from .detection import DEFAULT_MIN_CONFIDENCE, detect
-from .entities import PIIType, Span
+from .entities import ExplanationStep, PIIType, Span
 from .mapping import Mapping, MappingEntry
 from .policy import MaskPolicy
 from .registry import SURROGATE_GENERATORS
@@ -184,8 +184,9 @@ def surrogate_substitute(span: Span, reserved: set[str], fallback_token: str) ->
     generator_entry = SURROGATE_GENERATORS.get(span.entity_type)
     if generator_entry is None:
         span.explanation.append(
-            f"surrogate: no generator registered for {span.entity_type.value}, "
-            "falling back to replace"
+            ExplanationStep(
+                rule="surrogate", outcome="fallback", detail="no generator registered for this type"
+            )
         )
         return _unique(fallback_token, reserved)
 
@@ -196,7 +197,7 @@ def surrogate_substitute(span: Span, reserved: set[str], fallback_token: str) ->
         if candidate not in reserved:
             return candidate
     span.explanation.append(
-        f"surrogate: generator for {span.entity_type.value} kept colliding, falling back to replace"
+        ExplanationStep(rule="surrogate", outcome="fallback", detail="generator kept colliding")
     )
     return _unique(fallback_token, reserved)
 

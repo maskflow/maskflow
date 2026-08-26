@@ -38,6 +38,20 @@ class PIIType(str):
 
 
 @dataclass(frozen=True)
+class ExplanationStep:
+    """One step in a Span's decision trail -- structured (not a free-text
+    string) so it can be rendered as text, serialized as JSON, or asserted
+    on in tests by field rather than substring match. `detail` is a short,
+    human-readable note (a static context keyword, an offset, a threshold
+    value) -- never the matched PII text itself (CLAUDE.md rule 1)."""
+
+    rule: str
+    outcome: str
+    delta: float = 0.0
+    detail: str = ""
+
+
+@dataclass(frozen=True)
 class Span:
     """One candidate (or resolved) PII detection. Every recognizer -- regex or
     NER -- emits these; SpanSet.resolve() (see spanset.py) is the single place
@@ -61,13 +75,13 @@ class Span:
     # (checksum-valid Luhn card, mod-97 IBAN, ...). Used to give validated
     # spans priority over unvalidated ones during overlap resolution.
     validated: bool = False
-    # Human-readable trail of resolution decisions that touched this span
-    # (context boost applied, beat/lost to an overlapping span, merged with a
-    # neighbor, ...). Mutable list on a frozen dataclass is intentional --
-    # frozen only blocks attribute *assignment*, and appending to this list in
-    # place is how resolution code annotates a span without needing
-    # dataclasses.replace() everywhere.
-    explanation: list[str] = field(default_factory=list)
+    # Structured trail of decisions that touched this span (pattern hit,
+    # checksum result, context boost, beat/lost to an overlapping span,
+    # merged with a neighbor, threshold cut, ...). Mutable list on a frozen
+    # dataclass is intentional -- frozen only blocks attribute *assignment*,
+    # and appending to this list in place is how resolution code annotates a
+    # span without needing dataclasses.replace() everywhere.
+    explanation: list[ExplanationStep] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.start < self.end:

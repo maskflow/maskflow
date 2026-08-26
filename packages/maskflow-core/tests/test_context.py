@@ -33,3 +33,27 @@ def test_missing_context_keyword_leaves_confidence_unboosted() -> None:
 
     span = next(s for s in spans if s.entity_type == "AMBIGUOUS_MARKER")
     assert span.score == 0.4
+
+
+def test_explanation_records_pattern_hit_and_boosted_context_step() -> None:
+    text = "Please note the marker code AMBIG-1234 below."
+    spans = detect(text, min_confidence=0.0)
+    span = next(s for s in spans if s.entity_type == "AMBIGUOUS_MARKER")
+
+    assert any(
+        step.rule == "pattern:AMBIGUOUS_MARKER" and step.outcome == "matched"
+        for step in span.explanation
+    )
+    context_step = next(step for step in span.explanation if step.rule == "context")
+    assert context_step.outcome == "boosted"
+    assert context_step.delta > 0
+
+
+def test_explanation_records_unboosted_context_step() -> None:
+    text = "Nothing relevant here: AMBIG-5678 appears alone."
+    spans = detect(text, min_confidence=0.0)
+    span = next(s for s in spans if s.entity_type == "AMBIGUOUS_MARKER")
+
+    context_step = next(step for step in span.explanation if step.rule == "context")
+    assert context_step.outcome == "no_match"
+    assert context_step.delta == 0

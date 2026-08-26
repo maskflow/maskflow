@@ -9,7 +9,7 @@ populated by whichever pack registers a type, via registry.register_pattern()
 / registry.register_ner_recognizer()'s `context_keywords` argument.
 """
 
-from .entities import PIIType
+from .entities import ExplanationStep, PIIType
 
 WINDOW = 40
 
@@ -21,15 +21,27 @@ MAX_CONFIDENCE = 0.99
 
 def apply_context_boost(
     text: str, start: int, end: int, pii_type: PIIType, base_confidence: float
-) -> float:
+) -> tuple[float, ExplanationStep]:
     keywords = CONTEXT_KEYWORDS.get(pii_type)
     if not keywords:
-        return base_confidence
+        return base_confidence, ExplanationStep(rule="context", outcome="not_configured")
 
     window_start = max(0, start - WINDOW)
     window_end = min(len(text), end + WINDOW)
     nearby = text[window_start:start].lower() + " " + text[end:window_end].lower()
 
-    if any(keyword in nearby for keyword in keywords):
-        return min(MAX_CONFIDENCE, base_confidence + BOOST)
-    return base_confidence
+    for keyword in keywords:
+        if keyword in nearby:
+            boosted = min(MAX_CONFIDENCE, base_confidence + BOOST)
+            step = ExplanationStep(
+                rule="context",
+                outcome="boosted",
+                delta=round(boosted - base_confidence, 2),
+                detail=f'keyword "{keyword}" found within {WINDOW} chars',
+            )
+            return boosted, step
+
+    step = ExplanationStep(
+        rule="context", outcome="no_match", detail=f"no context keyword found within {WINDOW} chars"
+    )
+    return base_confidence, step
