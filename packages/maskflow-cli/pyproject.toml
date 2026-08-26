@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.1.0"
+version = "0.2.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,6 +17,9 @@ dependencies = [
     # unsatisfiable alongside core>=0.3.0 above -- 0.2.0 is the first
     # version that requires (and works with) the new core.
     "maskflow-pack-intl>=0.2.0,<0.3",
+    # Same reasoning as pack-intl above, for AADHAAR/PAN/GSTIN/IFSC/UPI_VPA
+    # -- also makes `maskflow doctor`/`maskflow explain` aware of them.
+    "maskflow-pack-india>=0.1.0,<0.2",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",
@@ -35,6 +38,7 @@ dev = [
 [tool.uv.sources]
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
+maskflow-pack-india = { workspace = true }
 
 [tool.uv]
 package = true

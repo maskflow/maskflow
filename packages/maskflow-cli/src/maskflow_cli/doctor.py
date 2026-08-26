@@ -77,8 +77,6 @@ def _check_packages() -> list[ComponentCheck]:
     )
     for pack in installed_packs:
         checks.append(ComponentCheck(pack, _version(pack), "ok"))
-    if "maskflow-pack-india" not in installed_packs:
-        checks.append(ComponentCheck("maskflow-pack-india", None, "warn", "not installed"))
 
     return checks
 
