@@ -9,10 +9,24 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Changed
+
+- `maskflow-sdk` `0.2.0` -> `0.3.0`: now depends on `maskflow-pack-india`
+  (`>=0.1.0,<0.2`) in addition to `maskflow-pack-intl`, registered the same
+  side-effect-import way in `maskflow/__init__.py`. This is a **behavior
+  change, not just a new capability**: text that previously passed through
+  `mask()` untouched because it merely *looked like* an Aadhaar/PAN/GSTIN/
+  IFSC/UPI VPA will now be masked. `mask()`/`unmask()`/`mask_and_call()`'s
+  signatures are unchanged (CLAUDE.md rule 4), so this is additive at the
+  API level and a minor version bump, not a major one. `maskflow-cli` is
+  unaffected by this change -- it depends on `maskflow-core`/
+  `maskflow-pack-intl` directly, not on `maskflow-sdk`, and does not yet
+  depend on `maskflow-pack-india`.
+
 ### Added
 
-- New package `maskflow-pack-india` (`packs/maskflow-pack-india`, not yet a
-  dependency of `maskflow-sdk`/`maskflow-cli`): AADHAAR (12-digit UID and
+- New package `maskflow-pack-india` (`packs/maskflow-pack-india`, `0.1.0`,
+  published to PyPI): AADHAAR (12-digit UID and
   16-digit VID, Verhoeff checksum), AADHAAR_MASKED (display-masked form,
   e.g. `XXXX XXXX 9012`, unvalidated/context-gated), PAN (structural
   holder-category check; no public checksum exists for the final letter),

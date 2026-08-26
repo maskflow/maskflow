@@ -1,3 +1,4 @@
+import maskflow_pack_india  # noqa: F401 -- import side effect registers the 6 India recognizers
 import maskflow_pack_intl  # noqa: F401 -- import side effect registers the 12 recognizers
 from maskflow_core import MaskResult, PIIType, Span, detect, unmask
 from maskflow_core.config import ConfigResolutionError, RootConfig

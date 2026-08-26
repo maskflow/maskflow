@@ -39,6 +39,7 @@ jobs:
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
               - 'pyproject.toml'
             detection_js:
               - 'packages/maskflow-js/**'
