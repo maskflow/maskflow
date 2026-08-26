@@ -1,7 +1,9 @@
 """Registers MaskFlow's India-specific recognizers (AADHAAR, AADHAAR_MASKED,
-PAN, GSTIN, IFSC, UPI_VPA) against maskflow-core on import. Importing this
-package is the side effect that makes detect()/mask()/unmask() aware of
-these types -- see maskflow_core.registry.register_pattern.
+PAN, GSTIN, IFSC, UPI_VPA, INDIAN_MOBILE, PIN_CODE, VOTER_ID,
+INDIAN_PASSPORT, DRIVING_LICENCE, VEHICLE_REG, ABHA_NUMBER, ABHA_ADDRESS,
+BANK_ACCOUNT_IN) against maskflow-core on import. Importing this package is
+the side effect that makes detect()/mask()/unmask() aware of these types --
+see maskflow_core.registry.register_pattern.
 
 Context keywords are positive-only (English, Hindi/Devanagari, and Hinglish
 transliterations) -- maskflow-core's context.apply_context_boost() has no
@@ -141,6 +143,221 @@ register_pattern(
         "paytm",
         "यूपीआई",
         "यूपीआई आईडी",
+    ),
+)
+
+register_pattern(
+    "INDIAN_MOBILE",
+    patterns.INDIAN_MOBILE_RE,
+    0.35,
+    validator=patterns.validate_indian_mobile,
+    context_keywords=(
+        "mobile",
+        "mobile number",
+        "mobile no",
+        "phone",
+        "phone number",
+        "cell",
+        "cell number",
+        "contact number",
+        "whatsapp",
+        "call me at",
+        "मोबाइल",
+        "मोबाइल नंबर",
+        "फ़ोन नंबर",
+        "संपर्क नंबर",
+    ),
+)
+
+# All 28 states + 8 union territories (as of this pack's 2026-08 refresh) --
+# a state/UT name next to a 6-digit number is as strong a signal for
+# PIN_CODE as the word "pincode" itself.
+_INDIAN_STATE_AND_UT_NAMES = (
+    "andhra pradesh",
+    "arunachal pradesh",
+    "assam",
+    "bihar",
+    "chhattisgarh",
+    "goa",
+    "gujarat",
+    "haryana",
+    "himachal pradesh",
+    "jharkhand",
+    "karnataka",
+    "kerala",
+    "madhya pradesh",
+    "maharashtra",
+    "manipur",
+    "meghalaya",
+    "mizoram",
+    "nagaland",
+    "odisha",
+    "punjab",
+    "rajasthan",
+    "sikkim",
+    "tamil nadu",
+    "telangana",
+    "tripura",
+    "uttar pradesh",
+    "uttarakhand",
+    "west bengal",
+    "andaman and nicobar",
+    "chandigarh",
+    "dadra and nagar haveli",
+    "daman and diu",
+    "delhi",
+    "jammu and kashmir",
+    "ladakh",
+    "lakshadweep",
+    "puducherry",
+)
+
+register_pattern(
+    "PIN_CODE",
+    patterns.PIN_CODE_RE,
+    0.3,
+    context_keywords=(
+        "pin",
+        "pincode",
+        "pin code",
+        "postal code",
+        "zip",
+        "address",
+        "district",
+        "city",
+        "पिन कोड",
+        "पिनकोड",
+        "डाक कोड",
+    )
+    + _INDIAN_STATE_AND_UT_NAMES,
+)
+
+register_pattern(
+    "VOTER_ID",
+    patterns.VOTER_ID_RE,
+    0.55,
+    context_keywords=(
+        "voter id",
+        "voter id card",
+        "epic",
+        "epic no",
+        "epic number",
+        "electoral roll",
+        "election card",
+        "मतदाता पहचान पत्र",
+        "वोटर आईडी",
+    ),
+)
+
+register_pattern(
+    "INDIAN_PASSPORT",
+    patterns.INDIAN_PASSPORT_RE,
+    0.6,
+    context_keywords=(
+        "passport",
+        "passport no",
+        "passport number",
+        "पासपोर्ट",
+        "पासपोर्ट नंबर",
+    ),
+)
+# No context_keywords here -- register_pattern() stores CONTEXT_KEYWORDS per
+# PIIType, not per pattern, so a second non-empty tuple for INDIAN_PASSPORT
+# would overwrite the inline registration's keywords above. Doesn't matter
+# for the MRZ block anyway: four independent ICAO check digits (0.97) clear
+# DEFAULT_MIN_CONFIDENCE on their own, same as GSTIN needing none.
+register_pattern(
+    "INDIAN_PASSPORT",
+    patterns.INDIAN_PASSPORT_MRZ_RE,
+    0.6,
+    validator=patterns.validate_indian_passport_mrz,
+)
+
+register_pattern(
+    "DRIVING_LICENCE",
+    patterns.DRIVING_LICENCE_RE,
+    0.5,
+    validator=patterns.validate_driving_licence,
+    context_keywords=(
+        "driving licence",
+        "driving license",
+        "dl no",
+        "dl number",
+        "licence number",
+        "license number",
+        "ड्राइविंग लाइसेंस",
+        "लाइसेंस नंबर",
+    ),
+)
+
+register_pattern(
+    "VEHICLE_REG",
+    patterns.VEHICLE_REG_RE,
+    0.5,
+    validator=patterns.validate_vehicle_reg,
+    context_keywords=(
+        "vehicle number",
+        "vehicle registration",
+        "reg no",
+        "registration number",
+        "vehicle no",
+        "car number",
+        "गाड़ी नंबर",
+        "वाहन पंजीकरण",
+    ),
+)
+
+register_pattern(
+    "ABHA_NUMBER",
+    patterns.ABHA_NUMBER_RE,
+    0.35,
+    context_keywords=(
+        "abha",
+        "abha number",
+        "abha id",
+        "health id",
+        "abdm",
+        "ayushman",
+        "ayushman bharat",
+        "national health id",
+        "आभा",
+        "आभा नंबर",
+        "स्वास्थ्य आईडी",
+        "आयुष्मान",
+    ),
+)
+
+register_pattern(
+    "ABHA_ADDRESS",
+    patterns.ABHA_ADDRESS_RE,
+    0.5,
+    validator=patterns.validate_abha_address,
+    context_keywords=(
+        "abha address",
+        "abha id",
+        "health id",
+        "abdm",
+        "आभा पता",
+        "आभा आईडी",
+    ),
+)
+
+register_pattern(
+    "BANK_ACCOUNT_IN",
+    patterns.BANK_ACCOUNT_IN_RE,
+    0.3,
+    context_keywords=(
+        "account",
+        "account no",
+        "account number",
+        "a/c",
+        "a/c no",
+        "acct",
+        "acct no",
+        "bank account",
+        "खाता संख्या",
+        "खाता नंबर",
+        "बैंक खाता",
     ),
 )
 

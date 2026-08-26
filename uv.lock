@@ -1312,7 +1312,7 @@ provides-extras = ["nlp", "store", "yaml"]
 
 [[package]]
 name = "maskflow-pack-india"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "packs/maskflow-pack-india" }
 dependencies = [
     { name = "maskflow-core" },

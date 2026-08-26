@@ -29,6 +29,12 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   of warning on them. Also removes `doctor.py`'s now-dead "maskflow-pack-
   india not installed" hint, since it's a hard dependency now, not an
   optional one to nudge users toward installing.
+- `maskflow-pack-india` `0.1.0` -> `0.2.0`: adds the 9 new entity types
+  listed below (INDIAN_MOBILE through BANK_ACCOUNT_IN) -- additive only, no
+  API change. `maskflow-sdk` and `maskflow-cli`'s `maskflow-pack-india`
+  dependency bound widened from `<0.2` to `<0.3` so a future release of
+  either can pick up this version; their own published versions on PyPI
+  still declare the old `<0.2` bound until they're next released.
 
 ### Added
 
@@ -48,6 +54,21 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   transliterations; core has no negative-context ("example"/"test"/"dummy"
   suppression) mechanism yet, so that part of CLAUDE.md's confidence
   formula isn't implemented for this pack either -- noted as follow-up work.
+- `maskflow-pack-india`: 9 more India entity types -- INDIAN_MOBILE (`+91`/
+  `0`-prefixed numbers get full confidence unconditionally; a bare 10-digit
+  number needs a nearby context keyword), PIN_CODE (unvalidated, always
+  context-required -- pin/pincode/a state or UT name/address), VOTER_ID
+  (EPIC number, structural only, no public checksum), INDIAN_PASSPORT
+  (the inline 8-char number, structural only, plus a full TD3
+  machine-readable-zone block recognizer validated against all 4 ICAO 9303
+  check digits -- document number, DOB, expiry, and composite), DRIVING_LICENCE
+  and VEHICLE_REG (both validated against a bundled, documented-refresh-
+  procedure state/UT RTO code list), ABHA_NUMBER (unvalidated, always
+  context-required, no checksum), ABHA_ADDRESS (`handle@abdm`/`handle@sbx`,
+  same design as UPI_VPA), and BANK_ACCOUNT_IN (9-18 digits, unvalidated,
+  always context-required). Every context-required type ships a dedicated
+  hard-negative test asserting zero detections on invoice/order-ID/
+  timestamp text of the same digit shape.
 - `maskflow-cli`: `maskflow doctor` -- checks installed maskflow-core/cli/pack
   versions, spaCy + `en_core_web_sm` model presence, `.maskflowrc` validity,
   and prints which entities are consequently enabled/disabled (an NER-backed

@@ -55,9 +55,14 @@ def test_explain_lowering_threshold_via_set_promotes_a_near_miss_to_masked() -> 
     text = "Random unrelated text with a number 123456789 in it, nothing special."
     result = runner.invoke(app, ["explain", "--set", "entities.SSN.threshold=0.3", text])
     assert result.exit_code == 0
-    assert "NEAREST MISSES" not in result.stdout
-    assert "SSN" in result.stdout
     assert "masked" in result.stdout
+    # SSN itself moved out of the near-miss section and into the masked
+    # section above it -- maskflow-pack-india's BANK_ACCOUNT_IN (9-18
+    # digits, always context-required) is a separate, still-legitimate
+    # near miss on this same bare 9-digit span, so "no near misses at all"
+    # isn't the right assertion here.
+    assert "[1] SSN" in result.stdout
+    assert "[entities.SSN]" not in result.stdout
 
 
 def test_explain_bad_config_exits_nonzero(fixtures_dir: Path) -> None:
