@@ -1,9 +1,9 @@
 """Aho-Corasick gazetteer matching for PERSON_NAME (Indian) and
-INDIAN_ADDRESS L1 (the work order's "L1 Gazetteer" layer). Registered with
-maskflow-core via registry.register_custom_recognizer() in __init__.py --
-see that module's docstring for how a custom match function's raw hits
-(start, end, matched_text, base_confidence) feed into the same
-validator/context-boost/Span pipeline every other recognizer uses.
+INDIAN_ADDRESS L1 (the work order's "L1 Gazetteer" layer). Wrapped by a
+maskflow_core.recognizer.GazetteerRecognizer in __init__.py -- see that
+module's docstring for how a custom match function's raw hits (start, end,
+matched_text, base_confidence) feed into the same validator/context-boost/
+Span pipeline every other recognizer uses.
 
 Both automatons are built lazily and cached (@lru_cache(maxsize=1)), the
 same way maskflow_core.ner._get_nlp() lazily loads spaCy -- importing this

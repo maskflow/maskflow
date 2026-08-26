@@ -1252,7 +1252,7 @@ wheels = [
 
 [[package]]
 name = "maskflow-cli"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "packages/maskflow-cli" }
 dependencies = [
     { name = "maskflow-core", extra = ["yaml"] },
@@ -1282,7 +1282,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-core"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "packages/maskflow-core" }
 dependencies = [
     { name = "click" },
@@ -1312,7 +1312,7 @@ provides-extras = ["nlp", "store", "yaml"]
 
 [[package]]
 name = "maskflow-pack-india"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "packs/maskflow-pack-india" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },
@@ -1327,7 +1327,7 @@ requires-dist = [
 
 [[package]]
 name = "maskflow-pack-intl"
-version = "0.2.0"
+version = "0.3.0"
 source = { editable = "packs/maskflow-pack-intl" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },
@@ -1338,7 +1338,7 @@ requires-dist = [{ name = "maskflow-core", extras = ["nlp"], editable = "package
 
 [[package]]
 name = "maskflow-sdk"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "packages/maskflow-sdk" }
 dependencies = [
     { name = "maskflow-core" },

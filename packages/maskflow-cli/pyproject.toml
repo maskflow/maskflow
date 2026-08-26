@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.3.0"
+version = "0.4.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -10,21 +10,31 @@ dependencies = [
     # maskflow_core.config, which only exists from core 0.3.0 -- [yaml]
     # since the CLI, unlike the SDK, should accept a YAML .maskflowrc out
     # of the box (it's already a heavier, more optional install than the SDK).
-    "maskflow-core[yaml]>=0.5.0,<0.6",
+    # 0.6.0 adds maskflow_core.recognizer (issue #21's pluggable interface)
+    # -- pack-intl/pack-india now require it, so the floor moves with theirs
+    # even though this package doesn't import maskflow_core.recognizer
+    # directly.
+    "maskflow-core[yaml]>=0.6.0,<0.7",
     # maskflow_pack_intl is imported (side-effect only, to populate the
     # PIIType registry) for `maskflow config validate`'s soft entity-name
     # cross-check -- see app.py. pack-intl 0.1.0 itself requires core<0.3,
     # unsatisfiable alongside core>=0.3.0 above -- 0.2.0 is the first
-    # version that requires (and works with) the new core.
-    "maskflow-pack-intl>=0.2.0,<0.3",
+    # version that requires (and works with) the new core. 0.3.0 migrates
+    # registration to declarative Recognizer objects (maskflow_core.recognizer)
+    # and adds a "maskflow.recognizers" entry point -- import-time
+    # side-effect behavior unchanged, so the existing lower bound logic
+    # still holds, it just now requires core>=0.6.0 too.
+    "maskflow-pack-intl>=0.3.0,<0.4",
     # Same reasoning as pack-intl above, for AADHAAR/PAN/GSTIN/IFSC/UPI_VPA
     # -- also makes `maskflow doctor`/`maskflow explain` aware of them.
     # 0.2.0 adds INDIAN_MOBILE/PIN_CODE/VOTER_ID/INDIAN_PASSPORT/
     # DRIVING_LICENCE/VEHICLE_REG/ABHA_NUMBER/ABHA_ADDRESS/BANK_ACCOUNT_IN;
     # 0.3.0 adds PERSON_NAME (Indian)/INDIAN_ADDRESS (gazetteer + structural
-    # + NLP-agreement layers). Both additive only -- no API change, so the
-    # existing lower bound still holds.
-    "maskflow-pack-india>=0.1.0,<0.4",
+    # + NLP-agreement layers); 0.4.0 migrates registration to declarative
+    # Recognizer objects the same way pack-intl 0.3.0 did, same import-time
+    # side effect. All additive only -- no API change, so the existing
+    # lower bound still holds.
+    "maskflow-pack-india>=0.1.0,<0.5",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",

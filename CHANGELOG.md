@@ -9,6 +9,52 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Added
+
+- `maskflow-core` `0.5.0` -> `0.6.0`: adds `maskflow_core.recognizer` (issue
+  #21's pluggable recognizer architecture) -- a `Recognizer` ABC
+  (`entity_type`/`supported_languages`/`default_threshold`/
+  `analyze(text, ctx) -> Iterable[Span]`), `AnalysisContext` (per-`detect()`-
+  call state including a lazily computed, memoised NLP doc -- however many
+  NER-dependent recognizers share one context, the underlying parse happens
+  exactly once), three base helpers (`PatternRecognizer`,
+  `GazetteerRecognizer`, `NlpRecognizer`) covering the three match
+  strategies core already supported, and `RecognizerRegistry` (lazy
+  discovery via the `"maskflow.recognizers"` entry-point group -- enumerating
+  entry points never imports a pack; only actually accessing
+  `.recognizers`/`.register_all()` does). `Recognizer.register()` populates
+  the *existing* `PATTERNS`/`CUSTOM_RECOGNIZERS`/`NER_RECOGNIZERS` dicts
+  `detect()`/`detect_ner()` already read, and is idempotent per instance --
+  detection.py/ner.py's resolution pipeline is otherwise unchanged. Purely
+  additive: no existing function's signature changed, `register_pattern()`/
+  `register_custom_recognizer()`/`register_ner_recognizer()` still work
+  exactly as before. `docs/custom-recognizers.md` added.
+- `maskflow-pack-intl` `0.2.0` -> `0.3.0` and `maskflow-pack-india` `0.3.0`
+  -> `0.4.0`: internal registration migrated from bare
+  `register_pattern()`/`register_custom_recognizer()`/
+  `register_ner_recognizer()` calls to declarative `PatternRecognizer`/
+  `GazetteerRecognizer`/`NlpRecognizer` objects, and both packs now expose a
+  `load_recognizers()` entry point (group `"maskflow.recognizers"`) for
+  `RecognizerRegistry`-based discovery. **Behavior-identical**: each pack's
+  `__init__.py` still registers everything at import time exactly as
+  before (same patterns, same confidences, same context-keyword unions, same
+  order) -- verified by the full existing test suite (both packs' positive/
+  negative/hard-negative fixtures, `-m leak`, `-m benchmark`) passing
+  unchanged. Both packs now require `maskflow-core>=0.6.0,<0.7`. Explicitly
+  out of scope for this round: `maskflow-sdk`/`maskflow-cli` still activate
+  both packs via the original side-effect `import maskflow_pack_intl` /
+  `import maskflow_pack_india` (unchanged) rather than
+  `RecognizerRegistry`-based discovery -- migrating their activation
+  mechanism is a separate, later decision, not required for this issue's
+  scope (the pluggable interface itself, and packs being *capable* of
+  entry-point discovery).
+- `maskflow-sdk` `0.4.0` -> `0.5.0` and `maskflow-cli` `0.3.0` -> `0.4.0`:
+  no code changes in either package -- dependency bounds widened for the
+  `maskflow-core`/`maskflow-pack-intl`/`maskflow-pack-india` bumps above
+  (`maskflow-core` floor raised to `0.6.0` since the packs now hard-require
+  `maskflow_core.recognizer`), so this bump exists purely to publish those
+  widened bounds as a new release.
+
 ### Changed
 
 - `maskflow-sdk` `0.2.0` -> `0.3.0`: now depends on `maskflow-pack-india`
