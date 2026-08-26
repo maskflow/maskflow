@@ -46,8 +46,8 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 
 ## What it detects today
 
-`maskflow-sdk` bundles both `maskflow-pack-intl` and `maskflow-pack-india` — installing the SDK
-gets you everything below with no extra install step:
+`maskflow-sdk` and `maskflow-cli` both bundle `maskflow-pack-intl` and `maskflow-pack-india` —
+installing either gets you everything below with no extra install step:
 
 | Type | How |
 |---|---|
@@ -70,9 +70,7 @@ gets you everything below with no extra install step:
 | IFSC | Regex + bank code against a bundled RBI code list |
 | UPI VPA | Regex + PSP handle against a bundled NPCI handle list |
 
-ABHA and Indian names/addresses are not yet implemented. `maskflow-cli` currently bundles only
-`maskflow-pack-intl` directly (not `maskflow-pack-india` yet) — see
-[`packages/maskflow-cli/pyproject.toml`](packages/maskflow-cli/pyproject.toml).
+ABHA and Indian names/addresses are not yet implemented.
 
 ## MaskFlow vs. alternatives
 

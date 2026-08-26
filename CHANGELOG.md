@@ -18,10 +18,17 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `mask()` untouched because it merely *looked like* an Aadhaar/PAN/GSTIN/
   IFSC/UPI VPA will now be masked. `mask()`/`unmask()`/`mask_and_call()`'s
   signatures are unchanged (CLAUDE.md rule 4), so this is additive at the
-  API level and a minor version bump, not a major one. `maskflow-cli` is
-  unaffected by this change -- it depends on `maskflow-core`/
-  `maskflow-pack-intl` directly, not on `maskflow-sdk`, and does not yet
-  depend on `maskflow-pack-india`.
+  API level and a minor version bump, not a major one.
+- `maskflow-cli` `0.1.0` -> `0.2.0`: now also depends on `maskflow-pack-india`
+  (`>=0.1.0,<0.2`), registered in `app.py` the same way as `maskflow-pack-intl`.
+  `maskflow doctor` and `maskflow explain` are entirely registry-driven, so
+  no command-specific code changed -- the 6 India entity types just start
+  showing up in `doctor`'s entity table and `explain`'s pattern hits.
+  `maskflow config validate`'s soft entity-name cross-check now recognizes
+  `entities.AADHAAR`/`PAN`/`GSTIN`/`IFSC`/`UPI_VPA` as known types instead
+  of warning on them. Also removes `doctor.py`'s now-dead "maskflow-pack-
+  india not installed" hint, since it's a hard dependency now, not an
+  optional one to nudge users toward installing.
 
 ### Added
 

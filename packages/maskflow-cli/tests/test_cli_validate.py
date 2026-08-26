@@ -20,8 +20,13 @@ def test_validate_valid_fixture(fixtures_dir: Path) -> None:
     )
     assert result.exit_code == 0
     assert "Config is valid" in result.stdout
-    # entity-name soft cross-check warning (no pack-india installed).
+    # entity-name soft cross-check warning for custom.EMPLOYEE_ID -- a
+    # genuinely custom type, not something any pack registers. AADHAAR (also
+    # in this fixture) no longer triggers this warning now that pack-india
+    # is wired in, so this assertion only holds because of EMPLOYEE_ID.
     assert "WARNING" in result.stderr
+    assert "EMPLOYEE_ID" in result.stderr
+    assert "AADHAAR" not in result.stderr
 
 
 def test_validate_typo_exits_nonzero(fixtures_dir: Path) -> None:
