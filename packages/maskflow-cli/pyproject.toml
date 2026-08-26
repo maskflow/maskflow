@@ -10,7 +10,7 @@ dependencies = [
     # maskflow_core.config, which only exists from core 0.3.0 -- [yaml]
     # since the CLI, unlike the SDK, should accept a YAML .maskflowrc out
     # of the box (it's already a heavier, more optional install than the SDK).
-    "maskflow-core[yaml]>=0.4.0,<0.5",
+    "maskflow-core[yaml]>=0.5.0,<0.6",
     # maskflow_pack_intl is imported (side-effect only, to populate the
     # PIIType registry) for `maskflow config validate`'s soft entity-name
     # cross-check -- see app.py. pack-intl 0.1.0 itself requires core<0.3,
@@ -22,7 +22,7 @@ dependencies = [
     # 0.2.0 adds INDIAN_MOBILE/PIN_CODE/VOTER_ID/INDIAN_PASSPORT/
     # DRIVING_LICENCE/VEHICLE_REG/ABHA_NUMBER/ABHA_ADDRESS/BANK_ACCOUNT_IN,
     # additive only -- no API change, so the existing lower bound still holds.
-    "maskflow-pack-india>=0.1.0,<0.3",
+    "maskflow-pack-india>=0.1.0,<0.4",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",

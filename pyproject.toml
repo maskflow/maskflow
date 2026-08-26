@@ -80,6 +80,13 @@ ignore_missing_imports = true
 module = "yaml"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# pyahocorasick is a C extension with no bundled/third-party stubs; used by
+# maskflow-pack-india's gazetteer.py for PERSON_NAME (Indian) / INDIAN_ADDRESS
+# L1 matching.
+module = "ahocorasick"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 markers = [
     "benchmark: performance / regex-safety checks (opt-in via -m benchmark)",

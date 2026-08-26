@@ -308,3 +308,105 @@ def validate_abha_address(value: str) -> float | None:
 # ---------------------------------------------------------------------------
 
 BANK_ACCOUNT_IN_RE = re.compile(r"(?<!\d)(\d{9,18})(?!\d)")
+
+# ---------------------------------------------------------------------------
+# PERSON_NAME (Indian) -- L2 Structural. Honorifics, relational markers,
+# initials, and form-field labels are strong enough evidence to detect a
+# name STRUCTURALLY even when it isn't in gazetteer.py's L1 word list --
+# every pattern below feeds the same PIIType.PERSON_NAME L1 already
+# registered (see __init__.py), so hits from both layers compete/merge in
+# the same spanset.resolve() pass. All bounded (1-3 capitalised words max),
+# no nested quantifiers -- CLAUDE.md rule 3.
+# ---------------------------------------------------------------------------
+
+# 1-3 capitalised words, e.g. "Sharma", "Priya Iyer", "Anjali Kumar Rao".
+_NAME_RUN = r"[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,2}"
+
+# Honorific + capitalised name run, e.g. "Mr. Sharma", "Dr. Priya Iyer",
+# "Shri Ramesh Chandra". Devanagari "श्री"/"श्रीमती" are already registered
+# as PERSON_NAME context keywords (__init__.py) instead of matched here --
+# they don't reliably precede a Latin-script capitalised run the way these
+# English/transliterated honorifics do.
+#
+# KNOWN LIMITATION (documented, not fixed here -- L2 report,
+# packs/maskflow-pack-india/tests/fixtures/india_l2_samples.py's
+# PERSON_NAME_HARD_NEGATIVE_SAMPLES): "Dr. Reddy's" (the pharma brand)
+# structurally matches identically to "Dr. Reddy" the person -- honorific +
+# capitalised word is genuinely ambiguous without real-world entity
+# knowledge. No cheap regex heuristic (e.g. penalizing a trailing "'s")
+# fixes this without also losing recall on "Dr. Sharma's clinic" (a real,
+# common, correct case), so this is left for L3's NLP disambiguation.
+PERSON_NAME_HONORIFIC_RE = re.compile(
+    rf"(?:Shri|Sri|Smt|Kum|Mr|Mrs|Ms|Dr|Prof|Late)\.?\s+({_NAME_RUN})"
+)
+
+# Relational marker: two separate patterns (not one two-group pattern)
+# because detection.py's _scan_pattern only ever reads group(1) -- one
+# captures the SUBJECT's name (before the marker), the other the relative's
+# name (after), e.g. "Ramesh S/o Suresh Kumar" yields both "Ramesh" and
+# "Suresh Kumar" as independent PERSON_NAME candidates.
+PERSON_NAME_RELATIONAL_SUBJECT_RE = re.compile(
+    rf"({_NAME_RUN})\s+(?:S/o|D/o|W/o|C/o|son of|daughter of|wife of)\b"
+)
+PERSON_NAME_RELATIONAL_OBJECT_RE = re.compile(
+    rf"(?:S/o|D/o|W/o|C/o|son of|daughter of|wife of)\s+({_NAME_RUN})"
+)
+
+# Initials before a surname ("R. Venkataraman", "K.S. Rao") -- 1-3 single
+# capital letters, each dot-terminated, then a capitalised word. The
+# required dots make this structurally distinctive enough for a high
+# standalone confidence (contrast the suffix-initial form below).
+PERSON_NAME_INITIALS_PREFIX_RE = re.compile(r"((?:[A-Z]\.\s?){1,3}[A-Z][a-zA-Z]+)(?![a-zA-Z])")
+
+# A given name followed by a single trailing initial, no dot ("Srinivasan
+# K") -- inherently more ambiguous than the dotted prefix form (a lone
+# trailing capital letter is weak evidence on its own, e.g. a mid-sentence
+# acronym start), so this is context-gated rather than high-confidence
+# standalone -- see __init__.py's PERSON_NAME context keywords.
+PERSON_NAME_INITIALS_SUFFIX_RE = re.compile(r"([A-Z][a-zA-Z]{2,}\s+[A-Z])(?![a-zA-Z])")
+
+# Form-field label immediately before a capitalised name run, e.g. "Name:
+# Rohit Sharma", "Applicant Priya Iyer". "नाम" (Devanagari) is already a
+# PERSON_NAME context keyword, same reasoning as the honorific pattern.
+PERSON_NAME_FORM_FIELD_RE = re.compile(
+    rf"(?:Name|Applicant|Customer Name)\s*[:\-]?\s+({_NAME_RUN})"
+)
+
+# ---------------------------------------------------------------------------
+# INDIAN_ADDRESS -- L2 Structural. Unit markers, landmark-relative phrases,
+# and locality-word suffixes are strong enough evidence to detect an
+# address fragment structurally, on top of L1's gazetteer-only matching
+# (gazetteer.match_indian_places). All bounded, no nested quantifiers.
+# ---------------------------------------------------------------------------
+
+# Unit marker + a following number (optionally letter-suffixed), e.g.
+# "H.No. 123", "Flat 4B", "Sector 62", "Plot 45A", "Door No. 12".
+INDIAN_ADDRESS_UNIT_MARKER_RE = re.compile(
+    r"((?:H\.?\s?No\.?|Flat|Plot|Sector|Block|Phase|Door\s+No\.?)\s*[:\-]?\s*\d+[A-Za-z]?)"
+)
+
+# Landmark-relative phrase: preposition + a following proper-noun run, e.g.
+# "near City Hospital", "opposite Ashoka Talkies".
+#
+# KNOWN LIMITATION (documented, not fixed here -- see the L2 report /
+# india_l2_samples.py's INDIAN_ADDRESS_HARD_NEGATIVE_SAMPLES): capitalisation
+# alone can't distinguish a genuine landmark from an ordinary noun someone
+# happens to capitalise mid-sentence ("hiding behind Curtains") -- telling
+# those apart needs a landmark gazetteer (out of scope) or real NLP (L3),
+# not a regex. Left at this confidence because most real landmark-relative
+# addresses DO look exactly like this, and lowering it further would cost
+# more genuine recall than the false-positive rate here justifies.
+INDIAN_ADDRESS_LANDMARK_RE = re.compile(rf"(?:near|opposite|behind|beside)\s+({_NAME_RUN})")
+
+# Locality-word suffix, e.g. "Lajpat Nagar", "Green Park Colony", "Ashok
+# Vihar" -- a capitalised word/run immediately before one of these suffixes
+# is specific enough to be high-confidence on its own.
+INDIAN_ADDRESS_LOCALITY_RE = re.compile(
+    rf"({_NAME_RUN}\s+(?:Nagar|Colony|Vihar|Puram|Layout|Extension|Marg))"
+)
+
+# 6-digit PIN code, first digit 1-8 -- same shape as PIN_CODE_RE above, kept
+# as its own local pattern (not reused directly) so gazetteer.py's PIN_CODE
+# reinforcement can stay self-contained rather than importing detection
+# internals just for a lookaround match.
+INDIAN_PIN_CODE_SHAPE_RE = re.compile(r"(?<!\d)[1-8]\d{5}(?!\d)")

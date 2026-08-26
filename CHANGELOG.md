@@ -35,6 +35,43 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   dependency bound widened from `<0.2` to `<0.3` so a future release of
   either can pick up this version; their own published versions on PyPI
   still declare the old `<0.2` bound until they're next released.
+- `maskflow-core` `0.4.0` -> `0.5.0`: adds `registry.register_custom_recognizer()`
+  alongside the existing `register_pattern`/`register_ner_recognizer` --
+  lets a pack register a non-regex match source (e.g. a gazetteer
+  automaton) that still goes through the same validator/context-boost/
+  tier-0-excision/resolve pipeline as every other recognizer. Also adds
+  `NerMapping.agreement_boost` (default `0.0`, so every existing NER
+  registration is unaffected) and `detect_ner()`'s new `agreement_spans`
+  keyword: when a spaCy entity overlaps a pattern/custom-recognizer
+  candidate of the same type (even one that scored below its own
+  threshold), `agreement_boost` is added to its confidence before the
+  context boost -- `detect()` now passes every pattern-pass candidate
+  through as agreement evidence. Both additions are purely additive; no
+  existing function's signature changed, no existing recognizer's output
+  changed (agreement_boost only has an effect when a pack explicitly opts
+  in). `maskflow-sdk`, `maskflow-cli`, and `maskflow-pack-intl`'s
+  `maskflow-core` dependency bound widened from `<0.5` to `<0.6`.
+- `maskflow-pack-india` `0.2.0` -> `0.3.0`: adds PERSON_NAME (Indian) and
+  INDIAN_ADDRESS across all three built layers (L1 gazetteer, L2
+  structural, L3 NLP agreement -- L4 fine-tuning not started, see Added
+  below and the cumulative precision/recall report). Now depends on
+  `pyahocorasick` and `maskflow-core[nlp]` (spaCy -- previously spaCy-free)
+  `>=0.5.0,<0.6`. `PIN_CODE`'s state/UT name list moved from `__init__.py`
+  to `data/indian_places.py` (now shared with INDIAN_ADDRESS's gazetteer)
+  -- same 36 values, no behavior change. `maskflow-sdk`/`maskflow-cli`'s
+  `maskflow-pack-india` bound widened from `<0.3` to `<0.4`.
+- **Behavior change for `maskflow-pack-intl`'s PERSON_NAME when
+  `maskflow-pack-india` is also installed** (i.e. the actual
+  `maskflow-sdk`/`maskflow-cli` bundled configuration): pack-india's L3
+  registers the same spaCy `"PERSON"` label pack-intl does
+  (`register_ner_recognizer`'s `NER_RECOGNIZERS` dict holds one mapping
+  per label; pack-india imports after pack-intl in the bundled
+  configuration, so its registration wins). The standalone base confidence
+  (`0.75`) is unchanged from pack-intl's own -- deliberately NOT
+  down-weighted, to avoid regressing non-Indian-name recall -- but a name
+  that also matches this pack's L1 gazetteer or L2 structural patterns now
+  scores higher (`0.75` -> `0.95`) and records that agreement in
+  `span.explanation`.
 
 ### Added
 
@@ -69,6 +106,81 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   always context-required). Every context-required type ships a dedicated
   hard-negative test asserting zero detections on invoice/order-ID/
   timestamp text of the same digit shape.
+- `maskflow-pack-india`: PERSON_NAME (Indian) and INDIAN_ADDRESS, built
+  through **L1 gazetteer, L2 structural, and L3 NLP-agreement** (L4
+  fine-tuning NOT started -- measured recall after L1-L3 is well above the
+  work order's 0.85 gate, see the report below).
+
+  **L1 (gazetteer):** new `gazetteer.py` matches a ~115k-entry Indian name
+  gazetteer and a 368-entry state/UT + city gazetteer via `pyahocorasick`
+  (lazily built + `lru_cache`d, so bare `import maskflow_pack_india` stays
+  fast), routed through the new `register_custom_recognizer()` core hook.
+  PERSON_NAME contiguous hits (e.g. a given name immediately followed by a
+  surname) coalesce into one span; frequency-tiered confidence (common
+  names/words need nearby context, rarer ones fire standalone); a small
+  programmatic spelling-variant rule table (Krishna/Krishnaa, Lakshmi/
+  Laxmi); English- and Hinglish-function-word and this pack's own
+  entity-name-acronym collisions (`the`, `mera`, `abha`, `pan`, ...)
+  excluded/downgraded -- see `data/indian_names.py`'s docstring.
+  INDIAN_ADDRESS's gazetteer alone is deliberately low-confidence (a bare
+  place mention isn't an address).
+  Gazetteer sourcing fell short of the 150k-name target: the largest
+  license-clean candidate found (`swami93/indian-names-1.5M` on
+  HuggingFace, MIT-labeled) is self-declared with no documented upstream
+  provenance despite the dataset name, and turned out to contain
+  meaningful noise (English/Hindi function words, fragments); several
+  larger candidates were excluded outright (a CC0-labeled electoral-roll
+  dataset whose actual access terms are research-only/non-commercial; a
+  ~28k-name GitHub gist set with no license at all). Bundled anyway with
+  the provenance gap and every exclusion documented in `data/indian_names.py`,
+  per an explicit decision this session rather than silently overstating
+  coverage.
+
+  **L2 (structural):** new patterns in `patterns.py` -- PERSON_NAME
+  honorifics (Shri/Sri/Smt/Kum/Mr/Mrs/Ms/Dr/Prof/Late + capitalised run),
+  relational markers (S/o, D/o, W/o, C/o, "son of"/"daughter of"/"wife of",
+  emitting both the subject's and the relative's name as separate
+  candidates), dotted initials ("K.S. Rao", high confidence) and undotted
+  trailing initials ("Srinivasan K", context-gated -- too ambiguous
+  standalone), form-field labels ("Name:", "Applicant", "Customer Name");
+  INDIAN_ADDRESS unit markers (H.No./Flat/Plot/Sector/Block/Phase/Door No.
+  + number), landmark-relative phrases (near/opposite/behind/beside +
+  proper noun), locality-word suffixes (Nagar/Colony/Vihar/Puram/Layout/
+  Extension/Marg), and **mutual PIN_CODE reinforcement** (a place hit
+  within 20 chars of a PIN-shaped number is boosted 0.3 -> 0.65 in
+  `gazetteer.py`; PIN_CODE's own context keywords gained the locality-word
+  set for the reverse direction). Two documented, deliberately-not-"fixed"
+  precision limitations: "Dr. Reddy's" (the pharma brand) is structurally
+  indistinguishable from "Dr. Reddy" the person; a capitalised common noun
+  after "near"/"behind"/etc. is indistinguishable from a real landmark --
+  both need real-world entity knowledge (L3/L4), not more regex.
+
+  **L3 (NLP agreement):** `NerMapping.agreement_boost` (new in
+  maskflow-core, see Changed above) wired up for PERSON_NAME via spaCy's
+  `PERSON` label (standalone confidence deliberately left at pack-intl's
+  existing `0.75` -- see the pack-intl behavior-change note above -- with
+  `agreement_boost=0.2`). A GPE/LOC mapping for INDIAN_ADDRESS was
+  implemented, measured, and **deliberately dropped**: unlike PERSON_NAME,
+  spaCy tagging a place and the gazetteer agreeing it's a place doesn't
+  resolve INDIAN_ADDRESS's actual ambiguity (is this bare mention part of
+  an address, vs. just a place named in passing) -- it measurably promoted
+  plain sentences like "Mumbai is a city in India." past threshold with no
+  address context at all. INDIAN_ADDRESS recall beyond L1+L2 is left to a
+  future landmark/context gazetteer instead. This pack now depends on
+  `maskflow-core[nlp]` (spaCy) unconditionally -- previously spaCy-free.
+
+  **Cumulative L1+L2+L3 report** (`bench/indiapii/report.py`, against a
+  small hand-built fixture set under `packs/maskflow-pack-india/tests/
+  fixtures/india_l{1,2,3}_samples.py` -- not a general accuracy claim,
+  and iterated against directly while building, so treat as "known bug
+  classes fixed" rather than production accuracy): PERSON_NAME 79.3%
+  precision / 100% recall; INDIAN_ADDRESS 92.9% / 100%. PERSON_NAME's
+  remaining false positives are entirely documented, known limitations
+  (common-word/name collisions inherited from maskflow-pack-intl's own
+  pre-existing PERSON NER, confirmed present even with pack-india NOT
+  installed; the "Dr. Reddy's" ambiguity above) -- not new regressions
+  from this session's recognizers. Re-run `bench/indiapii/report.py` if
+  L4 is ever taken up.
 - `maskflow-cli`: `maskflow doctor` -- checks installed maskflow-core/cli/pack
   versions, spaCy + `en_core_web_sm` model presence, `.maskflowrc` validity,
   and prints which entities are consequently enabled/disabled (an NER-backed

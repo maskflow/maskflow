@@ -10,7 +10,7 @@ from typing import Literal, overload
 from .context import apply_context_boost
 from .entities import ExplanationStep, PIIType, Span
 from .ner import detect_ner
-from .registry import PATTERNS, Validator
+from .registry import CUSTOM_RECOGNIZERS, PATTERNS, CustomMatchFn, Validator
 from .spanset import ResolveConfig, SpanSet
 
 DEFAULT_MIN_CONFIDENCE = 0.5
@@ -32,6 +32,50 @@ _EXCISION_CHAR = "█"
 _MAX_EXCLUSION_MATCH_LEN = 10_000
 
 
+def _finish_match(
+    text: str,
+    pii_type: PIIType,
+    start: int,
+    end: int,
+    value: str,
+    base_confidence: float,
+    validator: Validator | None,
+    recognizer: str,
+) -> Span | None:
+    explanation: list[ExplanationStep] = [ExplanationStep(rule=recognizer, outcome="matched")]
+
+    confidence = base_confidence
+    validated = False
+    if validator is not None:
+        adjusted = validator(value)
+        if adjusted is None:
+            # No Span is emitted for a checksum failure -- there is nothing
+            # to attach this outcome to, and nothing for
+            # detect(return_rejected=True) to surface as a near miss.
+            return None
+        explanation.append(
+            ExplanationStep(
+                rule="checksum", outcome="passed", delta=round(adjusted - confidence, 2)
+            )
+        )
+        confidence = adjusted
+        validated = True
+
+    confidence, context_step = apply_context_boost(text, start, end, pii_type, confidence)
+    explanation.append(context_step)
+
+    return Span(
+        start=start,
+        end=end,
+        entity_type=pii_type,
+        score=round(confidence, 2),
+        recognizer=recognizer,
+        text=value,
+        validated=validated,
+        explanation=explanation,
+    )
+
+
 def _scan_pattern(
     text: str,
     pii_type: PIIType,
@@ -47,40 +91,25 @@ def _scan_pattern(
             start, end = match.span(0)
             value = match.group(0)
 
-        explanation: list[ExplanationStep] = [
-            ExplanationStep(rule=f"pattern:{pii_type}", outcome="matched")
-        ]
-
-        confidence = base_confidence
-        validated = False
-        if validator is not None:
-            adjusted = validator(value)
-            if adjusted is None:
-                # No Span is emitted for a checksum failure -- there is
-                # nothing to attach this outcome to, and nothing for
-                # detect(return_rejected=True) to surface as a near miss.
-                continue
-            explanation.append(
-                ExplanationStep(
-                    rule="checksum", outcome="passed", delta=round(adjusted - confidence, 2)
-                )
-            )
-            confidence = adjusted
-            validated = True
-
-        confidence, context_step = apply_context_boost(text, start, end, pii_type, confidence)
-        explanation.append(context_step)
-
-        yield Span(
-            start=start,
-            end=end,
-            entity_type=pii_type,
-            score=round(confidence, 2),
-            recognizer=f"pattern:{pii_type}",
-            text=value,
-            validated=validated,
-            explanation=explanation,
+        span = _finish_match(
+            text, pii_type, start, end, value, base_confidence, validator, f"pattern:{pii_type}"
         )
+        if span is not None:
+            yield span
+
+
+def _scan_custom(
+    text: str,
+    pii_type: PIIType,
+    match_fn: CustomMatchFn,
+    validator: Validator | None,
+) -> Iterator[Span]:
+    for start, end, value, base_confidence in match_fn(text):
+        span = _finish_match(
+            text, pii_type, start, end, value, base_confidence, validator, f"custom:{pii_type}"
+        )
+        if span is not None:
+            yield span
 
 
 def _pattern_pass(
@@ -104,6 +133,12 @@ def _pattern_pass(
         if pii_type in disabled_types:
             continue
         candidates.extend(_scan_pattern(text, pii_type, regex, base_confidence, None))
+
+    for pii_type, custom_rules in CUSTOM_RECOGNIZERS.items():
+        if pii_type in disabled_types:
+            continue
+        for match_fn, validator in custom_rules:
+            candidates.extend(_scan_custom(text, pii_type, match_fn, validator))
 
     return candidates
 
@@ -207,7 +242,14 @@ def detect(
     tier0 = SpanSet(text, tuple(pattern_candidates)).resolve(config)
     excised_text = _excise(text, tier0)
 
-    ner_candidates = detect_ner(excised_text, disabled_types=disabled_types)
+    # pattern_candidates (every candidate, not just tier0's threshold-clearing
+    # winners) doubles as L3's "agreement" evidence -- see ner.py's
+    # detect_ner(). A candidate below its own threshold is still valid
+    # agreement evidence (that's the whole point: a weak L1/L2 hit combined
+    # with an independent NER hit can jointly clear the bar neither did alone).
+    ner_candidates = detect_ner(
+        excised_text, disabled_types=disabled_types, agreement_spans=pattern_candidates
+    )
 
     # The one authoritative resolution: every regex candidate (not just
     # tier0's winners) plus every NER candidate, resolved together exactly

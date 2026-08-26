@@ -9,6 +9,7 @@ which entity types matter; that mapping is entirely pack content.
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from functools import lru_cache
 from typing import Any
 
@@ -44,7 +45,15 @@ def _get_nlp() -> Any:
         ) from exc
 
 
-def detect_ner(text: str, disabled_types: frozenset[PIIType] = frozenset()) -> list[Span]:
+def _overlaps(a_start: int, a_end: int, b_start: int, b_end: int) -> bool:
+    return a_start < b_end and b_start < a_end
+
+
+def detect_ner(
+    text: str,
+    disabled_types: frozenset[PIIType] = frozenset(),
+    agreement_spans: Sequence[Span] = (),
+) -> list[Span]:
     if not NER_RECOGNIZERS:
         # Nothing registered a spaCy label -- skip loading the model entirely,
         # so a core-only install with no [nlp]/pack never even tries to import
@@ -65,14 +74,45 @@ def detect_ner(text: str, disabled_types: frozenset[PIIType] = frozenset()) -> l
         if mapping.pii_type in disabled_types:
             continue
 
+        explanation: list[ExplanationStep] = [
+            ExplanationStep(rule=f"ner:{ent.label_}", outcome="matched")
+        ]
+
+        confidence = mapping.base_confidence
+        if mapping.agreement_boost > 0:
+            # "NLP as recall only, up-weighted on agreement with L1/L2"
+            # (CLAUDE.md's L3 work order): agreement_spans carries EVERY
+            # pattern/custom-recognizer candidate of this run, including
+            # ones that scored below their own threshold -- a spaCy entity
+            # overlapping one of those (same pii_type) is a second,
+            # independent signal for a match that may not have cleared the
+            # bar alone, worth trusting more than spaCy by itself.
+            agrees = any(
+                cand.entity_type == mapping.pii_type
+                and _overlaps(ent.start_char, ent.end_char, cand.start, cand.end)
+                for cand in agreement_spans
+            )
+            if agrees:
+                confidence = min(1.0, confidence + mapping.agreement_boost)
+                explanation.append(
+                    ExplanationStep(
+                        rule="agreement",
+                        outcome="matched",
+                        delta=mapping.agreement_boost,
+                        detail="overlaps an L1/L2 candidate of the same type",
+                    )
+                )
+            else:
+                explanation.append(
+                    ExplanationStep(rule="agreement", outcome="no_match", detail="no L1/L2 overlap")
+                )
+
         confidence, context_step = apply_context_boost(
-            text, ent.start_char, ent.end_char, mapping.pii_type, mapping.base_confidence
+            text, ent.start_char, ent.end_char, mapping.pii_type, confidence
         )
+        explanation.append(context_step)
+
         if confidence >= mapping.threshold:
-            explanation: list[ExplanationStep] = [
-                ExplanationStep(rule=f"ner:{ent.label_}", outcome="matched"),
-                context_step,
-            ]
             spans.append(
                 Span(
                     start=ent.start_char,

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import random
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 from .context import CONTEXT_KEYWORDS
@@ -53,10 +53,28 @@ class NerMapping:
     # this bar -- mirrors detect()'s min_confidence filter, but applied per
     # label since NER base confidences vary far more than regex matches do.
     threshold: float = 0.0
+    # "NLP as recall only" (CLAUDE.md's L3 work order): when > 0, a spaCy
+    # entity that overlaps an `agreement_spans` candidate of the same
+    # pii_type (a pattern/custom-recognizer hit -- L1 gazetteer or L2
+    # structural, even one that scored below its own threshold) has this
+    # added to base_confidence before the context boost -- see ner.py's
+    # detect_ner(). A finding with no such agreement uses base_confidence
+    # alone, unboosted.
+    agreement_boost: float = 0.0
 
 
 # spaCy label (e.g. "PERSON") -> NerMapping, appended to by register_ner_recognizer()
 NER_RECOGNIZERS: dict[str, NerMapping] = {}
+
+# A non-regex match source (e.g. an Aho-Corasick gazetteer automaton) that
+# scans `text` itself and reports raw hits as (start, end, matched_text,
+# base_confidence) -- base_confidence is per-hit rather than a single fixed
+# value like register_pattern()'s, since a gazetteer's confidence naturally
+# varies per matched entry (e.g. frequency tier), not per recognizer.
+CustomMatchFn = Callable[[str], Iterable[tuple[int, int, str, float]]]
+
+# type -> [(match_fn, validator), ...], appended to by register_custom_recognizer()
+CUSTOM_RECOGNIZERS: dict[PIIType, list[tuple[CustomMatchFn, Validator | None]]] = {}
 
 
 def register_pattern(
@@ -75,18 +93,40 @@ def register_pattern(
     return registered_type
 
 
+def register_custom_recognizer(
+    pii_type: str,
+    match_fn: CustomMatchFn,
+    validator: Validator | None = None,
+    context_keywords: tuple[str, ...] | None = None,
+) -> PIIType:
+    """Register a non-regex match source (e.g. a gazetteer automaton) for
+    `pii_type`, registering the PIIType itself first if it isn't already
+    known. detection.py's custom pass calls `match_fn(text)` and routes each
+    raw hit through the same validator/context-boost/Span pipeline as a
+    registered regex pattern -- see _finish_match()."""
+    registered_type = PIIType.register(pii_type)
+    CUSTOM_RECOGNIZERS.setdefault(registered_type, []).append((match_fn, validator))
+    if context_keywords:
+        CONTEXT_KEYWORDS[registered_type] = context_keywords
+    return registered_type
+
+
 def register_ner_recognizer(
     spacy_label: str,
     pii_type: str,
     base_confidence: float,
     threshold: float = 0.0,
     context_keywords: tuple[str, ...] | None = None,
+    agreement_boost: float = 0.0,
 ) -> PIIType:
     """Map a spaCy entity label (e.g. "PERSON") onto `pii_type`, registering the
     PIIType itself first if it isn't already known. ner.py's generic NER pass
-    reads NER_RECOGNIZERS to turn matching doc.ents into Spans."""
+    reads NER_RECOGNIZERS to turn matching doc.ents into Spans. `agreement_boost`
+    is NerMapping's "NLP as recall only" up-weighting -- see its docstring."""
     registered_type = PIIType.register(pii_type)
-    NER_RECOGNIZERS[spacy_label] = NerMapping(registered_type, base_confidence, threshold)
+    NER_RECOGNIZERS[spacy_label] = NerMapping(
+        registered_type, base_confidence, threshold, agreement_boost
+    )
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
     return registered_type

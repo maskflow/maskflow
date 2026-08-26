@@ -1,14 +1,14 @@
 [project]
 name = "maskflow-pack-india"
-version = "0.2.0"
-description = "MaskFlow's Indian PII recognizers (Aadhaar, PAN, GSTIN, IFSC, UPI VPA, mobile, PIN code, voter ID, passport, driving licence, vehicle registration, ABHA, bank account)"
+version = "0.3.0"
+description = "MaskFlow's Indian PII recognizers (Aadhaar, PAN, GSTIN, IFSC, UPI VPA, mobile, PIN code, voter ID, passport, driving licence, vehicle registration, ABHA, bank account, PERSON_NAME, INDIAN_ADDRESS)"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    # register_pattern()'s validator/context_keywords kwargs are all this
-    # pack needs -- no NER, so no maskflow-core[nlp] extra required (keeps
-    # this pack spaCy-free and its own import cost near zero).
-    "maskflow-core>=0.4.0,<0.5",
+    "maskflow-core[nlp]>=0.5.0,<0.6",
+    # PERSON_NAME (Indian) / INDIAN_ADDRESS gazetteer matching (~115k names) --
+    # linear-time multi-pattern search, never "a regex loop" (CLAUDE.md rule 3).
+    "pyahocorasick>=2.0,<3",
 ]
 
 [tool.uv.sources]
