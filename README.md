@@ -61,13 +61,27 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 | Person name | spaCy NER |
 | Date of birth | spaCy NER + keyword context |
 
-India pack (Aadhaar, PAN, GSTIN, UPI, IFSC, ABHA, Indian names) in active development.
+### India pack
+
+`packs/maskflow-pack-india` — checksum/structurally validated, not yet a dependency of
+`maskflow-sdk`/`maskflow-cli` (install it directly from the workspace to try it today):
+
+| Type | How |
+|---|---|
+| Aadhaar (UID + VID) | Regex + Verhoeff checksum |
+| Aadhaar (masked display form, e.g. `XXXX XXXX 9012`) | Regex, unvalidated, needs context |
+| PAN | Regex + holder-category structural check (no public final-letter checksum) |
+| GSTIN | Regex + state-code range + embedded-PAN check + base-36 checksum |
+| IFSC | Regex + bank code against a bundled RBI code list |
+| UPI VPA | Regex + PSP handle against a bundled NPCI handle list |
+
+ABHA and Indian names/addresses are not yet implemented.
 
 ## MaskFlow vs. alternatives
 
 |  | MaskFlow | Presidio | mask-privacy |
 |---|---|---|---|
-| Indian identifiers with checksums | In development (Aadhaar, PAN, GSTIN) | No | No |
+| Indian identifiers with checksums | Aadhaar, PAN, GSTIN, IFSC, UPI (pack shipped, not yet in `maskflow-sdk`) | No | No |
 | Session-consistent tokens (unmask later) | Yes | Via custom anonymizer config | Yes, today |
 | NER | spaCy | spaCy, Stanza, transformers | Regex-based, no NER |
 | Breadth / maturity | Narrow, early (12 types) | Broad, mature (Microsoft-backed, years of production use) | Narrow, early |

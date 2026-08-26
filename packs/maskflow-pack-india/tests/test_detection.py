@@ -1,0 +1,57 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+import maskflow_pack_india  # noqa: F401 -- import side effect registers all 6 recognizers
+from fixtures.pii_samples import NEGATIVE_SAMPLES, POSITIVE_SAMPLES
+from maskflow_core.detection import detect
+
+ACCURACY_TARGET = 0.95
+
+
+def _found_pairs(text: str) -> set[tuple]:
+    return {(s.entity_type, s.text) for s in detect(text)}
+
+
+def test_all_positive_samples_are_detected():
+    """Every expected (type, value) pair must show up in detect()'s output."""
+    misses = []
+    total_expected = 0
+
+    for idx, sample in enumerate(POSITIVE_SAMPLES):
+        found = _found_pairs(sample.text)
+        for expected in sample.expected:
+            total_expected += 1
+            if expected not in found:
+                # Report the sample index + entity type only -- never the raw
+                # sample text or matched value (CLAUDE.md rule 1).
+                misses.append((idx, expected[0]))
+
+    accuracy = 1 - (len(misses) / total_expected)
+    assert accuracy >= ACCURACY_TARGET, (
+        f"Detection accuracy {accuracy:.2%} below {ACCURACY_TARGET:.0%} target. "
+        f"Misses (index into POSITIVE_SAMPLES, expected type):\n"
+        + "\n".join(f"  POSITIVE_SAMPLES[{idx}] -> {pii_type}" for idx, pii_type in misses)
+    )
+
+
+def test_negative_samples_produce_no_findings():
+    false_positives = []
+    for idx, text in enumerate(NEGATIVE_SAMPLES):
+        spans = detect(text)
+        if spans:
+            false_positives.append((idx, [s.entity_type for s in spans]))
+
+    assert not false_positives, (
+        "False positives on PII-free / invalid text "
+        "(index into NEGATIVE_SAMPLES, types found):\n"
+        + "\n".join(f"  NEGATIVE_SAMPLES[{idx}] -> {types}" for idx, types in false_positives)
+    )
+
+
+def test_findings_are_non_overlapping_and_sorted():
+    text = "KYC details: PAN ABCPE1234F, Aadhaar 234567890124, UPI vikram@oksbi for verification."
+    spans = detect(text)
+    for a, b in zip(spans, spans[1:], strict=False):
+        assert a.end <= b.start, f"Overlapping or unsorted spans: {a} and {b}"
