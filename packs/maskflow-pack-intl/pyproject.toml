@@ -1,16 +1,19 @@
 [project]
 name = "maskflow-pack-intl"
-version = "0.2.0"
+version = "0.3.0"
 description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN, address, person name, date of birth)"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    # register_surrogate_generator()/SURROGATE_GENERATORS -- called
-    # unconditionally at import time by this pack's Strategy.SURROGATE
-    # generator registrations -- only exist from core 0.3.0. Importing
-    # this pack against an older core raises ImportError immediately.
-    "maskflow-core[nlp]>=0.5.0,<0.6",
+    # maskflow_core.recognizer (Recognizer/PatternRecognizer/NlpRecognizer --
+    # issue #21's pluggable interface, used by this pack's __init__.py) only
+    # exists from core 0.6.0. Importing this pack against an older core
+    # raises ImportError immediately.
+    "maskflow-core[nlp]>=0.6.0,<0.7",
 ]
+
+[project.entry-points."maskflow.recognizers"]
+intl = "maskflow_pack_intl:load_recognizers"
 
 [tool.uv.sources]
 maskflow-core = { workspace = true }

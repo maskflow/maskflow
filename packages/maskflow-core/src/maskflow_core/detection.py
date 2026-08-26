@@ -4,13 +4,13 @@ spanset.py for the resolution algorithm itself.
 """
 
 import re
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Literal, overload
 
-from .context import apply_context_boost
-from .entities import ExplanationStep, PIIType, Span
+from .entities import PIIType, Span
 from .ner import detect_ner
-from .registry import CUSTOM_RECOGNIZERS, PATTERNS, CustomMatchFn, Validator
+from .recognizer import _scan_custom, _scan_pattern
+from .registry import CUSTOM_RECOGNIZERS, PATTERNS
 from .spanset import ResolveConfig, SpanSet
 
 DEFAULT_MIN_CONFIDENCE = 0.5
@@ -30,86 +30,6 @@ _EXCISION_CHAR = "█"
 # detection.py must stay config-agnostic (config depends on detection's
 # types, never the reverse).
 _MAX_EXCLUSION_MATCH_LEN = 10_000
-
-
-def _finish_match(
-    text: str,
-    pii_type: PIIType,
-    start: int,
-    end: int,
-    value: str,
-    base_confidence: float,
-    validator: Validator | None,
-    recognizer: str,
-) -> Span | None:
-    explanation: list[ExplanationStep] = [ExplanationStep(rule=recognizer, outcome="matched")]
-
-    confidence = base_confidence
-    validated = False
-    if validator is not None:
-        adjusted = validator(value)
-        if adjusted is None:
-            # No Span is emitted for a checksum failure -- there is nothing
-            # to attach this outcome to, and nothing for
-            # detect(return_rejected=True) to surface as a near miss.
-            return None
-        explanation.append(
-            ExplanationStep(
-                rule="checksum", outcome="passed", delta=round(adjusted - confidence, 2)
-            )
-        )
-        confidence = adjusted
-        validated = True
-
-    confidence, context_step = apply_context_boost(text, start, end, pii_type, confidence)
-    explanation.append(context_step)
-
-    return Span(
-        start=start,
-        end=end,
-        entity_type=pii_type,
-        score=round(confidence, 2),
-        recognizer=recognizer,
-        text=value,
-        validated=validated,
-        explanation=explanation,
-    )
-
-
-def _scan_pattern(
-    text: str,
-    pii_type: PIIType,
-    regex: re.Pattern[str],
-    base_confidence: float,
-    validator: Validator | None,
-) -> Iterator[Span]:
-    for match in regex.finditer(text):
-        if match.re.groups:
-            start, end = match.span(1)
-            value = match.group(1)
-        else:
-            start, end = match.span(0)
-            value = match.group(0)
-
-        span = _finish_match(
-            text, pii_type, start, end, value, base_confidence, validator, f"pattern:{pii_type}"
-        )
-        if span is not None:
-            yield span
-
-
-def _scan_custom(
-    text: str,
-    pii_type: PIIType,
-    match_fn: CustomMatchFn,
-    validator: Validator | None,
-) -> Iterator[Span]:
-    for start, end, value, base_confidence in match_fn(text):
-        span = _finish_match(
-            text, pii_type, start, end, value, base_confidence, validator, f"custom:{pii_type}"
-        )
-        if span is not None:
-            yield span
 
 
 def _pattern_pass(
