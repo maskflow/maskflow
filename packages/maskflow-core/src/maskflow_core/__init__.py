@@ -1,5 +1,6 @@
-from .detection import detect
+from .detection import detect, detect_patterns_only
 from .entities import ExplanationStep, PIIType, Span
+from .logging_filter import PIIRedactionFilter, install_pii_filter
 from .mapping import Mapping, MappingEntry
 from .mapping_store import (
     EncryptedFileMappingStore,
@@ -22,6 +23,7 @@ from .strategies import HashConfig, MaskConfig, Strategy
 
 __all__ = [
     "detect",
+    "detect_patterns_only",
     "mask",
     "unmask",
     "mask_with_policy",
@@ -48,4 +50,6 @@ __all__ = [
     "InMemoryMappingStore",
     "EncryptedFileMappingStore",
     "RedisMappingStore",
+    "PIIRedactionFilter",
+    "install_pii_filter",
 ]
