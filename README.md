@@ -69,8 +69,18 @@ installing either gets you everything below with no extra install step:
 | GSTIN | Regex + state-code range + embedded-PAN check + base-36 checksum |
 | IFSC | Regex + bank code against a bundled RBI code list |
 | UPI VPA | Regex + PSP handle against a bundled NPCI handle list |
+| Indian mobile number | Regex, full confidence with a `+91`/`0` prefix, needs context otherwise |
+| PIN code | Regex, unvalidated, needs context (pin/pincode/state name/address) |
+| Voter ID (EPIC number) | Regex, structural only (no public checksum) |
+| Indian passport number | Regex, structural only (no public checksum) |
+| Indian passport MRZ block | Regex + 4 ICAO 9303 check digits |
+| Driving licence | Regex + state RTO code against a bundled code list |
+| Vehicle registration | Regex + state RTO code against a bundled code list |
+| ABHA number (health ID) | Regex, unvalidated, needs context |
+| ABHA address | Regex + domain (abdm/sbx) check |
+| Bank account number (India) | Regex, unvalidated, needs context (account/a\/c/acct) |
 
-ABHA and Indian names/addresses are not yet implemented.
+Indian names/addresses are not yet implemented.
 
 ## MaskFlow vs. alternatives
 

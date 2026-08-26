@@ -1,7 +1,7 @@
 [project]
 name = "maskflow-pack-india"
-version = "0.1.0"
-description = "MaskFlow's Indian PII recognizers (Aadhaar, PAN, GSTIN, IFSC, UPI VPA)"
+version = "0.2.0"
+description = "MaskFlow's Indian PII recognizers (Aadhaar, PAN, GSTIN, IFSC, UPI VPA, mobile, PIN code, voter ID, passport, driving licence, vehicle registration, ABHA, bank account)"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [

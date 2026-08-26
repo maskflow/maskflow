@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-import maskflow_pack_india  # noqa: F401 -- import side effect registers all 6 recognizers
+import maskflow_pack_india  # noqa: F401 -- import side effect registers all recognizers
 from fixtures.pii_samples import NEGATIVE_SAMPLES, POSITIVE_SAMPLES
 from maskflow_core.detection import detect
 

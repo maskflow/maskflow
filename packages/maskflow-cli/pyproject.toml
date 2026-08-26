@@ -19,7 +19,10 @@ dependencies = [
     "maskflow-pack-intl>=0.2.0,<0.3",
     # Same reasoning as pack-intl above, for AADHAAR/PAN/GSTIN/IFSC/UPI_VPA
     # -- also makes `maskflow doctor`/`maskflow explain` aware of them.
-    "maskflow-pack-india>=0.1.0,<0.2",
+    # 0.2.0 adds INDIAN_MOBILE/PIN_CODE/VOTER_ID/INDIAN_PASSPORT/
+    # DRIVING_LICENCE/VEHICLE_REG/ABHA_NUMBER/ABHA_ADDRESS/BANK_ACCOUNT_IN,
+    # additive only -- no API change, so the existing lower bound still holds.
+    "maskflow-pack-india>=0.1.0,<0.3",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",

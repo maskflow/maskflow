@@ -1,16 +1,18 @@
 """Regex patterns and structural/checksum validators for India-specific PII
 types. Each validator(value) -> float | None returns an adjusted confidence,
 or None to reject the match entirely -- see checksums.py for the Verhoeff
-(AADHAAR) and GSTIN check-digit algorithms these call into. __init__.py
-registers these against maskflow-core via register_pattern().
+(AADHAAR), GSTIN, and MRZ (INDIAN_PASSPORT) check-digit algorithms these
+call into. __init__.py registers these against maskflow-core via
+register_pattern().
 """
 
 from __future__ import annotations
 
 import re
 
-from .checksums import gstin_is_valid, verhoeff_is_valid
+from .checksums import gstin_is_valid, indian_passport_mrz_line2_is_valid, verhoeff_is_valid
 from .data.ifsc_bank_codes import IFSC_BANK_CODES
+from .data.indian_state_rto_codes import INDIAN_STATE_RTO_CODES
 from .data.upi_handles import UPI_PSP_HANDLES
 
 # ---------------------------------------------------------------------------
@@ -142,3 +144,167 @@ def validate_upi_vpa(value: str) -> float | None:
     if psp.lower() not in UPI_PSP_HANDLES:
         return None
     return 0.95
+
+
+# ---------------------------------------------------------------------------
+# INDIAN_MOBILE -- 10 digits starting 6-9 (TRAI never assigns a mobile
+# number starting 0-5), optionally preceded by a +91 country code or a 0
+# trunk prefix. One regex + one confidence-branching validator rather than
+# a two-pattern split (contrast AADHAAR/AADHAAR_VID): an explicit prefix is
+# unambiguous on its own, a bare 10-digit run is not, so the validator
+# returns a high confidence for the former and a below-threshold one for
+# the latter -- CLAUDE.md's "require prefix OR a context keyword for full
+# score" expressed as one rule.
+# ---------------------------------------------------------------------------
+
+INDIAN_MOBILE_RE = re.compile(r"(?<!\d)((?:\+91[-\s]?|0)?[6-9]\d{9})(?!\d)")
+
+
+def validate_indian_mobile(value: str) -> float | None:
+    has_prefix = value[0] in "+0"
+    return 0.8 if has_prefix else 0.35
+
+
+# ---------------------------------------------------------------------------
+# PIN_CODE -- 6-digit postal code, first digit 1-8 (India Post's zone 9 is
+# reserved for army post offices and has its own separate context). No
+# checksum exists; a bare 6-digit number is extremely ambiguous (order
+# numbers, reference codes, ...) so this is always context-required --
+# base confidence starts well below DEFAULT_MIN_CONFIDENCE and needs a
+# nearby pin/pincode/state-name/address keyword (see __init__.py) to clear
+# the bar.
+# ---------------------------------------------------------------------------
+
+PIN_CODE_RE = re.compile(r"(?<!\d)([1-8]\d{5})(?!\d)")
+
+
+# ---------------------------------------------------------------------------
+# VOTER_ID (EPIC number) -- 3 letters + 7 digits. No public checksum is
+# published for the letter/digit combination, so this is structural-only
+# (same tier as PAN): the regex fully encodes the shape, so no validator
+# function is needed -- base confidence alone (below) already reflects
+# "shape-valid but unchecksummed."
+# ---------------------------------------------------------------------------
+
+VOTER_ID_RE = re.compile(r"(?<![A-Za-z0-9])[A-Z]{3}\d{7}(?![A-Za-z0-9])")
+
+
+# ---------------------------------------------------------------------------
+# INDIAN_PASSPORT -- inline 8-char number (1 letter, excluding Q/X/Z per
+# the Ministry of External Affairs' issuing-letter set, + 7 digits) plus a
+# full TD3 machine-readable-zone (MRZ) 2-line block, scoped to Indian
+# passports by pinning the issuing-state/nationality field to "IND". The
+# inline number has no public checksum; the MRZ block carries four
+# independent ICAO 9303 check digits (see checksums.py), so it gets its
+# own, much higher, validated confidence.
+# ---------------------------------------------------------------------------
+
+INDIAN_PASSPORT_RE = re.compile(r"(?<![A-Za-z0-9])[A-PR-WY][1-9]\d\s?\d{4}[1-9](?![A-Za-z0-9])")
+
+# TD3 line 1: 'P' + document-type subcode + "IND" (issuing state) + a
+# 39-char name field (letters and '<' filler only).
+# TD3 line 2: 9-char document number + its check digit + "IND" (nationality)
+# + 6-digit DOB + its check digit + sex (M/F/<) + 6-digit expiry + its check
+# digit + 14-char personal-number field + its check digit + composite check
+# digit. Every quantifier is a fixed count -- no unbounded/backtracking risk.
+INDIAN_PASSPORT_MRZ_RE = re.compile(
+    r"(P[A-Z<]IND[A-Z<]{39}\n[A-Z0-9<]{9}\dIND\d{6}\d[MF<]\d{6}\d[A-Z0-9<]{14}[A-Z0-9<]\d)",
+    re.MULTILINE,
+)
+
+
+def validate_indian_passport_mrz(value: str) -> float | None:
+    lines = value.split("\n")
+    if len(lines) != 2:
+        return None
+    _line1, line2 = lines
+    # 0.97: four independent ICAO check digits all agreeing is a stronger
+    # signal than a single mod-97/Verhoeff checksum, so this sits above
+    # every other validated confidence in this pack.
+    return 0.97 if indian_passport_mrz_line2_is_valid(line2) else None
+
+
+# ---------------------------------------------------------------------------
+# DRIVING_LICENCE -- 2-letter state RTO code + 2-digit RTO office number +
+# 4-digit issue year (19xx/20xx) + 7-digit serial, e.g. "MH12 20110012345".
+# The RTO code lookup (data/indian_state_rto_codes.py) IS the structural
+# check -- there is no per-character checksum on a DL number, same design
+# as IFSC's bank-code lookup.
+# ---------------------------------------------------------------------------
+
+DRIVING_LICENCE_RE = re.compile(
+    r"(?<![A-Za-z0-9])([A-Z]{2}\d{2}([- ]?)(?:19|20)\d{2}\2\d{7})(?![A-Za-z0-9])"
+)
+
+
+def validate_driving_licence(value: str) -> float | None:
+    state_code = value[:2]
+    if state_code not in INDIAN_STATE_RTO_CODES:
+        return None
+    return 0.85
+
+
+# ---------------------------------------------------------------------------
+# VEHICLE_REG -- 2-letter state RTO code + 1-2 digit RTO office number +
+# 1-2 letter series + 4-digit number, e.g. "MH12AB1234". Same state-code-
+# lookup-as-structural-check design as DRIVING_LICENCE, sharing the same
+# bundled code set.
+# ---------------------------------------------------------------------------
+
+VEHICLE_REG_RE = re.compile(
+    r"(?<![A-Za-z0-9])([A-Z]{2}[- ]?\d{1,2}[- ]?[A-Z]{1,2}[- ]?\d{4})(?![A-Za-z0-9])"
+)
+
+
+def validate_vehicle_reg(value: str) -> float | None:
+    state_code = value[:2]
+    if state_code not in INDIAN_STATE_RTO_CODES:
+        return None
+    return 0.85
+
+
+# ---------------------------------------------------------------------------
+# ABHA_NUMBER -- Ayushman Bharat Health Account, 14 digits in 2-4-4-4
+# groups (e.g. "12-3456-7890-1234"). No checksum is registered here (NDHM's
+# real check-digit scheme isn't part of this work order's scope) -- a bare
+# 14-digit run is exactly as ambiguous as a bare AADHAAR-length run, so
+# this is always context-required, mirroring AADHAAR_MASKED's design.
+# ---------------------------------------------------------------------------
+
+ABHA_NUMBER_RE = re.compile(r"(?<!\d)(\d{2}([- ]?)\d{4}\2\d{4}\2\d{4})(?!\d)")
+
+
+# ---------------------------------------------------------------------------
+# ABHA_ADDRESS -- handle@abdm or handle@sbx, the health-ID analogue of a UPI
+# VPA. Same shape family and same "reject unless the suffix is on the known
+# list" design as validate_upi_vpa -- "sbx" is ABDM's sandbox/test-domain
+# suffix, still worth masking since sandbox addresses are still tied to a
+# real health ID during testing/onboarding flows.
+# ---------------------------------------------------------------------------
+
+ABHA_ADDRESS_RE = re.compile(r"\b([A-Za-z0-9.\-_]{2,64}@[A-Za-z]{2,10})(?!\.[A-Za-z])\b")
+
+_ABHA_ADDRESS_DOMAINS = frozenset({"abdm", "sbx"})
+
+
+def validate_abha_address(value: str) -> float | None:
+    handle, _, domain = value.partition("@")
+    if not handle or domain.lower() not in _ABHA_ADDRESS_DOMAINS:
+        return None
+    return 0.9
+
+
+# ---------------------------------------------------------------------------
+# BANK_ACCOUNT_IN -- 9 to 18 digits (the range Indian banks actually issue
+# account numbers in; no fixed length or checksum exists across banks). A
+# bare digit run in this range is maximally ambiguous -- it overlaps
+# AADHAAR (12 digits), AADHAAR_VID (16 digits), and INDIAN_MOBILE (10
+# digits) in length alone -- so this is always context-required (account /
+# a\/c / acct nearby). Where a checksum-validated type like AADHAAR also
+# matches the same span, spanset resolution's "validated desc, score desc"
+# ordering (CLAUDE.md design decision #1) makes the checksum-backed span
+# win outright; BANK_ACCOUNT_IN only ever surfaces where nothing more
+# specific also validated.
+# ---------------------------------------------------------------------------
+
+BANK_ACCOUNT_IN_RE = re.compile(r"(?<!\d)(\d{9,18})(?!\d)")
