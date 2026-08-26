@@ -89,6 +89,31 @@ def _excise(text: str, spans: list[Span]) -> str:
     return "".join(chars)
 
 
+def detect_patterns_only(
+    text: str,
+    min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+    *,
+    per_entity_threshold: Mapping[PIIType, float] | None = None,
+    disabled_types: frozenset[PIIType] = frozenset(),
+    extra_patterns: Sequence[tuple[PIIType, re.Pattern[str], float]] = (),
+) -> list[Span]:
+    """The regex/checksum-validated pass alone, resolved on its own -- no NER
+    (no spaCy load, no per-document parse cost). This is exactly the tier-0
+    computation `detect()` already runs internally to build its excision mask
+    (see below); exposed here because it's a useful detector in its own right
+    anywhere the NER pass's cost isn't worth paying, e.g. a per-log-record
+    scrub on a hot path (maskflow_core.logging_filter) rather than a
+    per-request mask() call. Does not catch NER-only entity types (bare
+    names, addresses) -- those require the full detect().
+    """
+    config = ResolveConfig(
+        default_threshold=min_confidence,
+        per_entity_threshold=dict(per_entity_threshold or {}),
+    )
+    pattern_candidates = _pattern_pass(text, disabled_types, extra_patterns)
+    return SpanSet(text, tuple(pattern_candidates)).resolve(config)
+
+
 @overload
 def detect(
     text: str,
@@ -158,7 +183,9 @@ def detect(
     # are already confidently claimed, so the NER pass runs on text with those
     # regions blanked out. This provisional pass exists only to build that
     # mask -- it is not the final answer, and its winners are not the only
-    # candidates that get to compete below.
+    # candidates that get to compete below. Same computation as
+    # detect_patterns_only(), just reusing pattern_candidates already computed
+    # above rather than re-running _pattern_pass.
     tier0 = SpanSet(text, tuple(pattern_candidates)).resolve(config)
     excised_text = _excise(text, tier0)
 
@@ -193,4 +220,4 @@ def detect(
     return resolved, rejected
 
 
-__all__ = ["detect", "Span", "PIIType"]
+__all__ = ["detect", "detect_patterns_only", "Span", "PIIType"]

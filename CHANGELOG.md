@@ -11,6 +11,24 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- `maskflow-core` (still unreleased `0.6.0`, no separate bump -- see the
+  `0.5.0` -> `0.6.0` entry below): also adds `maskflow_core.logging_filter`
+  (closes the last open item on issue #23) -- `PIIRedactionFilter`, a
+  `logging.Filter` that scrubs a LogRecord's formatted message through the
+  new `detect_patterns_only()` (regex/checksum-validated patterns, no NER --
+  cheap enough for a hot logging path) before emission, and
+  `install_pii_filter(logger=None, ...)` to attach one (default: root
+  logger; idempotent per logger). Opt-in only -- importing `maskflow_core`
+  never touches global logging state on its own. This protects a *downstream
+  app's own* logger calls (e.g. `logger.info(f"...{raw_input}")` before
+  `mask()` ever runs, or a careless third-party recognizer plugin doing
+  `logger.debug(span.text)`), which repr-exclusion and the `pytest -m leak`
+  gate never covered -- those two only protect MaskFlow's own test session.
+  `detect_patterns_only()` is also now public on `detect.py`/`maskflow_core`
+  (the existing tier-0-excision computation inside `detect()`, factored out
+  and reused rather than duplicated). NER-only entity types (bare names,
+  addresses) and `exc_info`/traceback text are explicitly out of scope --
+  see `docs/logging.md`.
 - `maskflow-core` `0.5.0` -> `0.6.0`: adds `maskflow_core.recognizer` (issue
   #21's pluggable recognizer architecture) -- a `Recognizer` ABC
   (`entity_type`/`supported_languages`/`default_threshold`/
