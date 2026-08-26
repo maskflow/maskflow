@@ -1282,7 +1282,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-core"
-version = "0.6.0"
+version = "0.7.0"
 source = { editable = "packages/maskflow-core" }
 dependencies = [
     { name = "click" },
