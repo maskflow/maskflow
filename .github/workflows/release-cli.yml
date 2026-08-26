@@ -1,0 +1,27 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "cli-py-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      # maskflow-cli pulls in maskflow-pack-intl, which requires
+      # maskflow-core[nlp] -- same as the sdk/pack-intl release workflows.
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run pytest packages/maskflow-cli/tests -q
+      - run: uv build --package maskflow-cli
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true
