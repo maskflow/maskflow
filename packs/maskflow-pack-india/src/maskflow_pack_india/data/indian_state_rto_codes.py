@@ -7,7 +7,7 @@ aren't in this set is treated as structurally invalid by validate_driving_licenc
 / validate_vehicle_reg() (patterns.py) -- same "the code lookup IS the
 structural check" design as IFSC's bank-code list (data/ifsc_bank_codes.py).
 
-Refresh procedure:
+Refresh procedure: see docs/data-refresh.md.
   1. MoRTH (Ministry of Road Transport & Highways) publishes the current
      state/UT RTO code list via the Vahan/Sarathi portals
      (https://vahan.parivahan.gov.in, https://sarathi.parivahan.gov.in).

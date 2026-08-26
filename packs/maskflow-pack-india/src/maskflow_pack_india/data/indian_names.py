@@ -33,7 +33,9 @@ that scale could be found this session (a Harvard Dataverse electoral-roll
 dataset was CC0-labeled but its actual access terms restrict it to
 research-only, non-commercial use; several GitHub name-list gists carry no
 license at all) -- see the L1 precision/recall report for the full
-sourcing writeup, and CHANGELOG.md for this decision's record.
+sourcing writeup, and CHANGELOG.md for this decision's record. Re-checked
+2026-08-27 (issue #28 closeout): still no license-clean 150k+ source found;
+still open, see docs/data-refresh.md.
 
 Frequency tiering: per CLAUDE.md's spec ("common names need context, rare
 may fire alone"), the bundled pool defaults to "rare" (fires standalone)

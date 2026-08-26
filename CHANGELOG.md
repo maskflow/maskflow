@@ -11,6 +11,20 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- `scripts/refresh_india_reference_data.py` and `docs/data-refresh.md`
+  (issue #28): closes the one item on that issue with zero prior progress --
+  every `maskflow-pack-india` reference-data file documented its own refresh
+  procedure as prose, but nothing was scripted or consolidated. The script
+  has `ifsc`/`cities` subcommands, each a pure diff function (unit-tested in
+  `packs/maskflow-pack-india/tests/test_reference_data_refresh.py`, no
+  network) plus a fetch/parse wrapper; it never writes the bundled data
+  files itself, matching the "curated, not auto-merged" philosophy those
+  files already documented. `upi` prints the still-manual PSP-handle
+  procedure -- no machine-readable NPCI feed exists. `docs/data-refresh.md`
+  is the single doc covering sourcing/licensing/refresh cadence for all five
+  data files (IFSC codes, UPI handles, RTO codes, place gazetteer, name
+  gazetteer); each file's docstring now points to it instead of duplicating
+  the procedure prose.
 - `maskflow-core` (still unreleased `0.6.0`, no separate bump -- see the
   `0.5.0` -> `0.6.0` entry below): also adds `maskflow_core.logging_filter`
   (closes the last open item on issue #23) -- `PIIRedactionFilter`, a
@@ -75,6 +89,30 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Changed
 
+- `maskflow-pack-india` `0.4.0` -> `0.5.0` (issue #28 closeout): grows two of
+  the pack's bundled reference datasets using the new refresh script above.
+  `IFSC_BANK_CODES` 56 -> 94 entries: cross-checked against
+  `razorpay/ifsc`'s public-domain data and added every code in scope
+  (foreign/private/small-finance/payments/local-area banks, plus 3
+  legitimate merged/retired PSU codes) that this pack's manual curation had
+  missed; also relabels `ESFB` (was miscommented "ESAF Small Finance Bank",
+  actually Equitas per the cross-check -- the `ESFB` *value* is unchanged,
+  only its comment). `INDIAN_CITIES` 368 -> 554 entries: unions the existing
+  Wikipedia-sourced list with Census 2011 town-population data (population
+  >= 100,000), clearing the "top-500" target from issue #28. **Behavior
+  change**: IFSC/VEHICLE_REG/DRIVING_LICENCE and INDIAN_ADDRESS's L1
+  gazetteer will now validate/match values they previously rejected/missed
+  -- e.g. an IFSC starting `IPPB`/`ESFB`/`USFB`/... now passes structural
+  validation, and 186 more real city names are recognized as address
+  context. No API change. `maskflow-sdk`/`maskflow-cli`'s
+  `maskflow-pack-india` bound widened from `<0.5` to `<0.6`. The
+  `PERSON_NAME` (Indian) gazetteer target (150k+ names) and India-specific
+  negative context terms remain open -- see docs/data-refresh.md and the two
+  follow-up issues filed from #28.
+- `maskflow-sdk` `0.5.0` -> `0.6.0` and `maskflow-cli` `0.4.0` -> `0.5.0`:
+  no code changes in either package -- dependency bounds widened for the
+  `maskflow-pack-india` bump above, so this bump exists purely to publish
+  those widened bounds as a new release.
 - `maskflow-sdk` `0.2.0` -> `0.3.0`: now depends on `maskflow-pack-india`
   (`>=0.1.0,<0.2`) in addition to `maskflow-pack-intl`, registered the same
   side-effect-import way in `maskflow/__init__.py`. This is a **behavior

@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.4.0"
+version = "0.5.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,7 +34,7 @@ dependencies = [
     # Recognizer objects the same way pack-intl 0.3.0 did, same import-time
     # side effect. All additive only -- no API change, so the existing
     # lower bound still holds.
-    "maskflow-pack-india>=0.1.0,<0.5",
+    "maskflow-pack-india>=0.1.0,<0.6",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",

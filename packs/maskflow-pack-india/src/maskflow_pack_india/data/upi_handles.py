@@ -6,7 +6,10 @@ conservative, since a handle-shaped string that happens to have a TLD-like
 look (e.g. "name@company") should fall through to nothing rather than being
 misclassified.
 
-Refresh procedure:
+Refresh procedure: see docs/data-refresh.md, or run
+`uv run python scripts/refresh_india_reference_data.py upi` (from the repo
+root) for a reminder of the steps below -- still manual, no automatable NPCI
+feed exists as of 2026-08-27.
   1. NPCI publishes the list of live PSP handles as part of its UPI
      "member/handle" directory at https://www.npci.org.in -- cross-referenced
      against each PSP's own published VPA format documentation (banks list
