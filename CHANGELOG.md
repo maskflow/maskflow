@@ -72,6 +72,20 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   that also matches this pack's L1 gazetteer or L2 structural patterns now
   scores higher (`0.75` -> `0.95`) and records that agreement in
   `span.explanation`.
+- `maskflow-sdk` `0.3.0` -> `0.4.0` and `maskflow-cli` `0.2.0` -> `0.3.0`:
+  no code changes in either package -- both already declared
+  `maskflow-pack-india>=0.1.0,<0.4` and `maskflow-core>=0.5.0,<0.6` (widened
+  earlier in this same round of changes, see above), so this bump exists
+  purely to publish those already-widened bounds as a new release. Since
+  `maskflow-pack-india<0.4` and `maskflow-core<0.6` already permitted
+  0.3.0/0.5.0, this is what actually lets `pip install maskflow-sdk`/
+  `maskflow-cli` pick up PERSON_NAME (Indian)/INDIAN_ADDRESS -- their
+  previously-published versions (`0.3.0`/`0.2.0`) are unaffected and still
+  resolve to the pre-this-session `maskflow-pack-india`/`maskflow-core`.
+  Minor bump, not patch, for the same reason earlier pack-india dependency
+  bumps in this file were treated as minor: `mask()`'s output changes for
+  previously-untouched text (new entity types get masked that weren't
+  before), even though neither package's own API changed.
 
 ### Added
 

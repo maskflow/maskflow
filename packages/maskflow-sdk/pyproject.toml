@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-sdk"
-version = "0.3.0"
+version = "0.4.0"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,11 +16,12 @@ dependencies = [
     "maskflow-pack-intl>=0.2.0,<0.3",
     # Adds AADHAAR/AADHAAR_MASKED/PAN/GSTIN/IFSC/UPI_VPA detection --
     # registered the same side-effect-import way as pack-intl above (see
-    # maskflow/__init__.py). No [nlp] extra of its own; maskflow-core[nlp]
-    # is already pulled in transitively via pack-intl. 0.2.0 adds
-    # INDIAN_MOBILE/PIN_CODE/VOTER_ID/INDIAN_PASSPORT/DRIVING_LICENCE/
-    # VEHICLE_REG/ABHA_NUMBER/ABHA_ADDRESS/BANK_ACCOUNT_IN, additive only --
-    # no API change, so the existing lower bound still holds.
+    # maskflow/__init__.py). 0.2.0 adds INDIAN_MOBILE/PIN_CODE/VOTER_ID/
+    # INDIAN_PASSPORT/DRIVING_LICENCE/VEHICLE_REG/ABHA_NUMBER/ABHA_ADDRESS/
+    # BANK_ACCOUNT_IN; 0.3.0 adds PERSON_NAME (Indian)/INDIAN_ADDRESS
+    # (gazetteer + structural + NLP-agreement layers -- also its own
+    # [nlp]/spaCy dependency now, not spaCy-free anymore). Both additive
+    # only -- no API change, so the existing lower bound still holds.
     "maskflow-pack-india>=0.1.0,<0.4",
 ]
 
