@@ -61,8 +61,6 @@ def test_explain_lowering_threshold_via_set_promotes_a_near_miss_to_masked() -> 
 
 
 def test_explain_bad_config_exits_nonzero(fixtures_dir: Path) -> None:
-    result = runner.invoke(
-        app, ["explain", "--config", str(fixtures_dir / "typo.toml"), "hello"]
-    )
+    result = runner.invoke(app, ["explain", "--config", str(fixtures_dir / "typo.toml"), "hello"])
     assert result.exit_code == 1
     assert "did you mean 'threshold'?" in result.stderr
