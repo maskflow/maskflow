@@ -9,6 +9,37 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Added
+
+- `maskflow-cli`: `maskflow doctor` -- checks installed maskflow-core/cli/pack
+  versions, spaCy + `en_core_web_sm` model presence, `.maskflowrc` validity,
+  and prints which entities are consequently enabled/disabled (an NER-backed
+  entity like `PERSON_NAME` reports "disabled -- spaCy model unavailable"
+  when the model isn't installed; an entity turned off via
+  `.maskflowrc`'s `entities.<X>.enabled = false` reports that instead).
+  Also flags the still-unimplemented `RedisMappingStore` as an informational
+  warning. Exits 0 only when every check passes. Adds `rich` as a
+  `maskflow-cli`-only dependency for the table output.
+- `maskflow-cli`: `maskflow explain "<text>"` -- shows, span by span, why
+  each piece of text was (or wasn't) detected as PII: the pattern/NER hit,
+  checksum result, context boost, and the threshold decision behind it.
+  Spans that scored below their entity's threshold are listed separately as
+  NEAREST MISSES, along with the `.maskflowrc` threshold change that would
+  have caught them. Matched text is truncated to 8 characters by default
+  (`--full` shows the entire match) -- never printed unbounded, per this
+  repo's no-raw-PII-in-output rule. Supports `--config`/`--set` like
+  `maskflow config`, so explanations reflect the same resolved config a
+  real `mask()` call would use.
+- `maskflow-core`: `detect()` gained an opt-in `return_rejected` keyword
+  (default `False`, zero behavior/cost change for existing callers) that
+  changes the return shape to `(accepted, rejected)`, where `rejected` is
+  every candidate span dropped for scoring below its entity type's
+  threshold in the resolve pass. `Span.explanation` changed from
+  `list[str]` to `list[ExplanationStep]` (a new structured dataclass:
+  `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
+  serialized, or asserted on by field instead of by substring match. This
+  is the core support `maskflow explain` is built on.
+
 ## [core 0.3.0, pack-intl 0.2.0, sdk 0.2.0] - 2026-08-21
 
 ### Added

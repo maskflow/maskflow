@@ -9,7 +9,7 @@ dependencies = [
     # maskflow_core.config (RootConfig, resolve_config, compile_config --
     # what mask()/mask_and_call()/session() read .maskflowrc through) only
     # exists from core 0.3.0.
-    "maskflow-core>=0.3.0,<0.4",
+    "maskflow-core>=0.4.0,<0.5",
     # pack-intl 0.1.0 itself requires core<0.3 (register_surrogate_generator
     # didn't exist yet), unsatisfiable alongside core>=0.3.0 above -- 0.2.0
     # is the first version that requires (and works with) the new core.

@@ -9,7 +9,7 @@ dependencies = [
     # unconditionally at import time by this pack's Strategy.SURROGATE
     # generator registrations -- only exist from core 0.3.0. Importing
     # this pack against an older core raises ImportError immediately.
-    "maskflow-core[nlp]>=0.3.0,<0.4",
+    "maskflow-core[nlp]>=0.4.0,<0.5",
 ]
 
 [tool.uv.sources]

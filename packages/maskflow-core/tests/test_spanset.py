@@ -16,7 +16,7 @@ from hypothesis import strategies as st
 from maskflow_core.detection import detect
 from maskflow_core.entities import PIIType, Span
 from maskflow_core.registry import PATTERNS, register_pattern
-from maskflow_core.spanset import OverlapPolicy, ResolveConfig, resolve
+from maskflow_core.spanset import OverlapPolicy, ResolveConfig, resolve, resolve_verbose
 
 TEXT = "the quick brown fox jumps over the lazy dog while a cat sleeps nearby"
 
@@ -194,7 +194,10 @@ def test_contained_policy_prefers_the_more_specific_span_when_validation_is_equa
 
     assert len(result) == 1
     assert (result[0].start, result[0].end) == (inner_start, inner_end)
-    assert any("contained: preferred" in note for note in result[0].explanation)
+    assert any(
+        step.rule == "overlap:contained" and step.outcome == "preferred"
+        for step in result[0].explanation
+    )
 
 
 def test_merge_policy_joins_adjacent_same_type_spans() -> None:
@@ -286,3 +289,50 @@ def test_email_and_upi_shaped_handle_resolve_independently(
 
     for a, b in zip(spans, spans[1:], strict=False):
         assert a.end <= b.start
+
+
+def test_resolve_verbose_accepted_matches_plain_resolve() -> None:
+    text = "the quick brown fox"
+    low = Span(start=4, end=9, entity_type=TYPE_A, score=0.2, recognizer="prop-test", text="quick")
+    high = Span(
+        start=10, end=15, entity_type=TYPE_B, score=0.9, recognizer="prop-test", text="brown"
+    )
+    config = ResolveConfig(default_threshold=0.5)
+
+    accepted, rejected = resolve_verbose([low, high], text, config)
+
+    assert accepted == resolve([low, high], text, config)
+    assert accepted == [high]
+    assert rejected == [low]
+
+
+def test_resolve_verbose_stamps_rejected_spans_with_threshold_step() -> None:
+    text = "the quick brown fox"
+    low = Span(start=4, end=9, entity_type=TYPE_A, score=0.2, recognizer="prop-test", text="quick")
+    config = ResolveConfig(default_threshold=0.5)
+
+    _, rejected = resolve_verbose([low], text, config)
+
+    assert len(rejected) == 1
+    step = rejected[0].explanation[-1]
+    assert step.rule == "threshold"
+    assert step.outcome == "dropped"
+
+
+def test_resolve_verbose_does_not_reject_spans_that_only_lost_to_overlap() -> None:
+    """A span dropped for losing an overlap conflict (not for scoring below
+    threshold) must not show up in `rejected` -- only the threshold cut
+    counts as a near miss."""
+    text = "the quick brown fox"
+    winner = Span(
+        start=4, end=9, entity_type=TYPE_A, score=0.9, recognizer="prop-test", text="quick"
+    )
+    loser = Span(
+        start=4, end=9, entity_type=TYPE_B, score=0.8, recognizer="prop-test", text="quick"
+    )
+    config = ResolveConfig(default_threshold=0.0)
+
+    accepted, rejected = resolve_verbose([winner, loser], text, config)
+
+    assert accepted == [winner]
+    assert rejected == []

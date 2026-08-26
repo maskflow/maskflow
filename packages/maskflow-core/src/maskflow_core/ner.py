@@ -13,7 +13,7 @@ from functools import lru_cache
 from typing import Any
 
 from .context import apply_context_boost
-from .entities import PIIType, Span
+from .entities import ExplanationStep, PIIType, Span
 from .registry import NER_RECOGNIZERS
 
 MODEL_NAME = "en_core_web_sm"
@@ -65,10 +65,14 @@ def detect_ner(text: str, disabled_types: frozenset[PIIType] = frozenset()) -> l
         if mapping.pii_type in disabled_types:
             continue
 
-        confidence = apply_context_boost(
+        confidence, context_step = apply_context_boost(
             text, ent.start_char, ent.end_char, mapping.pii_type, mapping.base_confidence
         )
         if confidence >= mapping.threshold:
+            explanation: list[ExplanationStep] = [
+                ExplanationStep(rule=f"ner:{ent.label_}", outcome="matched"),
+                context_step,
+            ]
             spans.append(
                 Span(
                     start=ent.start_char,
@@ -77,6 +81,7 @@ def detect_ner(text: str, disabled_types: frozenset[PIIType] = frozenset()) -> l
                     score=confidence,
                     recognizer=f"ner:{ent.label_}",
                     text=ent.text,
+                    explanation=explanation,
                 )
             )
 
