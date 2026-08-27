@@ -1,0 +1,76 @@
+<svg width="720" height="300" viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Terminal demo of maskflow masking and unmasking an Aadhaar number and email address">
+  <title>MaskFlow terminal demo</title>
+  <defs>
+    <clipPath id="rounded">
+      <rect x="0" y="0" width="720" height="300" rx="10" ry="10"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#rounded)">
+    <rect x="0" y="0" width="720" height="300" fill="#0d1117"/>
+    <rect x="0" y="0" width="720" height="36" fill="#161b22"/>
+    <line x1="0" y1="36" x2="720" y2="36" stroke="#30363d" stroke-width="1"/>
+
+    <circle cx="20" cy="18" r="6" fill="#ff5f56"/>
+    <circle cx="40" cy="18" r="6" fill="#ffbd2e"/>
+    <circle cx="60" cy="18" r="6" fill="#27c93f"/>
+    <text x="360" y="23" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#8b949e">maskflow — python3</text>
+
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+      <!-- Line 1: pip install -->
+      <text x="24" y="66" fill="#79c0ff" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.033;0.038;1" values="0;0;1;1"/>
+        $ pip install maskflow-sdk
+      </text>
+
+      <!-- Line 2: install output -->
+      <text x="24" y="90" fill="#8b949e" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.133;0.138;1" values="0;0;1;1"/>
+        Successfully installed maskflow-sdk-0.6.0
+      </text>
+
+      <!-- Line 3: import -->
+      <text x="24" y="122" fill="#79c0ff" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.244;0.249;1" values="0;0;1;1"/>
+        &gt;&gt;&gt; from maskflow import mask, unmask
+      </text>
+
+      <!-- Line 4: mask() call -->
+      <text x="24" y="146" fill="#79c0ff" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.367;0.372;1" values="0;0;1;1"/>
+        &gt;&gt;&gt; mask("Aadhaar 2346 8907 6543, alice@example.com")
+      </text>
+
+      <!-- Line 5: masked output -->
+      <text x="24" y="178" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.511;0.516;1" values="0;0;1;1"/>
+        <tspan fill="#c9d1d9">Aadhaar </tspan><tspan fill="#f0883e">&lt;AADHAAR_1&gt;</tspan><tspan fill="#c9d1d9">, </tspan><tspan fill="#f0883e">&lt;EMAIL_1&gt;</tspan>
+      </text>
+
+      <!-- Line 6: unmask() call -->
+      <text x="24" y="210" fill="#79c0ff" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.633;0.638;1" values="0;0;1;1"/>
+        &gt;&gt;&gt; unmask(result.masked_text, result.mapping)
+      </text>
+
+      <!-- Line 7: restored output -->
+      <text x="24" y="242" opacity="0">
+        <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
+          keyTimes="0;0.767;0.772;1" values="0;0;1;1"/>
+        <tspan fill="#c9d1d9">Aadhaar </tspan><tspan fill="#7ee787">2346 8907 6543</tspan><tspan fill="#c9d1d9">, </tspan><tspan fill="#7ee787">alice@example.com</tspan>
+      </text>
+
+      <!-- Idle prompt + blinking cursor -->
+      <text x="24" y="274" fill="#79c0ff">$</text>
+      <rect x="38" y="262" width="8" height="14" fill="#c9d1d9">
+        <animate attributeName="opacity" dur="1s" repeatCount="indefinite" values="1;1;0;0;1"/>
+      </rect>
+    </g>
+  </g>
+</svg>
