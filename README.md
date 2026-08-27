@@ -1,33 +1,97 @@
 # MaskFlow
 
-Indian PII detection and reversible masking for LLM pipelines. Aadhaar, PAN, GSTIN, UPI, IFSC,
-names — masked before a prompt leaves your process, restored in the response.
+**Stop Indian PII from ever reaching an LLM.**
+
+Aadhaar, PAN, GSTIN, UPI, IFSC, ABHA, Indian names and addresses — detected and replaced with
+reversible, typed placeholders before a prompt leaves your process, restored in the response.
+28 entity types, checksum-validated where a public checksum exists, MIT-licensed, runs entirely
+on your own infrastructure.
 
 [![CI](https://github.com/maskflow/maskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/maskflow/maskflow/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/maskflow-sdk)](https://pypi.org/project/maskflow-sdk/)
+[![npm](https://img.shields.io/npm/v/%40maskflow%2Fdetection)](https://www.npmjs.com/package/@maskflow/detection)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+
+<p align="center">
+  <img src=".github/assets/demo.svg" alt="Terminal demo: pip install maskflow-sdk, then mask() replaces an Aadhaar number and email with &lt;AADHAAR_1&gt; and &lt;EMAIL_1&gt; before an LLM call, and unmask() restores the originals in the response" width="720">
+</p>
+
+## Why
+
+India's DPDP Act sets a compliance deadline of **13 May 2027**, with penalties of up to
+**₹250 crore** for a breach where the required safeguards weren't in place. Every prompt sent to
+an LLM provider is a potential data-sharing event — and general-purpose PII tools weren't built to
+recognize Aadhaar, PAN, GSTIN, UPI VPAs, IFSC codes, ABHA health IDs, or Indian names and addresses
+reliably. [Presidio](https://github.com/microsoft/presidio) already owns generic PII and is more
+mature everywhere else; MaskFlow exists specifically to close that gap, with accuracy that's
+measured and published, not asserted. See [MaskFlow vs. alternatives](#maskflow-vs-alternatives).
 
 ## Quickstart
 
 ```bash
 pip install maskflow-sdk
+python -m spacy download en_core_web_sm
 ```
 
 ```python
 from maskflow import mask, unmask
 
-result = mask("Email me at alice@example.com or call 415-555-0132.")
+result = mask("My Aadhaar is 2346 8907 6543 and you can reach me at alice@example.com.")
 result.masked_text
-# "Email me at <EMAIL_1> or call <PHONE_1>."
+# "My Aadhaar is <AADHAAR_1> and you can reach me at <EMAIL_1>."
 unmask(result.masked_text, result.mapping)  # original text, restored
 ```
+
+For a one-line wrapper around your actual LLM call, or session-scoped masking across a multi-turn
+agent (same value → same token for as long as the session is open), see
+[`packages/maskflow-sdk/README.md`](packages/maskflow-sdk/README.md).
+
+## How it works
+
+1. **Tier-0 excision first.** Deterministic regex/checksum matches (Aadhaar, PAN, GSTIN, email,
+   credit card, ...) are found and locked in *before* the NER pass ever runs — spaCy parses each
+   document at most once, only over what tier-0 didn't already claim.
+2. **Every match is a `Span`.** Start/end offsets, entity type, confidence, which recognizer
+   produced it, whether a checksum validated it, and a human-readable explanation trail. Run
+   `maskflow explain "<text>"` (from `maskflow-cli`) to see that trail for any input, span by span
+   — including near-misses that fell just below threshold and what config change would catch them.
+3. **Deterministic resolution on overlaps.** Below-threshold spans are dropped; among what's left,
+   a checksum-validated span always beats an overlapping unvalidated one, then higher confidence,
+   then longer span, then earliest start wins — greedy, non-overlapping placement.
+4. **Placeholders are typed, stable, and collision-proof.** `<AADHAAR_1>`, `<EMAIL_1>`, ... — the
+   same value gets the same token within a session, and if the input text already contains
+   something that looks like a placeholder, a nonce suffix (`<AADHAAR_1_a4f9>`) is used instead so
+   a real placeholder is never ambiguous with attacker-controlled input.
+5. **Recognizers are pluggable.** `maskflow-pack-intl` and `maskflow-pack-india` are just two
+   `"maskflow.recognizers"` entry-point plugins sharing one memoised analysis context — write and
+   register your own the same way. See [`docs/custom-recognizers.md`](docs/custom-recognizers.md).
+
+## Protecting your own logs
+
+Regex/checksum-based recognizers can also scrub your application's own `logging` calls — not just
+text passed through `mask()` — closing the gap where a raw value gets logged before it's ever
+masked:
+
+```python
+from maskflow_core import install_pii_filter
+
+install_pii_filter()  # attaches to the root logger, once, at startup
+```
+
+Opt-in only; importing `maskflow_core` never touches global logging state on its own. It doesn't
+cover NER-only entity types (bare names/addresses) or `exc_info` tracebacks — see
+[`docs/logging.md`](docs/logging.md) for the exact boundary.
 
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
 entity, add a custom regex-based entity, exclude specific values, or change the substitution
-strategy (replace/redact/mask/hash/surrogate) — `mask()`/`mask_and_call()`/`session()` all pick it
-up automatically, with no `.maskflowrc` anywhere behaving exactly as before this existed:
+strategy per entity (`replace` / `redact` / `mask` / `hash` / `surrogate` — the last swaps in a
+plausible *fake* value drawn from reserved/test-only ranges, e.g. RFC 2606 example domains or
+publicly documented payment-industry test card numbers, instead of a placeholder token).
+`mask()`/`mask_and_call()`/`session()` all pick it up automatically; no `.maskflowrc` anywhere
+behaves exactly as before this existed:
 
 ```toml
 [entities.PHONE]
@@ -47,7 +111,9 @@ See [`docs/configuration.md`](docs/configuration.md) for the full schema and pre
 ## What it detects today
 
 `maskflow-sdk` and `maskflow-cli` both bundle `maskflow-pack-intl` and `maskflow-pack-india` —
-installing either gets you everything below with no extra install step:
+installing either gets you all 28 types below with no extra install step.
+
+**International (12 types)** — `maskflow-pack-intl`:
 
 | Type | How |
 |---|---|
@@ -63,6 +129,11 @@ installing either gets you everything below with no extra install step:
 | Street address | Regex |
 | Person name | spaCy NER |
 | Date of birth | spaCy NER + keyword context |
+
+**Indian (17 types, the moat)** — `maskflow-pack-india`:
+
+| Type | How |
+|---|---|
 | Aadhaar (UID + VID) | Regex + Verhoeff checksum |
 | Aadhaar (masked display form, e.g. `XXXX XXXX 9012`) | Regex, unvalidated, needs context |
 | PAN | Regex + holder-category structural check (no public final-letter checksum) |
@@ -78,9 +149,27 @@ installing either gets you everything below with no extra install step:
 | Vehicle registration | Regex + state RTO code against a bundled code list |
 | ABHA number (health ID) | Regex, unvalidated, needs context |
 | ABHA address | Regex + domain (abdm/sbx) check |
-| Bank account number (India) | Regex, unvalidated, needs context (account/a\/c/acct) |
+| Bank account number (India) | Regex, unvalidated, needs context (account/a/c/acct) |
+| Person name (Indian) | Gazetteer (name corpus) + structural (honorifics, relational markers, initials, form fields) + spaCy NER agreement boost |
+| Indian address | Gazetteer (554+ Indian cities/places) + structural (unit markers, landmark-relative phrasing, locality patterns) |
 
-Indian names/addresses are not yet implemented.
+(`PERSON_NAME` is one shared entity type produced by both packs' layers, so 12 + 17 − 1 shared = 28
+unique types total.)
+
+## Multi-language
+
+`@maskflow/detection` on npm is a TypeScript port of the 10 pure regex/structural intl types
+(email, phone, SSN, credit card, IP, AWS key, API key, JWT, IBAN, street address) — same API
+shape as the Python SDK, tested against the same fixtures so both stay accuracy-matched.
+`PERSON_NAME`/`DATE_OF_BIRTH` (need spaCy NER) and the India pack's checksum-validated types stay
+Python-only for now. See [`packages/maskflow-js/README.md`](packages/maskflow-js/README.md).
+
+```ts
+import { mask, unmask } from "@maskflow/detection";
+
+const result = mask("Email me at alice@example.com or call 415-555-0132.");
+unmask(result.maskedText, result.mapping); // original text, restored
+```
 
 ## MaskFlow vs. alternatives
 
@@ -89,23 +178,39 @@ Indian names/addresses are not yet implemented.
 | Indian identifiers with checksums | Aadhaar, PAN, GSTIN, IFSC, UPI (in `maskflow-sdk`) | No | No |
 | Session-consistent tokens (unmask later) | Yes | Via custom anonymizer config | Yes, today |
 | NER | spaCy | spaCy, Stanza, transformers | Regex-based, no NER |
-| Breadth / maturity | Narrow, early (12 types) | Broad, mature (Microsoft-backed, years of production use) | Narrow, early |
+| Breadth / maturity | Narrow, early (28 types) | Broad, mature (Microsoft-backed, years of production use) | Narrow, early |
 | License | MIT | MIT | Varies by package |
-| Languages | Python (JS port in progress) | Python, multi-language via configurable NLP models | JS/TS |
+| Languages | Python + TypeScript (regex layer) | Python, multi-language via configurable NLP models | JS/TS |
 
 Presidio is ahead on breadth and maturity. If you need broad, battle-tested coverage today, use it.
 MaskFlow's bet is Indian-identifier accuracy and a reversible mask/unmask flow that's simpler to
-drop into a single-provider-agnostic call.
+drop into a single, provider-agnostic call.
 
 ## Benchmark
 
-Open benchmark coming: per-entity precision/recall, open dataset, reproducible — including results
-where competitors beat us.
+Open benchmark in progress in [`bench/indiapii/`](bench/indiapii/): per-entity precision/recall
+against a synthetic dataset, reproducible with one command, including results where competitors
+beat us. Scoring code exists; the dataset and published numbers are not out yet — track progress
+at [maskflow.in/benchmark.html](https://maskflow.in/benchmark.html).
+
+## Roadmap
+
+Openly not done yet, so you know what you're signing up for:
+
+- Published benchmark results (see above).
+- `maskflow-gateway` — an HTTP proxy that masks/unmasks around any provider without touching
+  application code. Not started; see `CLAUDE.md`'s target architecture.
+- Full India-pack parity in `@maskflow/detection` (checksum-validated Indian types, not just the
+  10 intl regex types).
 
 ## Links
 
 - Site: [maskflow.in](https://maskflow.in)
-- Docs: [packages/maskflow-sdk/README.md](packages/maskflow-sdk/README.md),
-  [docs/configuration.md](docs/configuration.md) (`.maskflowrc`)
+- Docs: [`docs/configuration.md`](docs/configuration.md),
+  [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
+  [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
+  [`docs/data-refresh.md`](docs/data-refresh.md)
+- [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
+- License: [MIT](LICENSE)
