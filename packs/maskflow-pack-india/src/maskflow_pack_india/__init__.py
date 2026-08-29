@@ -32,8 +32,9 @@ from maskflow_core.recognizer import (
     PatternRecognizer,
     Recognizer,
 )
+from maskflow_core.registry import register_surrogate_generator
 
-from . import gazetteer, patterns
+from . import gazetteer, patterns, surrogates
 from .data.indian_places import INDIAN_STATE_UT_NAMES
 
 _RECOGNIZERS: list[Recognizer] = []
@@ -530,6 +531,117 @@ _add(PatternRecognizer("INDIAN_ADDRESS", patterns.INDIAN_ADDRESS_LOCALITY_RE, 0.
 # no context) -- confirmed PRE-EXISTING in pack-intl alone, not introduced
 # this session; see the L3 report.
 _add(NlpRecognizer("PERSON", "PERSON_NAME", 0.75, agreement_boost=0.2))
+
+
+# ---------------------------------------------------------------------------
+# Strategy.SURROGATE fake-value generators -- see surrogates.py's module
+# docstring for what "synthetic" means here (random-within-valid-shape, not
+# drawn from any real-world registry). Registered for every type this pack
+# owns; Strategy.SURROGATE falls back to Strategy.REPLACE for anything not
+# listed here (see masking.py's surrogate_substitute()), so this list is the
+# single source of truth for "which India types actually get a surrogate."
+# ---------------------------------------------------------------------------
+register_surrogate_generator(
+    "AADHAAR",
+    surrogates.surrogate_aadhaar,
+    "random digits satisfying the Verhoeff checksum, 12 (UID) or 16 (VID) "
+    "digits matching the original's length -- not drawn from any real "
+    "UIDAI-issued range",
+)
+register_surrogate_generator(
+    "AADHAAR_MASKED",
+    surrogates.surrogate_aadhaar_masked,
+    "same masked display shape (8 masked digits + 4 real-looking digits) "
+    "with a freshly random last-4 group",
+)
+register_surrogate_generator(
+    "PAN",
+    surrogates.surrogate_pan,
+    "random 5 letters + 4 digits + 1 letter, 4th letter restricted to PAN's "
+    "published holder-category set -- no checksum exists to satisfy",
+)
+register_surrogate_generator(
+    "GSTIN",
+    surrogates.surrogate_gstin,
+    "random state code (01-38) + surrogate PAN + entity number + 'Z' + a "
+    "correctly computed mod-36 checksum character",
+)
+register_surrogate_generator(
+    "IFSC",
+    surrogates.surrogate_ifsc,
+    "a real, published RBI bank code (data/ifsc_bank_codes.py) + random "
+    "6-char branch code -- the bank code lookup is IFSC's only structural "
+    "check, same as the pack's own validator",
+)
+register_surrogate_generator(
+    "UPI_VPA",
+    surrogates.surrogate_upi_vpa,
+    "random handle + a real, published NPCI PSP handle (data/upi_handles.py)",
+)
+register_surrogate_generator(
+    "INDIAN_MOBILE",
+    surrogates.surrogate_indian_mobile,
+    "random 10-digit number starting 6-9 (TRAI's assignable range), "
+    "preserving the original's +91/0/bare prefix style",
+)
+register_surrogate_generator(
+    "PIN_CODE",
+    surrogates.surrogate_pin_code,
+    "random 6-digit code, first digit 1-8 (India Post's assignable zones)",
+)
+register_surrogate_generator(
+    "VOTER_ID",
+    surrogates.surrogate_voter_id,
+    "random 3 letters + 7 digits (EPIC number shape, no published checksum)",
+)
+register_surrogate_generator(
+    "INDIAN_PASSPORT",
+    surrogates.surrogate_indian_passport,
+    "random 8-char inline number, or a full TD3 MRZ block with all four "
+    "ICAO 9303 check digits correctly computed, matching whichever form "
+    "the original was",
+)
+register_surrogate_generator(
+    "DRIVING_LICENCE",
+    surrogates.surrogate_driving_licence,
+    "a real, published state RTO code (data/indian_state_rto_codes.py) + "
+    "random office/year/serial digits",
+)
+register_surrogate_generator(
+    "VEHICLE_REG",
+    surrogates.surrogate_vehicle_reg,
+    "a real, published state RTO code + random office/series/number",
+)
+register_surrogate_generator(
+    "ABHA_NUMBER",
+    surrogates.surrogate_abha_number,
+    "random 14 digits in 2-4-4-4 groups -- no published NDHM checksum to "
+    "satisfy",
+)
+register_surrogate_generator(
+    "ABHA_ADDRESS",
+    surrogates.surrogate_abha_address,
+    "random handle @ abdm/sbx, ABDM's own domain suffixes",
+)
+register_surrogate_generator(
+    "BANK_ACCOUNT_IN",
+    surrogates.surrogate_bank_account,
+    "random digits in the original's own length (9-18 digits) -- no "
+    "cross-bank checksum exists",
+)
+register_surrogate_generator(
+    "PERSON_NAME",
+    surrogates.surrogate_person_name,
+    "a name drawn from this pack's own bundled Indian-name gazetteer "
+    "(data/indian_names.py), matching the original's word count",
+)
+register_surrogate_generator(
+    "INDIAN_ADDRESS",
+    surrogates.surrogate_indian_address,
+    "a fabricated address built from this pack's own bundled city/state "
+    "lists (data/indian_places.py) and locality-suffix vocabulary -- never "
+    "a real street address",
+)
 
 
 def load_recognizers() -> list[Recognizer]:

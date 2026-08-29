@@ -184,6 +184,12 @@ jobs:
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest bench/indiapii/harness/tests -m benchmark -q
+      # Pure/deterministic pieces only (task generation, scoring, cache,
+      # pipeline masking against a fake model) -- no Anthropic key needed.
+      # The live task-model/judge path (pipeline.py's TaskModel.generate(),
+      # judge.py's Judge.score()) is exercised by a manual `run` invocation,
+      # same as llm_adapter.py's own network call is never run in CI.
+      - run: uv run pytest bench/indiapii/quality/tests -q
 
   detection-js:
     needs: changes
