@@ -1,0 +1,1455 @@
+{
+  "corpus": "indiapii-v1.0",
+  "generated_at": "2026-08-29T08:53:03.900303+00:00",
+  "num_docs": 2000,
+  "canonical_labels": [
+    "AADHAAR",
+    "AADHAAR_MASKED",
+    "ABHA_ADDRESS",
+    "ABHA_NUMBER",
+    "BANK_ACCOUNT_IN",
+    "DRIVING_LICENCE",
+    "GSTIN",
+    "IFSC",
+    "INDIAN_ADDRESS",
+    "INDIAN_MOBILE",
+    "INDIAN_PASSPORT",
+    "PAN",
+    "PERSON_NAME",
+    "PIN_CODE",
+    "UPI_VPA",
+    "VEHICLE_REG",
+    "VOTER_ID"
+  ],
+  "adapters": {
+    "maskflow": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 0.9683615819209039,
+          "recall": 1.0,
+          "f1": 0.983926521239954,
+          "tp": 857,
+          "fp": 28,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 285,
+          "fp": 0,
+          "fn": 0
+        },
+        "ABHA_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 141,
+          "fp": 0,
+          "fn": 0
+        },
+        "ABHA_NUMBER": {
+          "precision": 1.0,
+          "recall": 0.8741258741258742,
+          "f1": 0.9328358208955224,
+          "tp": 250,
+          "fp": 0,
+          "fn": 36
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 1.0,
+          "recall": 0.8765323992994746,
+          "f1": 0.9342043863742417,
+          "tp": 1001,
+          "fp": 0,
+          "fn": 141
+        },
+        "DRIVING_LICENCE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 286,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 114,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1142,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 4454,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9802847754654983,
+          "recall": 1.0,
+          "f1": 0.9900442477876107,
+          "tp": 1790,
+          "fp": 36,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 101,
+          "fp": 0,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.17715437073775572,
+          "recall": 0.5712143928035982,
+          "f1": 0.27043653140896723,
+          "tp": 1143,
+          "fp": 5309,
+          "fn": 858
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        },
+        "VEHICLE_REG": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 286,
+          "fp": 0,
+          "fn": 0
+        },
+        "VOTER_ID": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 119,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 0.9683615819209039,
+          "recall": 1.0,
+          "f1": 0.983926521239954,
+          "tp": 857,
+          "fp": 28,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 285,
+          "fp": 0,
+          "fn": 0
+        },
+        "ABHA_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 141,
+          "fp": 0,
+          "fn": 0
+        },
+        "ABHA_NUMBER": {
+          "precision": 1.0,
+          "recall": 0.8741258741258742,
+          "f1": 0.9328358208955224,
+          "tp": 250,
+          "fp": 0,
+          "fn": 36
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 1.0,
+          "recall": 0.8765323992994746,
+          "f1": 0.9342043863742417,
+          "tp": 1001,
+          "fp": 0,
+          "fn": 141
+        },
+        "DRIVING_LICENCE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 286,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 114,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1142,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.2761562640323305,
+          "recall": 1.0,
+          "f1": 0.43279380717804367,
+          "tp": 1230,
+          "fp": 3224,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9802847754654983,
+          "recall": 1.0,
+          "f1": 0.9900442477876107,
+          "tp": 1790,
+          "fp": 36,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 101,
+          "fp": 0,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.310136391816491,
+          "recall": 1.0,
+          "f1": 0.47344138175795575,
+          "tp": 2001,
+          "fp": 4451,
+          "fn": 0
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        },
+        "VEHICLE_REG": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 286,
+          "fp": 0,
+          "fn": 0
+        },
+        "VOTER_ID": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 119,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 70.07318426660807,
+      "median_doc_ms": 20.194311000523157,
+      "p95_doc_ms": 28.205725997395348,
+      "peak_memory_mb": 1.609375,
+      "doc_errors": 0
+    },
+    "presidio_oob": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 1798,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9022177419354839,
+          "recall": 1.0,
+          "f1": 0.9485956544780073,
+          "tp": 1790,
+          "fp": 194,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "PERSON_NAME": {
+          "precision": 0.13603873645376988,
+          "recall": 0.29485257371314344,
+          "f1": 0.1861786052382455,
+          "tp": 590,
+          "fp": 3747,
+          "fn": 1411
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.40545050055617354,
+          "recall": 0.5926829268292683,
+          "f1": 0.4815059445178335,
+          "tp": 729,
+          "fp": 1069,
+          "fn": 501
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9022177419354839,
+          "recall": 1.0,
+          "f1": 0.9485956544780073,
+          "tp": 1790,
+          "fp": 194,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "PERSON_NAME": {
+          "precision": 0.22181231265851972,
+          "recall": 0.48075962018990503,
+          "f1": 0.3035657936257494,
+          "tp": 962,
+          "fp": 3375,
+          "fn": 1039
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "latency_ms_per_kb": 54.25321360427903,
+      "median_doc_ms": 15.067910004290752,
+      "p95_doc_ms": 24.66000700223958,
+      "peak_memory_mb": 2.07421875,
+      "doc_errors": 0
+    },
+    "presidio_custom": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 0.9335511982570807,
+          "recall": 1.0,
+          "f1": 0.9656338028169015,
+          "tp": 857,
+          "fp": 61,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 1798,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9022177419354839,
+          "recall": 1.0,
+          "f1": 0.9485956544780073,
+          "tp": 1790,
+          "fp": 194,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.13603873645376988,
+          "recall": 0.29485257371314344,
+          "f1": 0.1861786052382455,
+          "tp": 590,
+          "fp": 3747,
+          "fn": 1411
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 0.9335511982570807,
+          "recall": 1.0,
+          "f1": 0.9656338028169015,
+          "tp": 857,
+          "fp": 61,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.40545050055617354,
+          "recall": 0.5926829268292683,
+          "f1": 0.4815059445178335,
+          "tp": 729,
+          "fp": 1069,
+          "fn": 501
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9022177419354839,
+          "recall": 1.0,
+          "f1": 0.9485956544780073,
+          "tp": 1790,
+          "fp": 194,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.22181231265851972,
+          "recall": 0.48075962018990503,
+          "f1": 0.3035657936257494,
+          "tp": 962,
+          "fp": 3375,
+          "fn": 1039
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "latency_ms_per_kb": 56.26524839333499,
+      "median_doc_ms": 15.767477001645602,
+      "p95_doc_ms": 24.658006004756317,
+      "peak_memory_mb": 0.55078125,
+      "doc_errors": 0
+    },
+    "mask_privacy": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 0.3860294117647059,
+          "recall": 0.36777583187390545,
+          "f1": 0.37668161434977576,
+          "tp": 420,
+          "fp": 668,
+          "fn": 722
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 2864,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.2828381548084441,
+          "recall": 0.8083798882681564,
+          "f1": 0.41905589342600635,
+          "tp": 1447,
+          "fp": 3669,
+          "fn": 343
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "PERSON_NAME": {
+          "precision": 0.23487712665406427,
+          "recall": 0.496751624187906,
+          "f1": 0.31894753730145997,
+          "tp": 994,
+          "fp": 3238,
+          "fn": 1007
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 0.3860294117647059,
+          "recall": 0.36777583187390545,
+          "f1": 0.37668161434977576,
+          "tp": 420,
+          "fp": 668,
+          "fn": 722
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": 0.4137569832402235,
+          "recall": 0.9634146341463414,
+          "f1": 0.5788959452857841,
+          "tp": 1185,
+          "fp": 1679,
+          "fn": 45
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.2828381548084441,
+          "recall": 0.8083798882681564,
+          "f1": 0.41905589342600635,
+          "tp": 1447,
+          "fp": 3669,
+          "fn": 343
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "PERSON_NAME": {
+          "precision": 0.2774102079395085,
+          "recall": 0.5867066466766616,
+          "f1": 0.3767046366115835,
+          "tp": 1174,
+          "fp": 3058,
+          "fn": 827
+        },
+        "PIN_CODE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 857
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "latency_ms_per_kb": 80.84078324918269,
+      "median_doc_ms": 21.70959900104208,
+      "p95_doc_ms": 39.393473001837265,
+      "peak_memory_mb": 0.69921875,
+      "doc_errors": 20
+    },
+    "naive_regex": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 0.374072457442165,
+          "recall": 1.0,
+          "f1": 0.5444726810673444,
+          "tp": 857,
+          "fp": 1434,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.5599356395816573,
+          "recall": 0.7776536312849162,
+          "f1": 0.6510757717492983,
+          "tp": 1392,
+          "fp": 1094,
+          "fn": 398
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": 0.8890041493775933,
+          "recall": 1.0,
+          "f1": 0.9412410763316859,
+          "tp": 857,
+          "fp": 107,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 2001
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 0.374072457442165,
+          "recall": 1.0,
+          "f1": 0.5444726810673444,
+          "tp": 857,
+          "fp": 1434,
+          "fn": 0
+        },
+        "AADHAAR_MASKED": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 285
+        },
+        "ABHA_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 141
+        },
+        "ABHA_NUMBER": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "DRIVING_LICENCE": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 114
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1142
+        },
+        "INDIAN_ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1230
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.7200321802091714,
+          "recall": 1.0,
+          "f1": 0.8372310570626754,
+          "tp": 1790,
+          "fp": 696,
+          "fn": 0
+        },
+        "INDIAN_PASSPORT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 101
+        },
+        "PAN": {
+          "precision": 0.8890041493775933,
+          "recall": 1.0,
+          "f1": 0.9412410763316859,
+          "tp": 857,
+          "fp": 107,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 2001
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 857,
+          "fp": 0,
+          "fn": 0
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        },
+        "VEHICLE_REG": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 286
+        },
+        "VOTER_ID": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 119
+        }
+      },
+      "latency_ms_per_kb": 0.1381329785638111,
+      "median_doc_ms": 0.03559899778338149,
+      "p95_doc_ms": 0.07312399975489825,
+      "peak_memory_mb": 0.0,
+      "doc_errors": 0
+    },
+    "llm_detector": {
+      "available": false,
+      "skipped_reason": "ANTHROPIC_API_KEY not set"
+    }
+  }
+}

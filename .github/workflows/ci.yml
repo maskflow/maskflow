@@ -15,6 +15,7 @@ jobs:
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       cli: ${{ steps.filter.outputs.cli }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
+      bench: ${{ steps.filter.outputs.bench }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -50,6 +51,12 @@ jobs:
               - 'pyproject.toml'
             detection_js:
               - 'packages/maskflow-js/**'
+            bench:
+              - 'bench/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
 
   core:
     needs: changes
@@ -161,6 +168,22 @@ jobs:
       - run: uv run ruff check packages/maskflow-cli
       - run: uv run ruff format --check packages/maskflow-cli
       - run: uv run pytest packages/maskflow-cli/tests -q
+
+  benchmark:
+    needs: changes
+    if: needs.changes.outputs.bench == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      # Only ever needs the maskflow adapter -- no presidio/mask-privacy
+      # install, no Anthropic key. See bench/indiapii/harness/tests/
+      # test_ci_regression.py.
+      - run: uv sync --all-extras
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run pytest bench/indiapii/harness/tests -m benchmark -q
 
   detection-js:
     needs: changes
