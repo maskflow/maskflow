@@ -2,6 +2,7 @@
 
 Synthetic India-PII benchmark corpus for maskflow-pack-india. ALL identifiers in this dataset are synthetic: checksum-valid (Aadhaar, GSTIN) or format-valid (PAN, IFSC, UPI VPA, ...) values generated at random and cross-checked against the pack's own validators (see generator/generate.py's self_check()). **None of these identifiers belong to any real person, business, or account.**
 
+- License: CC-BY-4.0
 - Seed: 20260827
 - Documents: 2000
 - Entity spans: 13468
