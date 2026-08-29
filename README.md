@@ -188,16 +188,33 @@ drop into a single, provider-agnostic call.
 
 ## Benchmark
 
-Open benchmark in progress in [`bench/indiapii/`](bench/indiapii/): per-entity precision/recall
-against a synthetic dataset, reproducible with one command, including results where competitors
-beat us. Scoring code exists; the dataset and published numbers are not out yet — track progress
-at [maskflow.in/benchmark.html](https://maskflow.in/benchmark.html).
+Real numbers, not vendor claims — including results where competitors beat us. Scored on
+[`indiapii-v1.0`](bench/indiapii/data/indiapii-v1.0.jsonl), 2000 synthetic, checksum-valid
+documents (Aadhaar/PAN/GSTIN pass the same validity math the real formats use), against stock
+Presidio, Presidio with two hand-added Aadhaar/PAN recognizers, and mask-privacy. F1 below is
+partial-overlap matching (exact-character matching is too strict for multi-token spans like
+addresses — see the full report for both).
+
+| Entity | MaskFlow | Presidio (stock) | Presidio + custom | mask-privacy |
+|---|---|---|---|---|
+| GSTIN / IFSC / UPI VPA | 100% | not supported | not supported | not supported |
+| AADHAAR | 98.4% | not supported | 96.6% | not supported |
+| PAN | 100% | not supported | 100% | not supported |
+| Indian mobile number | 99.0% | 94.9% | 94.9% | 41.9% |
+| Person name | 47.3% | 30.4% | 30.4% | 37.7% |
+| Indian address | 43.3% | 48.2% | 48.2% | **57.9%** |
+
+Indian address is the one row above where a competitor is ahead — our gazetteer still has room to
+grow, and we're not hiding that. Full per-entity breakdown (all 17 types), strict-vs-partial
+matching, and latency/memory numbers:
+[`bench/reports/indiapii-v1.0/results.md`](bench/reports/indiapii-v1.0/results.md). Reproduce with
+`uv sync --group bench && uv run python -m bench.indiapii.harness run`; harness source in
+[`bench/indiapii/harness/`](bench/indiapii/harness/).
 
 ## Roadmap
 
 Openly not done yet, so you know what you're signing up for:
 
-- Published benchmark results (see above).
 - `maskflow-gateway` — an HTTP proxy that masks/unmasks around any provider without touching
   application code. Not started; see `CLAUDE.md`'s target architecture.
 - Full India-pack parity in `@maskflow/detection` (checksum-validated Indian types, not just the
