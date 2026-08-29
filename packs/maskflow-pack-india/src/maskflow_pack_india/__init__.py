@@ -615,8 +615,7 @@ register_surrogate_generator(
 register_surrogate_generator(
     "ABHA_NUMBER",
     surrogates.surrogate_abha_number,
-    "random 14 digits in 2-4-4-4 groups -- no published NDHM checksum to "
-    "satisfy",
+    "random 14 digits in 2-4-4-4 groups -- no published NDHM checksum to satisfy",
 )
 register_surrogate_generator(
     "ABHA_ADDRESS",
@@ -626,8 +625,7 @@ register_surrogate_generator(
 register_surrogate_generator(
     "BANK_ACCOUNT_IN",
     surrogates.surrogate_bank_account,
-    "random digits in the original's own length (9-18 digits) -- no "
-    "cross-bank checksum exists",
+    "random digits in the original's own length (9-18 digits) -- no cross-bank checksum exists",
 )
 register_surrogate_generator(
     "PERSON_NAME",

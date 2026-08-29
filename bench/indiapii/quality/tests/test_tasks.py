@@ -44,9 +44,7 @@ class TestBuildTasks:
         assert [t.to_json() for t in first] == [t.to_json() for t in second]
 
     def test_extract_fields_restricted_to_schema_domains(self) -> None:
-        non_schema_docs = [
-            _doc(f"other-{i}", "some_unknown_domain", "text", ()) for i in range(10)
-        ]
+        non_schema_docs = [_doc(f"other-{i}", "some_unknown_domain", "text", ()) for i in range(10)]
         kyc_docs = [_kyc_doc(f"kyc-{i:03d}") for i in range(80)]
         tasks = build_tasks(non_schema_docs + kyc_docs, seed=1)
         extract_tasks = [t for t in tasks if t.task_type == "extract_fields"]
