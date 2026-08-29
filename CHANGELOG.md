@@ -11,6 +11,41 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- `bench/indiapii/quality`: a 200-task LLM-judged quality benchmark
+  answering "does masking India PII before an LLM call cost task quality,
+  and does it cost more with typed placeholders than with plausible
+  surrogates?" Tasks (summarize / draft_reply / extract_fields) are sampled
+  from the existing `indiapii-v1.0` corpus and run under three conditions
+  -- unmasked, masked-with-placeholders (`Strategy.REPLACE`), and
+  masked-with-surrogates (`Strategy.SURROGATE`) -- through the real
+  `mask_with_policy()`/`unmask()` round trip. Each final (post-unmask)
+  response is scored by a fixed-rubric LLM judge (task_completion, fluency,
+  factual_consistency, 1-5 each, tool-use structured output) plus
+  deterministic field-accuracy P/R/F1 for extract_fields (against the
+  corpus's own gold spans) and a placeholder-leak check. Both the task
+  model and judge model are env-configurable
+  (`MASKFLOW_BENCH_QUALITY_TASK_MODEL` / `..._JUDGE_MODEL`, default Sonnet
+  5 / Opus 5) and every LLM call is disk-cached, so a rerun with no new
+  tasks makes zero API calls. `uv run python -m bench.indiapii.quality
+  generate-tasks|run`. CI runs the pure/deterministic pieces (task
+  generation, scoring, cache, masking pipeline against a fake model) with
+  no Anthropic key; the live task-model/judge path is manual-only, same as
+  `bench/indiapii/harness/adapters/llm_adapter.py`'s own network call.
+- `maskflow-pack-india` (still unreleased `0.5.0`, no separate bump): adds
+  `Strategy.SURROGATE` generators for all 16 of this pack's registered
+  types (`surrogates.py`) -- previously `SURROGATE` silently fell back to
+  the same typed placeholder as `Strategy.REPLACE` for every India type
+  (no generator was registered, per `masking.py`'s documented fallback).
+  Each generator produces a fresh checksum-valid (Verhoeff/GSTIN/MRZ, where
+  a checksum exists) or format-valid value drawn from this pack's own
+  bundled reference data (IFSC bank codes, RTO codes, UPI PSP handles,
+  city/state/name gazetteers) -- never a real-world-registry lookup, same
+  "random within the valid shape" discipline `bench/indiapii/generator/
+  identifiers.py` already uses to build the synthetic benchmark corpus.
+  Built for `bench/indiapii/quality`'s masked-with-surrogates condition,
+  but registered unconditionally, so any caller selecting
+  `Strategy.SURROGATE` for an India type now gets a real surrogate instead
+  of the `REPLACE` fallback.
 - `scripts/refresh_india_reference_data.py` and `docs/data-refresh.md`
   (issue #28): closes the one item on that issue with zero prior progress --
   every `maskflow-pack-india` reference-data file documented its own refresh
