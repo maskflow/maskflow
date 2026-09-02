@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.5.0"
+version = "0.6.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,6 +40,10 @@ dependencies = [
     "tomli-w>=1.0",
     # CLI-only: `maskflow doctor`'s health/entity tables.
     "rich>=13.0",
+    # `maskflow scan`'s API sources (langfuse / helicone / langsmith) call
+    # those vendors' REST APIs directly -- one small HTTP client instead of
+    # three vendor SDKs. The file sources (jsonl/csv/dir) never import it.
+    "httpx>=0.27",
 ]
 
 [project.scripts]
@@ -48,6 +52,16 @@ maskflow = "maskflow_cli.app:main"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+]
+# `maskflow scan s3://...` -- only pulled by an explicit
+# `pip install 'maskflow-cli[s3]'`, so boto3 (large) never taxes the common
+# jsonl/csv/dir scan or the rest of the CLI.
+s3 = [
+    "boto3>=1.34",
+]
+# `maskflow scan postgres ...` -- likewise opt-in.
+postgres = [
+    "psycopg[binary]>=3.1",
 ]
 
 [tool.uv.sources]

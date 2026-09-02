@@ -11,6 +11,28 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- `maskflow-cli` `0.6.0`: `maskflow scan` -- a retrospective PII-exposure
+  scanner that answers "what PII has this system already sent to third-party
+  LLM providers?". Reads historical LLM traffic through one of eight source
+  adapters (`jsonl`/`ndjson` with `--field` selectors, `csv` with
+  `--columns`, `dir` recursive, `s3` streamed, `postgres` server-side
+  cursor, and the `langfuse` / `helicone` / `langsmith` REST APIs), streams
+  it through MaskFlow's own detection with bounded memory (`--workers N`,
+  resumable via a `--checkpoint` file), and writes **one self-contained HTML
+  report** (inline CSS/JS, zero external requests -- it is meant to be
+  emailed to auditors) with a single headline number, breakdowns by entity
+  type / provider / service / time, a severity ranking with a plain-English
+  "why this matters" per row, masked excerpts only (never a raw value), and
+  a DPDP Rule 6 mapping appendix slot. Also `--format json|csv`. Detection
+  is hybrid: the pattern/checksum pass runs over the whole corpus (the
+  1 GB / 5 min target) while the NER pass (bare Indian names & addresses)
+  runs on a `--sample` and is reported as a clearly-labelled extrapolated
+  estimate; `--deep` forces the full pipeline over every record. A
+  permanent CI fuzz gate (`scan-fuzz`) generates a corpus of known
+  synthetic PII, renders the report, and asserts no raw value survives in
+  any output format. New CLI dependency `httpx` (API sources); `boto3` /
+  `psycopg` gated behind `maskflow-cli[s3]` / `[postgres]`. No change to
+  `maskflow-core`, `maskflow-sdk`, or the existing CLI commands.
 - `bench/indiapii/quality`: a 200-task LLM-judged quality benchmark
   answering "does masking India PII before an LLM call cost task quality,
   and does it cost more with typed placeholders than with plausible
