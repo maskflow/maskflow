@@ -26,7 +26,7 @@ From the repo root (or anywhere, with `maskflow-cli` installed):
 
 ```bash
 maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
-  --field messages[].content \
+  --field 'messages[].content' \
   --provider-field provider \
   --service-field model \
   --timestamp-field created_at \
@@ -34,8 +34,9 @@ maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
   --out exposure-report.html
 ```
 
-- `--field messages[].content` — pull the text out of each record (the `[]`
-  means "every message").
+- `--field 'messages[].content'` — pull the text out of each record (the `[]`
+  means "every message"). **Quote it** — `[]` is a glob character in most
+  shells, so an unquoted `messages[].content` fails with "no matches found".
 - `--provider-field` / `--service-field` / `--timestamp-field` — map the
   record's metadata columns so the report can break exposure down by
   provider, model, and time.

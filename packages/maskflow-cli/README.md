@@ -7,7 +7,7 @@ maskflow config validate
 maskflow config show --resolved
 maskflow doctor
 maskflow explain "<text>"
-maskflow scan jsonl requests.jsonl --field messages[].content
+maskflow scan jsonl requests.jsonl --field 'messages[].content'
 ```
 
 `maskflow doctor` checks installed versions, spaCy model presence (and
@@ -60,10 +60,13 @@ can be emailed to an auditor as-is.
 
 ```bash
 maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
-  --field messages[].content \
+  --field 'messages[].content' \
   --provider-field provider --service-field model --timestamp-field created_at \
   --deep --out exposure-report.html
 ```
+
+Quote the `--field` value -- `messages[].content` contains `[]`, which your
+shell would otherwise try to expand.
 
 Then open `exposure-report.html`. See [`examples/README.md`](examples/README.md)
 for a walk-through of the output, and `docs/scan.md` for the full reference.
