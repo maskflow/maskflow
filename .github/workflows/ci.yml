@@ -53,6 +53,7 @@ jobs:
             cli_docker:
               - 'packages/maskflow-cli/Dockerfile'
               - 'packages/maskflow-cli/.dockerignore'
+              - '.github/workflows/ci.yml'
             detection_js:
               - 'packages/maskflow-js/**'
             bench:
@@ -218,17 +219,25 @@ jobs:
 
   scan-docker:
     # Only when the Dockerfile itself changes -- the image installs
-    # maskflow-cli from PyPI, so this validates the Dockerfile mechanics,
-    # not the PR's Python changes.
+    # maskflow-cli from PyPI, so this validates the Dockerfile mechanics
+    # (and the published CLI), not the PR's Python changes.
     needs: changes
     if: needs.changes.outputs.cli_docker == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f packages/maskflow-cli/Dockerfile packages/maskflow-cli
-      - run: |
-          docker build -f packages/maskflow-cli/Dockerfile -t mf-cli-test packages/maskflow-cli
+      - run: docker build -f packages/maskflow-cli/Dockerfile -t mf-cli-test packages/maskflow-cli
+      - name: The image runs `maskflow scan`
+        run: |
           docker run --rm mf-cli-test --help | grep -q "MaskFlow"
+          docker run --rm mf-cli-test scan --help | grep -q "self-contained report"
+          # Read-only mount; JSON to stdout so the container writes nothing.
+          docker run --rm -v "$PWD/packages/maskflow-cli/examples:/work:ro" mf-cli-test \
+            scan jsonl /work/sample-llm-traffic.jsonl \
+            --field 'messages[].content' --provider-field provider \
+            --service-field model --timestamp-field created_at --deep \
+            --format json --out - --quiet > out.json
+          python -c "import json; d=json.load(open('out.json')); assert d['headline_total']>100, d['headline_total']; assert any(r['entity_type']=='AADHAAR' for r in d['severity_rows'])"
 
   benchmark:
     needs: changes
