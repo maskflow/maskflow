@@ -4,7 +4,7 @@ shape the row actually has."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from ..fieldsel import first_str
 from ..spec import SourceSpec
@@ -29,7 +29,7 @@ def parse_timestamp(value: str | None) -> datetime | None:
     if num > 1e11:  # milliseconds
         num /= 1000.0
     try:
-        return datetime.fromtimestamp(num, tz=UTC)
+        return datetime.fromtimestamp(num, tz=timezone.utc)
     except (OverflowError, OSError, ValueError):
         return None
 

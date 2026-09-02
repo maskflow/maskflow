@@ -124,7 +124,7 @@ class S3Source:
             elif is_text:
                 yield ScanRecord(
                     id=f"{key}{_SEP}{offset}:0",
-                    text=raw.decode("utf-8", errors="replace").rstrip("\n"),
+                    text=raw.decode("utf-8", errors="replace").rstrip("\r\n"),
                     provider=self._spec.provider,
                     record_ref=f"s3://{self._bucket}/{key}@{offset}",
                 )

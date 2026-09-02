@@ -71,7 +71,7 @@ def iter_text_lines(stream: io.BufferedReader, *, resume_offset: int = 0) -> Ite
     for raw in stream:
         offset += len(raw)
         lineno += 1
-        text = raw.decode("utf-8", errors="replace").rstrip("\n")
+        text = raw.decode("utf-8", errors="replace").rstrip("\r\n")
         if not text.strip():
             continue
         yield JsonLine(end_offset=offset, lineno=lineno, obj=text)

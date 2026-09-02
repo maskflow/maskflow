@@ -91,9 +91,10 @@ def test_csv_resume_by_row(tmp_path: Path) -> None:
 
 
 def test_dir_source_mixed_files(tmp_path: Path) -> None:
-    (tmp_path / "a.jsonl").write_text('{"c": "json-text"}\n', encoding="utf-8")
-    (tmp_path / "b.txt").write_text("plain line one\nplain line two\n", encoding="utf-8")
-    (tmp_path / "c.csv").write_text("col\ncsv-text\n", encoding="utf-8")
+    (tmp_path / "a.jsonl").write_bytes(b'{"c": "json-text"}\r\n')
+    # CRLF on purpose -- text lines must come back without a trailing \r.
+    (tmp_path / "b.txt").write_bytes(b"plain line one\r\nplain line two\r\n")
+    (tmp_path / "c.csv").write_bytes(b"col\r\ncsv-text\r\n")
     spec = SourceSpec(kind="dir", target=str(tmp_path), fields=("c",), columns=("col",))
     src = get_source(spec)
     assert src.preflight().ok
