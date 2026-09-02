@@ -14,6 +14,7 @@ jobs:
       pack_india: ${{ steps.filter.outputs.pack_india }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       cli: ${{ steps.filter.outputs.cli }}
+      cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
       bench: ${{ steps.filter.outputs.bench }}
     steps:
@@ -49,6 +50,9 @@ jobs:
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
               - 'pyproject.toml'
+            cli_docker:
+              - 'packages/maskflow-cli/Dockerfile'
+              - 'packages/maskflow-cli/.dockerignore'
             detection_js:
               - 'packages/maskflow-js/**'
             bench:
@@ -185,6 +189,46 @@ jobs:
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest packages/maskflow-cli/tests/scan -m leak -q
+
+  scan-binary:
+    # The standalone `maskflow` binary (PyInstaller, spaCy excluded). Guards
+    # the spec / entry point / multiprocessing-freeze regression surface
+    # without the full 3-OS release matrix on every PR.
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # From the local checkout -- its deps (core / packs / httpx) are all
+      # on PyPI at compatible versions, only maskflow-cli itself is local.
+      - run: pip install pyinstaller ./packages/maskflow-cli
+      - run: pyinstaller --clean --noconfirm packages/maskflow-cli/packaging/maskflow.spec
+      - name: Smoke test
+        run: |
+          dist/maskflow --help
+          dist/maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
+            --field 'messages[].content' --provider-field provider --out /tmp/r.html --quiet
+          grep -q "PII Exposure Scan" /tmp/r.html
+          ! grep -Eq '\b19[0-9]{2}-[0-9]{2}-[0-9]{2}\b' /tmp/r.html
+          dist/maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
+            --field 'messages[].content' --deep 2>&1 | grep -q "needs the NER pass"
+
+  scan-docker:
+    # Only when the Dockerfile itself changes -- the image installs
+    # maskflow-cli from PyPI, so this validates the Dockerfile mechanics,
+    # not the PR's Python changes.
+    needs: changes
+    if: needs.changes.outputs.cli_docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f packages/maskflow-cli/Dockerfile packages/maskflow-cli
+      - run: |
+          docker build -f packages/maskflow-cli/Dockerfile -t mf-cli-test packages/maskflow-cli
+          docker run --rm mf-cli-test --help | grep -q "MaskFlow"
 
   benchmark:
     needs: changes

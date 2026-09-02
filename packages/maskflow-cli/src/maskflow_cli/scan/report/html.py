@@ -200,26 +200,71 @@ def _sev_row(r: SeverityRow) -> str:
 </details>"""
 
 
+# Draft mapping of DPDP Rules, Rule 6 ("Reasonable security safeguards") to
+# what this scan and MaskFlow contribute. Written by MaskFlow as a starting
+# point for your DPO -- it is not legal advice and the report says so. A
+# deployment can replace the whole block by substituting its own HTML for
+# the `<!-- DPDP_RULE6_APPENDIX -->` marker (see docs/dpdp-rule6.md).
+_DPDP_RULE6_ROWS = (
+    (
+        "Data security measures such as encryption, obfuscation, masking or "
+        "the use of virtual tokens",
+        "MaskFlow's core purpose: <code>mask()</code> replaces detected PII with "
+        "reversible typed tokens before a prompt leaves the process, so the "
+        "value is never disclosed to the LLM provider. This scan measures "
+        "where that control was <em>not</em> yet in place.",
+    ),
+    (
+        "Appropriate measures to control access to computer resources used by "
+        "the Data Fiduciary or a Data Processor",
+        "Out of MaskFlow's scope — it is a library, not an access-control "
+        "system. The findings here show which downstream systems (LLM "
+        "providers, and any observability vendor holding the logs) hold "
+        "personal data and therefore need access review.",
+    ),
+    (
+        "Visibility on access to personal data through logs and monitoring, "
+        "and the ability to detect, investigate and remediate unauthorised "
+        "access",
+        "This scan is the detection step: it inventories personal data that "
+        "reached third parties, by type, provider, and time, from your own "
+        "logs. Re-run it on a schedule to monitor for regressions.",
+    ),
+    (
+        "Reasonable measures for continued processing (including backups) in "
+        "the event of a compromise",
+        "Out of MaskFlow's scope.",
+    ),
+    (
+        "Retention of logs and personal data for a period enabling detection "
+        "and investigation of unauthorised access",
+        "This scan consumes exactly those logs; the report itself contains no "
+        "raw values and is safe to retain and share as evidence of the review.",
+    ),
+    (
+        "Contractual terms with Data Processors requiring reasonable security safeguards",
+        "Out of MaskFlow's scope. The provider / vendor list in the breakdown "
+        "above is the set of processors whose contracts should carry these "
+        "terms.",
+    ),
+)
+
+
 def _appendix(s: ScanSummary) -> str:
+    rows = "".join(f"<tr><td>{clause}</td><td>{how}</td></tr>" for clause, how in _DPDP_RULE6_ROWS)
     return f"""
 <h2>Appendix A — DPDP Rule 6 (Reasonable Security Safeguards) mapping</h2>
 <div class="appendix">
-  <p class="small muted">This section maps the findings above to the safeguards
-  expected under Rule 6 of the Digital Personal Data Protection Rules. The
-  mapping text is maintained by MaskFlow and inserted here.</p>
+  <p class="small muted">A starting-point mapping of Rule 6 of the Digital Personal
+  Data Protection Rules to what this scan and MaskFlow contribute. Written by
+  MaskFlow, <strong>not legal advice</strong> — review it against your Data
+  Protection Officer's reading. A deployment can replace this block by
+  substituting its own text for the
+  <span class="mono">&lt;!-- DPDP_RULE6_APPENDIX --&gt;</span> marker.</p>
   {s.dpdp_appendix_slot}
   <table>
-    <thead><tr><th>Rule 6 safeguard</th><th>How this scan / MaskFlow addresses it</th></tr></thead>
-    <tbody>
-      <tr><td>Encryption, masking or equivalent controls for personal data</td>
-          <td class="muted">Provided by MaskFlow — pending</td></tr>
-      <tr><td>Controls on access to personal data</td>
-          <td class="muted">Provided by MaskFlow — pending</td></tr>
-      <tr><td>Logging, monitoring and review to detect unauthorised processing</td>
-          <td class="muted">Provided by MaskFlow — pending</td></tr>
-      <tr><td>Measures to enable continued processing after a breach</td>
-          <td class="muted">Provided by MaskFlow — pending</td></tr>
-    </tbody>
+    <thead><tr><th>Rule 6 safeguard</th><th>How this scan / MaskFlow relates</th></tr></thead>
+    <tbody>{rows}</tbody>
   </table>
 </div>"""
 

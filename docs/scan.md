@@ -29,6 +29,20 @@ uv run maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jso
 `maskflow-cli` is on your `PATH`. Quote `--field` values — `[]` is a shell
 glob character.)
 
+## Install
+
+| | | NER pass (names / addresses / DOB) |
+|---|---|---|
+| `pipx install maskflow-cli` (or `pip`) | `maskflow scan ...` + `python -m spacy download en_core_web_sm` | yes |
+| `docker run --rm -v "$PWD:/work" ghcr.io/maskflow/cli scan ...` | spaCy + model baked in | yes, out of the box |
+| standalone binary (GitHub Releases: `maskflow-linux-x86_64`, `-macos-arm64`, `-windows-x86_64.exe`) | no Python needed | **no** — pattern/checksum pass only; `--deep` errors |
+| [`maskflow/scan-action`](../packaging/scan-action/) | `maskflow scan` in CI, report as an artifact, optional fail-over threshold | yes |
+
+`s3` / `postgres` sources need the `maskflow-cli[s3]` / `[postgres]` extras
+(already in the Docker image). See
+[`packages/maskflow-cli/packaging/`](../packages/maskflow-cli/packaging/)
+for how each artifact is built.
+
 > **Runs entirely locally. Nothing is transmitted.** The API sources
 > (`langfuse`, `helicone`, `langsmith`) make outbound requests to *your
 > own* observability account to *read* your data. No scan data — not the
@@ -80,8 +94,7 @@ Metadata is best-effort. Point the scanner at the fields that carry it:
 ## Detection depth
 
 The pattern/checksum pass (Aadhaar, PAN, GSTIN, UPI, IFSC, email, phone,
-cards, …) runs over the **entire** corpus — this is what hits the
-performance target of 1 GB of JSONL in under 5 minutes on a laptop.
+cards, …) runs over the **entire** corpus.
 
 The NER pass (bare Indian **names** and **addresses**) is ~100–1000× slower.
 By default it runs on a sample of `--ner-sample N` records (default 5 000)
@@ -89,11 +102,15 @@ and its name/address counts are **extrapolated and clearly labelled as an
 estimate** in the report. Pass `--deep` to run the full pipeline over every
 record for exact figures.
 
-The pattern pass runs at roughly 0.4 ms/record per core; with
-`--workers 8` on a typical laptop, 1 GB of JSONL (~5 M short records)
-finishes in about 4–5 minutes. `--deep` and a large `--ner-sample` trade
-directly against that budget — a `--deep` scan of the same 1 GB takes
-hours, which is why `--sample` exists for a fast first pass.
+**Throughput.** The pattern pass costs roughly 0.4 ms/record/core on
+prose-heavy traffic and up to ~1.3 ms/record/core on pathologically
+PII-dense records (measured on a 6-identifiers-per-record synthetic
+corpus). With `--workers 8` that puts a **1 GB JSONL export at roughly
+5–15 minutes** depending on density — at the low end for real logs, higher
+for corpora that are mostly identifiers. Use `--sample N` for a fast first
+pass on very large or very dense inputs. `--deep` runs the NER pass over
+every record and takes hours on 1 GB — reserve it for a `--sample` or a
+modest corpus.
 
 If spaCy or its model is not installed, the NER pass is skipped entirely
 and the report says so; pattern-based detection is unaffected.
@@ -126,8 +143,11 @@ and the report says so; pattern-based detection is unaffected.
 4. **Masked excerpts** — example contexts with every value shown as a typed
    placeholder such as `<AADHAAR_1>`. A raw value never appears anywhere in
    the document; a permanent CI fuzz job enforces this.
-5. **Appendix A — DPDP Rule 6 mapping** — a table skeleton with a
-   `<!-- DPDP_RULE6_APPENDIX -->` slot for text maintained by MaskFlow.
+5. **Appendix A — DPDP Rule 6 mapping** — a draft mapping of each Rule 6
+   safeguard to what the scan / MaskFlow contributes (starting point, not
+   legal advice), with a `<!-- DPDP_RULE6_APPENDIX -->` marker for
+   substituting your own authoritative text. See
+   [`dpdp-rule6.md`](dpdp-rule6.md).
 6. A **methodology footer** — detector versions, entity list, what was not
    scanned, corpus fingerprint.
 

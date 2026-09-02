@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 from dataclasses import dataclass
 
 from maskflow_core.config.engine import compile_config
@@ -17,6 +18,15 @@ from maskflow_core.detection import DEFAULT_MIN_CONFIDENCE, detect, detect_patte
 from maskflow_core.entities import Span
 
 _EXCERPT_CONTEXT = 64  # chars of surrounding text kept on each side
+
+# A last-pass scrub applied to the rendered excerpt string only (never to
+# the detection path): any ISO-ish or slashed date left in an excerpt is
+# blanked. A date sitting next to an identity document is very likely a
+# date of birth, and DATE_OF_BIRTH is an NER-only type -- so without this,
+# a patterns-only run (the standalone binary, or any host without spaCy)
+# could surface a raw DOB in a KYC excerpt. Bounded, anchored, no
+# backtracking (CLAUDE.md rule 3); operates on a <=400-char string.
+_EXCERPT_DATE_RE = re.compile(r"\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b")
 
 
 @dataclass(frozen=True)
@@ -103,7 +113,12 @@ def scan_with(
 
 def ner_available() -> tuple[bool, str]:
     """Whether the NER pass can run in this environment (spaCy + model
-    present). Cheap: reuses core's lru_cached loader. Returns (ok, reason)."""
+    present). Cheap: reuses core's lru_cached loader. Returns (ok, reason).
+
+    Suppresses core's "spaCy isn't installed" UserWarning -- `scan` emits
+    its own clearer one-line note and shouldn't print both."""
+    import warnings
+
     import maskflow_pack_india  # noqa: F401
     import maskflow_pack_intl  # noqa: F401
 
@@ -112,7 +127,9 @@ def ner_available() -> tuple[bool, str]:
     except Exception as exc:  # noqa: BLE001
         return False, str(exc)
     try:
-        nlp = _get_nlp()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            nlp = _get_nlp()
     except OSError as exc:
         return False, str(exc)
     if nlp is None:
@@ -160,6 +177,7 @@ def _excerpt(text: str, target: Span, all_spans: list[Span]) -> str:
         pieces.append(text[cursor:right])
 
     body = "".join(pieces).replace("\n", " ").strip()
+    body = _EXCERPT_DATE_RE.sub("<DATE>", body)
     prefix = "…" if left > 0 else ""
     suffix = "…" if right < len(text) else ""
     return (prefix + body + suffix)[:400]

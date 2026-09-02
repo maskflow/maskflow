@@ -37,6 +37,27 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   (60 fully synthetic records) plus `examples/README.md` and the
   `generate_sample.py` that produced it -- with a quick-start in the CLI
   README.
+  - **Packaging**: `release-cli.yml` now also builds and pushes
+    `ghcr.io/maskflow/cli` (`linux/amd64` + `arm64`, spaCy + model baked
+    in) and PyInstaller standalone binaries for mac/linux/windows (attached
+    to the GitHub Release; spaCy excluded, so the binary runs the
+    pattern/checksum pass only and `--deep` points at the pip/Docker
+    install). `packaging/scan-action/` is a composite GitHub Action that
+    runs `maskflow scan` in CI, uploads the report, and can fail the job
+    over a PII-instance threshold. New CI jobs `scan-binary` (spec /
+    entry-point / multiprocessing-freeze regression guard) and
+    `scan-docker` (Dockerfile-change smoke build). `docs/scan.md` gains an
+    Install section; `packages/maskflow-cli/packaging/README.md` documents
+    each channel.
+  - **DPDP Rule 6 appendix**: the report's Appendix A now carries a draft
+    mapping of each Rule 6 safeguard to what the scan / MaskFlow
+    contributes (explicitly a starting point, not legal advice), keeping
+    the `<!-- DPDP_RULE6_APPENDIX -->` marker for a deployment's own text.
+    See `docs/dpdp-rule6.md`.
+  - Excerpts now blank any date-shaped token (`<DATE>`) regardless of the
+    NER pass -- a date next to an identity document is very likely a DOB,
+    and `DATE_OF_BIRTH` is NER-only, so a patterns-only run (the binary, or
+    any host without spaCy) no longer surfaces a raw birth-date.
 - `bench/indiapii/quality`: a 200-task LLM-judged quality benchmark
   answering "does masking India PII before an LLM call cost task quality,
   and does it cost more with typed placeholders than with plausible
