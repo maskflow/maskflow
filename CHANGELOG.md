@@ -32,7 +32,11 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   synthetic PII, renders the report, and asserts no raw value survives in
   any output format. New CLI dependency `httpx` (API sources); `boto3` /
   `psycopg` gated behind `maskflow-cli[s3]` / `[postgres]`. No change to
-  `maskflow-core`, `maskflow-sdk`, or the existing CLI commands.
+  `maskflow-core`, `maskflow-sdk`, or the existing CLI commands. Ships a
+  runnable example -- `packages/maskflow-cli/examples/sample-llm-traffic.jsonl`
+  (60 fully synthetic records) plus `examples/README.md` and the
+  `generate_sample.py` that produced it -- with a quick-start in the CLI
+  README.
 - `bench/indiapii/quality`: a 200-task LLM-judged quality benchmark
   answering "does masking India PII before an LLM call cost task quality,
   and does it cost more with typed placeholders than with plausible
