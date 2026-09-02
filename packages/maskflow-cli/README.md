@@ -59,14 +59,16 @@ can be emailed to an auditor as-is.
 [`examples/`](examples/):
 
 ```bash
-maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
+uv run maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
   --field 'messages[].content' \
   --provider-field provider --service-field model --timestamp-field created_at \
   --deep --out exposure-report.html
 ```
 
-Quote the `--field` value -- `messages[].content` contains `[]`, which your
-shell would otherwise try to expand.
+Notes: `uv run` runs the CLI from the workspace venv -- drop it if
+`maskflow-cli` is on your `PATH` (`pipx install maskflow-cli`). Quote the
+`--field` value: `messages[].content` contains `[]`, which the shell would
+otherwise try to expand.
 
 Then open `exposure-report.html`. See [`examples/README.md`](examples/README.md)
 for a walk-through of the output, and `docs/scan.md` for the full reference.

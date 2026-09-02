@@ -22,16 +22,24 @@ Each record looks like:
 
 ## Run it
 
-From the repo root (or anywhere, with `maskflow-cli` installed):
+From the repo root. `uv run` invokes the CLI from the workspace venv without
+a separate install; if you have `maskflow-cli` installed (`pipx install
+maskflow-cli`, or an activated venv), drop the `uv run` prefix.
 
 ```bash
-maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
+uv run maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
   --field 'messages[].content' \
   --provider-field provider \
   --service-field model \
   --timestamp-field created_at \
   --deep \
   --out exposure-report.html
+```
+
+One line, if your shell mangles the backslash continuations:
+
+```bash
+uv run maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl --field 'messages[].content' --provider-field provider --service-field model --timestamp-field created_at --deep --out exposure-report.html
 ```
 
 - `--field 'messages[].content'` — pull the text out of each record (the `[]`

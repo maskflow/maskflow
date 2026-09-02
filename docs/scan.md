@@ -19,13 +19,15 @@ maskflow scan SOURCE [TARGET] [options]
 live in `packages/maskflow-cli/examples/`:
 
 ```bash
-maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
+uv run maskflow scan jsonl packages/maskflow-cli/examples/sample-llm-traffic.jsonl \
   --field 'messages[].content' \
   --provider-field provider --service-field model --timestamp-field created_at \
   --deep --out exposure-report.html
 ```
 
-(Quote `--field` values — `[]` is a shell glob character.)
+(`uv run` invokes the CLI from the workspace venv — drop it if
+`maskflow-cli` is on your `PATH`. Quote `--field` values — `[]` is a shell
+glob character.)
 
 > **Runs entirely locally. Nothing is transmitted.** The API sources
 > (`langfuse`, `helicone`, `langsmith`) make outbound requests to *your
