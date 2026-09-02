@@ -69,6 +69,15 @@ jobs:
           tags: |
             ghcr.io/maskflow/cli:${{ needs.version.outputs.v }}
             ghcr.io/maskflow/cli:latest
+      - name: Smoke test the pushed image
+        run: |
+          IMG=ghcr.io/maskflow/cli:${{ needs.version.outputs.v }}
+          docker run --rm "$IMG" scan --help | grep -q "self-contained report"
+          docker run --rm -v "$PWD/packages/maskflow-cli/examples:/work:ro" "$IMG" \
+            scan jsonl /work/sample-llm-traffic.jsonl \
+            --field 'messages[].content' --provider-field provider --deep \
+            --format json --out - --quiet > out.json
+          python3 -c "import json;d=json.load(open('out.json'));assert d['headline_total']>100,d"
 
   binaries:
     needs: version
