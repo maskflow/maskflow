@@ -83,6 +83,27 @@ Opt-in only; importing `maskflow_core` never touches global logging state on its
 cover NER-only entity types (bare names/addresses) or `exc_info` tracebacks — see
 [`docs/logging.md`](docs/logging.md) for the exact boundary.
 
+## Auditing what already reached a provider
+
+Going forward, `mask()` keeps PII out of your prompts. But the DPDP audit asks a backward-looking
+question first: *what has this system already sent to a third-party LLM?* `maskflow scan` answers
+it. It reads your historical LLM traffic — a JSONL/CSV export, a recursive directory, an S3
+archive, a Postgres table, or the Langfuse / Helicone / LangSmith API — streams it through the
+same detection with bounded memory (parallel, resumable), and writes **one self-contained HTML
+report**: a single headline number, breakdowns by entity type / provider / model / time, a
+severity ranking with a plain-English "why this matters" per row, **masked excerpts only** (never
+a raw value), and a DPDP Rule 6 mapping appendix. Also `--format json|csv`. Runs entirely locally
+— the API sources only *read* from your own account, nothing is transmitted.
+
+```bash
+pip install maskflow-cli
+maskflow scan jsonl requests.jsonl --field 'messages[].content' --deep -o exposure.html
+```
+
+A runnable 60-record synthetic example ships in
+[`packages/maskflow-cli/examples/`](packages/maskflow-cli/examples/); full reference in
+[`docs/scan.md`](docs/scan.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -225,6 +246,7 @@ Openly not done yet, so you know what you're signing up for:
 - Site: [maskflow.in](https://maskflow.in)
 - Docs: [`docs/configuration.md`](docs/configuration.md),
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
+  [`docs/scan.md`](docs/scan.md),
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
   [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
