@@ -13,6 +13,7 @@ jobs:
       pack_intl: ${{ steps.filter.outputs.pack_intl }}
       pack_india: ${{ steps.filter.outputs.pack_india }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
+      gateway: ${{ steps.filter.outputs.gateway }}
       cli: ${{ steps.filter.outputs.cli }}
       cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
@@ -39,6 +40,13 @@ jobs:
               - 'packs/maskflow-pack-intl/**'
               - 'pyproject.toml'
             sdk_python:
+              - 'packages/maskflow-sdk/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
+            gateway:
+              - 'packages/maskflow-gateway/**'
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
@@ -152,6 +160,71 @@ jobs:
       - run: uv run ruff check packages/maskflow-sdk
       - run: uv run ruff format --check packages/maskflow-sdk
       - run: uv run pytest packages/maskflow-sdk/tests -q
+
+  gateway:
+    needs: changes
+    if: needs.changes.outputs.gateway == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-gateway
+      - run: uv run ruff format --check packages/maskflow-gateway
+      - run: uv run pytest packages/maskflow-gateway/tests -q
+      # Explicit rerun of the leak gate so a PII leak is an unmissable
+      # distinct failure, same pattern as scan-fuzz.
+      - run: uv run pytest packages/maskflow-gateway/tests -m leak -q
+
+  gateway-helm:
+    needs: changes
+    if: needs.changes.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - run: helm lint packages/maskflow-gateway/deploy/helm/maskflow-gateway
+      - name: Templates render with and without Redis
+        run: |
+          helm template t packages/maskflow-gateway/deploy/helm/maskflow-gateway \
+            --set redis.url=redis://r:6379/0 --set sessionKey.value=$(printf 'ab%.0s' {1..32}) >/dev/null
+          helm template t packages/maskflow-gateway/deploy/helm/maskflow-gateway \
+            --set redis.url= --set replicaCount=1 --set autoscaling.enabled=false >/dev/null
+
+  gateway-loadtest:
+    # Throughput smoke: the gateway proxies a zero-latency upstream under a
+    # short Locust run; fails only if it cannot clear a low floor, so a
+    # future change that tanks throughput is caught. Not the published
+    # table (see packages/maskflow-gateway/loadtest/README.md).
+    needs: changes
+    if: needs.changes.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: Run the load test against a mock upstream
+        working-directory: packages/maskflow-gateway
+        run: |
+          uv run uvicorn loadtest.mock_upstream:app --port 9001 --log-level warning &
+          MASKFLOW_GATEWAY_OPENAI_BASE_URL=http://127.0.0.1:9001/v1 \
+          MASKFLOW_GATEWAY_NER=0 MASKFLOW_GATEWAY_JSON_LOGS=1 \
+          uv run maskflow-gateway --port 8000 --workers 2 &
+          for i in $(seq 1 30); do curl -sf localhost:8000/healthz && break; sleep 1; done
+          uv run --with locust locust -f loadtest/locustfile.py \
+            --host http://127.0.0.1:8000 --headless -u 40 -r 20 -t 20s \
+            --only-summary --exit-code-on-error 1 --csv gw
 
   cli:
     needs: changes
@@ -276,7 +349,7 @@ jobs:
 
   pip-audit:
     needs: changes
-    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.cli == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

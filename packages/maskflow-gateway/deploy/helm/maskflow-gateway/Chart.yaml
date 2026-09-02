@@ -1,0 +1,15 @@
+apiVersion: v2
+name: maskflow-gateway
+description: OpenAI/Anthropic-compatible proxy that masks PII before it reaches an LLM provider and restores it in the response, streaming included.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://maskflow.in
+sources:
+  - https://github.com/maskflow/maskflow
+keywords:
+  - pii
+  - llm
+  - proxy
+  - dpdp
+  - privacy

@@ -81,6 +81,22 @@ def test_reserved_envs_never_swept_into_config(isolated_dirs: tuple[Path, Path])
     assert resolved.config == resolve_config(cwd=project, home=home, env={}).config
 
 
+def test_sibling_package_env_subprefix_is_ignored_not_flagged(
+    isolated_dirs: tuple[Path, Path],
+) -> None:
+    """MASKFLOW_GATEWAY_* belongs to maskflow-gateway's own settings -- it
+    must not be parsed as .maskflowrc config nor reported as malformed."""
+    home, project = isolated_dirs
+    env = {
+        "MASKFLOW_GATEWAY_NER": "1",
+        "MASKFLOW_GATEWAY_OPENAI_BASE_URL": "https://x/v1",
+        "MASKFLOW_GATEWAY_SESSION_KEY": "ab" * 32,
+    }
+    # Must not raise ConfigResolutionError, and must not change the config.
+    resolved = resolve_config(cwd=project, home=home, env=env)
+    assert resolved.config == resolve_config(cwd=project, home=home, env={}).config
+
+
 def test_field_level_merge_preserves_sibling_fields(isolated_dirs: tuple[Path, Path]) -> None:
     """A higher layer setting only `threshold` must not erase a lower
     layer's `strategy` for the same entity."""

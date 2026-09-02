@@ -5,11 +5,87 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
-`@maskflow/detection`).
+`maskflow-gateway`, `@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-gateway` `0.1.0`** -- a new package: a drop-in
+  OpenAI/Anthropic-compatible reverse proxy (FastAPI + uvicorn) that masks
+  PII before a request reaches the provider and restores it in the
+  response, **including mid-stream**. Point an existing client's base URL
+  at it; no SDK or code change.
+  - **Endpoints**: `POST /v1/chat/completions` (OpenAI, streaming +
+    non-streaming, tool calls), `POST /v1/messages` (Anthropic, streaming +
+    tool use), `POST /v1/embeddings` (masks each input *before* it is
+    embedded -- the RAG path), `POST /v1/mask` / `POST /v1/unmask` (direct,
+    no upstream), `GET /healthz` `GET /readyz` `GET /metrics`
+    `GET /v1/entities`. The client's own provider key is forwarded
+    untouched and nothing is stored unless
+    `MASKFLOW_GATEWAY_UPSTREAM_API_KEY` is explicitly set.
+  - **Streaming unmask**: the model may split `<PERSON_NAME_1>` across SSE
+    chunks (and across frames, with JSON/protocol punctuation between the
+    halves). The gateway parses the provider SSE, and a `StreamingUnmasker`
+    -- a rolling buffer + a trie of the session's active placeholders --
+    emits the longest prefix that cannot extend into any placeholder,
+    retaining only the tail that still could, bounded by max placeholder
+    length, flushing at stream end. A two-layer decoder
+    (`ByteStreamingUnmasker`) handles chunk splits mid-UTF-8. Fuzz-tested:
+    the concatenated stream equals `maskflow_core.unmask` for **every**
+    byte-boundary chunking, including mid-code-point (`pytest -m` gate in
+    the `gateway` CI job). A whole-response `unmask` fallback covers the
+    (mask-side-precluded) case of a placeholder being an infix of an
+    original.
+  - **Tool calls**: `tool_calls[].function.arguments` /
+    `input_json_delta` are walked as JSON -- string leaves masked, keys
+    never touched, types preserved, depth + size bounded; streamed
+    argument fragments are accumulated and emitted unmasked as one delta.
+    Inbound `tool_result` / `role:"tool"` content is masked through the
+    session (never unmasked toward the model), so placeholder identity
+    stays consistent across a whole agent run.
+  - **Sessions**: `X-Maskflow-Session: <opaque id>` opts into cross-turn
+    token identity; absent -> a fresh ephemeral session per request. Redis
+    backend (`maskflow-gateway[redis]`) with **AES-256-GCM** encryption of
+    the session mapping at rest (`MASKFLOW_GATEWAY_SESSION_KEY`), mandatory
+    TTL (default 1 h, per-request `X-Maskflow-Session-TTL` capped at 24 h),
+    and a `maxmemory-policy != noeviction` check that makes `/readyz`
+    return **503 fail-closed** (eviction mid-conversation = failed unmask =
+    raw placeholders shown to a user).
+  - **Ops**: JSON logs through `maskflow_core`'s PII scrub filter;
+    Prometheus metrics (`maskflow_detections_total{entity_type,direction}`,
+    `maskflow_requests_total`, `maskflow_errors_total`,
+    `maskflow_stage_latency_seconds{stage=mask|upstream|unmask}`); request
+    size limit, upstream timeouts, per-key token-bucket rate limiting.
+    Error bodies carry offsets / entity types / stage names only, never a
+    raw value.
+  - **Deploy** (`packages/maskflow-gateway/deploy/`): multi-arch
+    `Dockerfile`, `docker-compose.yml` (gateway + noeviction Redis), a Helm
+    chart with HPA / PDB / ServiceMonitor / probes / non-root hardening,
+    and Fly / Render / Railway templates. `release-gateway.yml` publishes
+    `maskflow-gateway` to PyPI (OIDC) and `ghcr.io/maskflow/gateway`
+    (`amd64` + `arm64`) on a `gateway-v*` tag.
+  - **Load test** (`packages/maskflow-gateway/loadtest/`): a Locust profile
+    + zero-latency upstream stub. Published numbers, with the hardware:
+    **~430 req/s** pattern-only and **~90 req/s** NER-enabled on an Intel
+    i7-9750H laptop, 4 workers -- a conservative floor and a ~4-5x
+    pattern-vs-NER ratio, not an SLA. New CI jobs `gateway`, `gateway-helm`,
+    `gateway-loadtest`.
+  - `docs/gateway.md` covers the request flow, the streaming algorithm, and
+    the `noeviction` requirement in full.
+- **`maskflow-sdk` `0.7.0`** (additive, no breaking change):
+  - `Session.snapshot() -> bytes` / `Session.restore(bytes)` -- serialize
+    the full masking state (mapping + every identity cache) so a session
+    can move between processes. `Session.mapping` property exposes the live
+    `Mapping` (for building an incremental unmasker). `Session(...,
+    patterns_only=True)` / `session(patterns_only=True)` skip the NER pass
+    (routes through `detect_patterns_only`) -- the same
+    coverage/speed tradeoff `maskflow_core.logging_filter` makes. All
+    additive; `mask()` / `unmask()` / `mask_and_call()` and the existing
+    `Session` API are unchanged (`test_api_signatures.py` still green).
+- `maskflow-core`: `resolve_config()` now ignores env vars under the
+  `MASKFLOW_GATEWAY_*` sub-namespace (owned by `maskflow-gateway`'s own
+  settings) instead of flagging them as malformed `.maskflowrc` config.
 
 - `maskflow-cli` `0.6.0`: `maskflow scan` -- a retrospective PII-exposure
   scanner that answers "what PII has this system already sent to third-party

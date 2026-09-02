@@ -1,0 +1,29 @@
+# Render Blueprint -- https://render.com/docs/blueprint-spec
+# In the Render dashboard: New > Blueprint, point at this repo. Set
+# MASKFLOW_GATEWAY_SESSION_KEY as a secret (32 random bytes, hex).
+services:
+  - type: web
+    name: maskflow-gateway
+    runtime: docker
+    dockerfilePath: ./packages/maskflow-gateway/deploy/Dockerfile
+    dockerContext: ./packages/maskflow-gateway
+    healthCheckPath: /readyz
+    plan: starter
+    envVars:
+      - key: MASKFLOW_GATEWAY_NER
+        value: "0"
+      - key: MASKFLOW_GATEWAY_JSON_LOGS
+        value: "1"
+      - key: MASKFLOW_GATEWAY_SESSION_KEY
+        sync: false
+      - key: MASKFLOW_GATEWAY_REDIS_URL
+        fromService:
+          type: redis
+          name: maskflow-redis
+          property: connectionString
+
+  - type: redis
+    name: maskflow-redis
+    plan: starter
+    maxmemoryPolicy: noeviction
+    ipAllowList: []

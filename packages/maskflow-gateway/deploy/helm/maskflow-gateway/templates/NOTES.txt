@@ -1,0 +1,20 @@
+MaskFlow Gateway {{ .Chart.AppVersion }} deployed as {{ include "maskflow-gateway.fullname" . }}.
+
+Point your OpenAI / Anthropic client's base URL at the service:
+
+  http://{{ include "maskflow-gateway.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/v1
+
+Checklist:
+{{- if .Values.redis.url }}
+  * Redis: {{ .Values.redis.url }} -- confirm `maxmemory-policy noeviction`
+    (the gateway's /readyz returns 503 otherwise, and an evicted session
+    means a user sees raw <PERSON_NAME_1> placeholders).
+{{- else }}
+  * No Redis configured: sessions are in-process. Keep replicaCount: 1 or
+    two replicas will disagree on placeholder identity.
+{{- end }}
+{{- if not (or .Values.sessionKey.existingSecret .Values.sessionKey.value) }}
+  * MASKFLOW_GATEWAY_SESSION_KEY is NOT set. Redis sessions need it
+    (AES-256-GCM at rest). Set sessionKey.existingSecret or sessionKey.value.
+{{- end }}
+  * NER pass is {{ if eq (toString (index .Values.env "MASKFLOW_GATEWAY_NER")) "1" }}ON{{ else }}OFF{{ end }}.

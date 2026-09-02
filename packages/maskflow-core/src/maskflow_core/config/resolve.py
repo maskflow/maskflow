@@ -31,6 +31,10 @@ ENV_PREFIX = "MASKFLOW_"
 # Existing envs owned by maskflow_core (strategies.py / mapping_store.py)
 # for unrelated purposes -- never swept into this config layer.
 _RESERVED_ENV_NAMES = {"MASKFLOW_HASH_KEY", "MASKFLOW_MAPPING_KEY"}
+# Sub-namespaces owned by sibling packages that legitimately prefix their
+# own settings with the brand (maskflow-gateway uses MASKFLOW_GATEWAY_*).
+# These are not .maskflowrc config and must not be flagged as malformed.
+_RESERVED_ENV_SUBPREFIXES = ("MASKFLOW_GATEWAY_",)
 _TOP_LEVEL_MASKFLOW_FIELDS = {"packs", "default_strategy"}
 
 
@@ -110,6 +114,8 @@ def _build_env_layer(env: Mapping[str, str]) -> tuple[Layer, list[ConfigError]]:
 
     for key, raw_value in env.items():
         if not key.startswith(ENV_PREFIX) or key in _RESERVED_ENV_NAMES:
+            continue
+        if key.startswith(_RESERVED_ENV_SUBPREFIXES):
             continue
         path = _parse_env_key(key)
         if path is None:
