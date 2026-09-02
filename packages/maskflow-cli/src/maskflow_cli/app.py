@@ -9,11 +9,13 @@ import typer
 from .commands.config_cmd import app as config_app
 from .commands.doctor_cmd import doctor
 from .commands.explain_cmd import explain
+from .scan.cmd import scan
 
 app = typer.Typer(help="MaskFlow: reversible PII masking for LLM calls.", no_args_is_help=True)
 app.add_typer(config_app, name="config")
 app.command("doctor")(doctor)
 app.command("explain")(explain)
+app.command("scan")(scan)
 
 
 def main() -> None:

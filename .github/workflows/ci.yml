@@ -169,6 +169,23 @@ jobs:
       - run: uv run ruff format --check packages/maskflow-cli
       - run: uv run pytest packages/maskflow-cli/tests -q
 
+  scan-fuzz:
+    # Permanent fuzz gate for `maskflow scan`: generate a corpus of known
+    # synthetic PII, render every report format, assert no raw value
+    # survives anywhere in the output. Kept as a distinct required check
+    # (not just folded into the `cli` job) so a leak is unmissable.
+    needs: changes
+    if: needs.changes.outputs.cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run pytest packages/maskflow-cli/tests/scan -m leak -q
+
   benchmark:
     needs: changes
     if: needs.changes.outputs.bench == 'true'
