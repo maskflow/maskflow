@@ -96,13 +96,15 @@ a raw value), and a DPDP Rule 6 mapping appendix. Also `--format json|csv`. Runs
 — the API sources only *read* from your own account, nothing is transmitted.
 
 ```bash
-pip install maskflow-cli
+pipx install maskflow-cli   # or: docker run --rm -v "$PWD:/work" ghcr.io/maskflow/cli
 maskflow scan jsonl requests.jsonl --field 'messages[].content' --deep -o exposure.html
 ```
 
-A runnable 60-record synthetic example ships in
-[`packages/maskflow-cli/examples/`](packages/maskflow-cli/examples/); full reference in
-[`docs/scan.md`](docs/scan.md).
+Also ships as a standalone binary (mac/linux/windows, no Python — pattern pass only) and a
+[GitHub Action](packaging/scan-action/) that can fail a build over a PII-exposure threshold. A
+runnable 60-record synthetic example is in
+[`packages/maskflow-cli/examples/`](packages/maskflow-cli/examples/); full reference,
+including the Rule 6 mapping, in [`docs/scan.md`](docs/scan.md).
 
 ## Configuration
 
@@ -246,7 +248,7 @@ Openly not done yet, so you know what you're signing up for:
 - Site: [maskflow.in](https://maskflow.in)
 - Docs: [`docs/configuration.md`](docs/configuration.md),
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
-  [`docs/scan.md`](docs/scan.md),
+  [`docs/scan.md`](docs/scan.md), [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
   [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)

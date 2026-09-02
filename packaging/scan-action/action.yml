@@ -1,0 +1,109 @@
+name: "MaskFlow PII exposure scan"
+description: >-
+  Scan historical LLM traffic (JSONL/CSV/dir/S3/Postgres or Langfuse/
+  Helicone/LangSmith) for PII that reached a third-party provider, publish a
+  self-contained HTML report as an artifact, and optionally fail the job if
+  the count exceeds a threshold. Runs entirely on the runner.
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  source:
+    description: "jsonl | ndjson | csv | dir | s3 | postgres | langfuse | helicone | langsmith"
+    required: true
+  target:
+    description: "Path, s3:// URI, or connection string. Omit for the API sources."
+    required: false
+    default: ""
+  args:
+    description: >-
+      Extra `maskflow scan` arguments as one string, e.g.
+      "--field 'messages[].content' --provider-field provider --deep".
+    required: false
+    default: ""
+  format:
+    description: "html | json | csv -- the human report format."
+    required: false
+    default: "html"
+  output:
+    description: "Report file path."
+    required: false
+    default: "maskflow-scan-report.html"
+  fail-over:
+    description: >-
+      Fail the job if the total PII-instance count exceeds this number.
+      Empty (default) never fails.
+    required: false
+    default: ""
+  version:
+    description: "maskflow-cli version to install (default: latest)."
+    required: false
+    default: ""
+  python-version:
+    description: "Python for the runner venv."
+    required: false
+    default: "3.12"
+  upload-artifact:
+    description: "Upload the report as a workflow artifact."
+    required: false
+    default: "true"
+
+outputs:
+  total:
+    description: "Total PII instances that reached providers."
+    value: ${{ steps.scan.outputs.total }}
+  distinct:
+    description: "Distinct PII values."
+    value: ${{ steps.scan.outputs.distinct }}
+  report:
+    description: "Path to the generated report."
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - shell: bash
+      run: |
+        spec="maskflow-cli"
+        [ -n "${{ inputs.version }}" ] && spec="maskflow-cli==${{ inputs.version }}"
+        python -m pip install --upgrade pip
+        pip install "$spec"
+        # NER (names/addresses/DOB) needs the model; harmless if it fails
+        # (scan falls back to the pattern pass with a note).
+        python -m spacy download en_core_web_sm || true
+    - id: scan
+      shell: bash
+      run: |
+        set -euo pipefail
+        # JSON always, for the gate + a machine-readable artifact.
+        eval maskflow scan "${{ inputs.source }}" "${{ inputs.target }}" ${{ inputs.args }} \
+          --format json --out maskflow-scan.json --quiet
+        total=$(python -c "import json;print(json.load(open('maskflow-scan.json'))['headline_total'])")
+        distinct=$(python -c "import json;print(json.load(open('maskflow-scan.json'))['headline_distinct'])")
+        echo "total=$total"    >> "$GITHUB_OUTPUT"
+        echo "distinct=$distinct" >> "$GITHUB_OUTPUT"
+        echo "::notice::$total PII instances reached providers ($distinct distinct)"
+        # The human report, if a different format was asked for.
+        if [ "${{ inputs.format }}" != "json" ]; then
+          eval maskflow scan "${{ inputs.source }}" "${{ inputs.target }}" ${{ inputs.args }} \
+            --format "${{ inputs.format }}" --out "${{ inputs.output }}" --quiet
+        else
+          cp maskflow-scan.json "${{ inputs.output }}"
+        fi
+    - if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: maskflow-scan-report
+        path: |
+          ${{ inputs.output }}
+          maskflow-scan.json
+    - shell: bash
+      run: |
+        if [ -n "${{ inputs.fail-over }}" ] && [ "${{ steps.scan.outputs.total }}" -gt "${{ inputs.fail-over }}" ]; then
+          echo "::error::PII exposure ${{ steps.scan.outputs.total }} exceeds the allowed ${{ inputs.fail-over }}"
+          exit 1
+        fi

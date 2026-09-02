@@ -70,6 +70,16 @@ Notes: `uv run` runs the CLI from the workspace venv -- drop it if
 `--field` value: `messages[].content` contains `[]`, which the shell would
 otherwise try to expand.
 
+**Install it** -- four ways, see
+[`packaging/`](packaging/) and [`docs/scan.md`](../../docs/scan.md#install):
+
+| | NER (names/addresses/DOB) |
+|---|---|
+| `pipx install maskflow-cli` + `python -m spacy download en_core_web_sm` | yes |
+| `docker run --rm -v "$PWD:/work" ghcr.io/maskflow/cli scan ...` | yes, baked in |
+| standalone binary (GitHub Releases, no Python) | no -- pattern pass only |
+| [`maskflow/scan-action`](../../packaging/scan-action/) for CI | yes |
+
 Then open `exposure-report.html`. See [`examples/README.md`](examples/README.md)
 for a walk-through of the output, and `docs/scan.md` for the full reference.
 

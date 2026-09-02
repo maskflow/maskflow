@@ -1,0 +1,3 @@
+# The Dockerfile installs maskflow-cli from PyPI -- it needs no repo files
+# in the build context. Keep the context tiny.
+*
