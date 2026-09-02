@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-sdk"
-version = "0.6.0"
+version = "0.7.0"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
 requires-python = ">=3.10"

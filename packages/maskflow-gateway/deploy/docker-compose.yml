@@ -1,0 +1,36 @@
+# Local / single-box deployment: gateway + Redis with a mandatory
+# noeviction policy (an evicted session = a failed unmask = raw
+# placeholders shown to a user).
+#
+#   export MASKFLOW_GATEWAY_SESSION_KEY=$(python -c "import os;print(os.urandom(32).hex())")
+#   docker compose -f packages/maskflow-gateway/deploy/docker-compose.yml up
+
+services:
+  gateway:
+    image: ghcr.io/maskflow/gateway:latest
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      MASKFLOW_GATEWAY_REDIS_URL: redis://redis:6379/0
+      MASKFLOW_GATEWAY_SESSION_KEY: ${MASKFLOW_GATEWAY_SESSION_KEY:?set MASKFLOW_GATEWAY_SESSION_KEY to 32 random bytes, hex-encoded}
+      MASKFLOW_GATEWAY_NER: ${MASKFLOW_GATEWAY_NER:-0}
+      MASKFLOW_GATEWAY_OPENAI_BASE_URL: ${MASKFLOW_GATEWAY_OPENAI_BASE_URL:-https://api.openai.com/v1}
+      MASKFLOW_GATEWAY_ANTHROPIC_BASE_URL: ${MASKFLOW_GATEWAY_ANTHROPIC_BASE_URL:-https://api.anthropic.com/v1}
+      MASKFLOW_GATEWAY_RATE_LIMIT_PER_MINUTE: ${MASKFLOW_GATEWAY_RATE_LIMIT_PER_MINUTE:-0}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped

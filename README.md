@@ -106,6 +106,26 @@ runnable 60-record synthetic example is in
 [`packages/maskflow-cli/examples/`](packages/maskflow-cli/examples/); full reference,
 including the Rule 6 mapping, in [`docs/scan.md`](docs/scan.md).
 
+## Gateway: no code change at all
+
+`maskflow-gateway` is a drop-in OpenAI/Anthropic-compatible proxy. Point your existing client's
+base URL at it and PII is masked before every request reaches the provider and restored in the
+response — **streaming included** (a `<PERSON_NAME_1>` split across SSE chunks is stitched back
+together; fuzz-tested at every byte boundary). Tool-call arguments are walked as JSON; multi-turn
+token identity is kept in Redis (AES-256-GCM at rest).
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="sk-...")  # your real key, passed through
+```
+
+```bash
+pip install "maskflow-gateway[redis]"   # or: docker run -p 8000:8000 ghcr.io/maskflow/gateway
+```
+
+Full reference in [`packages/maskflow-gateway/README.md`](packages/maskflow-gateway/README.md) and
+[`docs/gateway.md`](docs/gateway.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -238,10 +258,10 @@ matching, and latency/memory numbers:
 
 Openly not done yet, so you know what you're signing up for:
 
-- `maskflow-gateway` — an HTTP proxy that masks/unmasks around any provider without touching
-  application code. Not started; see `CLAUDE.md`'s target architecture.
 - Full India-pack parity in `@maskflow/detection` (checksum-validated Indian types, not just the
   10 intl regex types).
+- `maskflow-gateway` hardening: more provider schemas, a Redis-cluster session backend, and
+  first-class OpenTelemetry traces.
 
 ## Links
 
@@ -250,7 +270,7 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
   [`docs/scan.md`](docs/scan.md), [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
-  [`docs/data-refresh.md`](docs/data-refresh.md)
+  [`docs/gateway.md`](docs/gateway.md), [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)

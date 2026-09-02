@@ -1,0 +1,81 @@
+image:
+  repository: ghcr.io/maskflow/gateway
+  tag: ""  # defaults to .Chart.appVersion
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+# Every MASKFLOW_GATEWAY_* setting (see the gateway README). `ner: "1"`
+# turns on the spaCy pass -- size the pod accordingly (see resources).
+env:
+  MASKFLOW_GATEWAY_NER: "0"
+  MASKFLOW_GATEWAY_JSON_LOGS: "1"
+  MASKFLOW_GATEWAY_OPENAI_BASE_URL: "https://api.openai.com/v1"
+  MASKFLOW_GATEWAY_ANTHROPIC_BASE_URL: "https://api.anthropic.com/v1"
+  MASKFLOW_GATEWAY_SESSION_TTL_SECONDS: "3600"
+  MASKFLOW_GATEWAY_RATE_LIMIT_PER_MINUTE: "0"
+
+redis:
+  # URL for an existing Redis. Leave empty for in-process sessions (only
+  # valid at replicaCount: 1).
+  url: "redis://maskflow-redis:6379/0"
+  # maxmemory-policy MUST be noeviction; /readyz fails closed otherwise.
+
+# The AES-256-GCM key for session encryption at rest. Provide ONE of:
+#   existingSecret: name of a Secret with key `session-key` (hex, 32 bytes)
+#   value: the hex string directly (chart creates the Secret) -- dev only
+sessionKey:
+  existingSecret: ""
+  value: ""
+
+# The upstream provider key. Omit to pass the client's own key through
+# (nothing stored). Same shape as sessionKey.
+upstreamApiKey:
+  existingSecret: ""
+  value: ""
+
+resources:
+  # Pattern-only (NER off): light. Turn NER on -> bump to ~1 CPU / 1Gi and
+  # raise startupProbe.failureThreshold (spaCy model load).
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+serviceMonitor:
+  # Prometheus Operator ServiceMonitor for /metrics.
+  enabled: false
+  interval: 30s
+  labels: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: gateway.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+podAnnotations: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

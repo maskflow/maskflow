@@ -1,0 +1,32 @@
+# fly.io -- `fly launch --copy-config --dockerfile deploy/Dockerfile` from
+# packages/maskflow-gateway, then:
+#   fly secrets set MASKFLOW_GATEWAY_SESSION_KEY=$(python -c "import os;print(os.urandom(32).hex())")
+#   fly redis create   # and set MASKFLOW_GATEWAY_REDIS_URL to its URL
+# Ensure the Redis has maxmemory-policy=noeviction (Upstash: eviction OFF).
+
+app = "maskflow-gateway"
+primary_region = "bom"
+
+[build]
+  dockerfile = "deploy/Dockerfile"
+
+[env]
+  MASKFLOW_GATEWAY_NER = "0"
+  MASKFLOW_GATEWAY_JSON_LOGS = "1"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/readyz"
+    interval = "10s"
+    timeout = "3s"
+
+[[vm]]
+  size = "shared-cpu-2x"
+  memory = "512mb"

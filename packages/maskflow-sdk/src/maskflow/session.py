@@ -16,12 +16,22 @@ not-shared-across-concurrent-callers caveat applies to it too.
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import secrets
 import time
 from typing import Any
 
-from maskflow_core import Mapping, MappingEntry, PIIType, Span, Strategy, detect, unmask
+from maskflow_core import (
+    Mapping,
+    MappingEntry,
+    PIIType,
+    Span,
+    Strategy,
+    detect,
+    detect_patterns_only,
+    unmask,
+)
 from maskflow_core.config import CompiledConfig, RootConfig, compile_config
 from maskflow_core.detection import DEFAULT_MIN_CONFIDENCE
 from maskflow_core.masking import surrogate_substitute
@@ -36,6 +46,11 @@ _RESERVED_TOKEN_RE = re.compile(r"<[A-Z_]+_\d+(?:_[0-9a-f]+)?>")
 
 _DEFAULT_MAX_DEPTH = 32
 _DEFAULT_MAX_ITEMS = 10_000
+
+# Bumped only on a breaking change to snapshot()'s dict shape. restore()
+# rejects an unknown version rather than silently mis-parsing a payload
+# written by a newer maskflow-sdk.
+_SNAPSHOT_VERSION = 1
 
 
 class SessionClosedError(RuntimeError):
@@ -80,9 +95,16 @@ class Session:
         ttl_seconds: float | None = 3600,
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
         config: RootConfig | None = None,
+        patterns_only: bool = False,
     ) -> None:
         self._ttl_seconds = ttl_seconds
         self._min_confidence = min_confidence
+        # patterns_only=True skips the NER pass entirely (detect_patterns_only
+        # instead of detect) -- no spaCy load, no per-document parse. Trades
+        # bare-name / address coverage for a large latency/throughput win, the
+        # same tradeoff maskflow_core.logging_filter already makes. Used by
+        # maskflow-gateway's MASKFLOW_GATEWAY_NER=0 mode.
+        self._patterns_only = patterns_only
         self._expires_at = None if ttl_seconds is None else time.monotonic() + ttl_seconds
         self._closed = False
         self._mapping = Mapping()
@@ -132,6 +154,24 @@ class Session:
                 f"Session expired after ttl_seconds={self._ttl_seconds}; its mapping has "
                 "been purged."
             )
+
+    def _detect(self, text: str, threshold: float) -> list[Span]:
+        """Route to the NER-inclusive detect() or the pattern-only pass,
+        per the session's `patterns_only` flag. Config-derived kwargs apply
+        either way; detect_patterns_only() just doesn't take the two
+        exclusion kwargs (see maskflow_core.detection), so they're dropped
+        in that branch -- exclusions are rare and NER-off is a deliberate
+        coverage/speed tradeoff already."""
+        kwargs = self._compiled.detect_kwargs()
+        if self._patterns_only:
+            return detect_patterns_only(
+                text,
+                min_confidence=threshold,
+                per_entity_threshold=kwargs["per_entity_threshold"],
+                disabled_types=kwargs["disabled_types"],
+                extra_patterns=kwargs["extra_patterns"],
+            )
+        return detect(text, min_confidence=threshold, **kwargs)
 
     def _substitute_for(self, entity_type: PIIType, value: str) -> str:
         """Session-scoped token for (entity_type, value): the same pair
@@ -220,7 +260,7 @@ class Session:
         threshold = self._min_confidence if min_confidence is None else min_confidence
         self._reserved.update(_RESERVED_TOKEN_RE.findall(text))
 
-        spans = detect(text, min_confidence=threshold, **self._compiled.detect_kwargs())
+        spans = self._detect(text, threshold)
         pieces: list[str] = []
         cursor = 0
         for span in spans:  # detect() returns non-overlapping spans sorted by start
@@ -240,7 +280,7 @@ class Session:
         # boundary, not an oversight.
         sign = "-" if value < 0 else ""
         digits = str(abs(value))
-        spans = detect(digits, min_confidence=threshold, **self._compiled.detect_kwargs())
+        spans = self._detect(digits, threshold)
         if len(spans) != 1 or spans[0].start != 0 or spans[0].end != len(digits):
             return value  # no single span covers the whole number -- leave it alone
 
@@ -308,6 +348,80 @@ class Session:
         self._check_open()
         return unmask(text, self._mapping)
 
+    @property
+    def mapping(self) -> Mapping:
+        """The session's current token -> MappingEntry map. Read it to build
+        an incremental unmasker for a streamed response, or to inspect what
+        has been detected so far. Mutating it directly is unsupported --
+        go through mask()/mask_json(). Holds raw PII; never log it."""
+        self._check_open()
+        return self._mapping
+
+    def snapshot(self) -> bytes:
+        """Serialize this session's full masking state to a UTF-8 JSON blob:
+        the token<->original mapping plus every identity cache (counters,
+        value->token, numeric surrogates, policy substitutes, reserved
+        tokens). Enough for restore() to continue minting tokens exactly
+        where this session left off.
+
+        The blob contains raw PII (that's what a Mapping is) -- it is never
+        logged or printed by this method, and a caller persisting it is
+        choosing to persist plaintext. maskflow-gateway encrypts it
+        (AES-GCM) before it touches Redis. Not stable across a
+        `_SNAPSHOT_VERSION` bump; restore() rejects a version it doesn't
+        know.
+        """
+        self._check_open()
+        payload = {
+            "v": _SNAPSHOT_VERSION,
+            "patterns_only": self._patterns_only,
+            "mapping": self._mapping.to_json(),
+            "counters": {t.value: n for t, n in self._counters.items()},
+            "value_tokens": [
+                [t.value, value, token] for (t, value), token in self._value_tokens.items()
+            ],
+            "numeric_tokens": [
+                [t.value, value, token] for (t, value), token in self._numeric_tokens.items()
+            ],
+            "policy_substitute_cache": [
+                [t.value, strategy.value, value, sub]
+                for (t, strategy, value), sub in self._policy_substitute_cache.items()
+            ],
+            "reserved": sorted(self._reserved),
+        }
+        return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+    def restore(self, blob: bytes) -> None:
+        """Repopulate this session from a snapshot() blob, replacing any
+        state it currently holds. The session must be open, and should have
+        been constructed with the same `config=` the snapshot was taken
+        under -- restore() does not carry the compiled config (regex
+        objects don't serialize), it carries the *results* of masking so
+        far. TTL is whatever this session was opened with, not the
+        original's."""
+        self._check_open()
+        data = json.loads(blob.decode("utf-8"))
+        version = data.get("v")
+        if version != _SNAPSHOT_VERSION:
+            raise ValueError(
+                f"Unsupported session snapshot version {version!r} "
+                f"(this maskflow-sdk writes/reads v{_SNAPSHOT_VERSION})."
+            )
+        self._patterns_only = bool(data["patterns_only"])
+        self._mapping = Mapping.from_json(data["mapping"])
+        self._counters = {PIIType.register(t): n for t, n in data["counters"].items()}
+        self._value_tokens = {
+            (PIIType.register(t), value): token for t, value, token in data["value_tokens"]
+        }
+        self._numeric_tokens = {
+            (PIIType.register(t), value): token for t, value, token in data["numeric_tokens"]
+        }
+        self._policy_substitute_cache = {
+            (PIIType.register(t), Strategy(strategy), value): sub
+            for t, strategy, value, sub in data["policy_substitute_cache"]
+        }
+        self._reserved = set(data["reserved"])
+
 
 class AsyncSession:
     """Non-invasive async wrapper: each call runs the underlying (sync)
@@ -321,9 +435,13 @@ class AsyncSession:
         ttl_seconds: float | None = 3600,
         min_confidence: float = DEFAULT_MIN_CONFIDENCE,
         config: RootConfig | None = None,
+        patterns_only: bool = False,
     ) -> None:
         self._session = Session(
-            ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config
+            ttl_seconds=ttl_seconds,
+            min_confidence=min_confidence,
+            config=config,
+            patterns_only=patterns_only,
         )
 
     async def __aenter__(self) -> AsyncSession:
@@ -357,12 +475,19 @@ class AsyncSession:
     async def unmask(self, text: str) -> str:
         return await asyncio.to_thread(self._session.unmask, text)
 
+    async def snapshot(self) -> bytes:
+        return await asyncio.to_thread(self._session.snapshot)
+
+    async def restore(self, blob: bytes) -> None:
+        await asyncio.to_thread(self._session.restore, blob)
+
 
 def session(
     *,
     ttl_seconds: float | None = 3600,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
     config: RootConfig | None = None,
+    patterns_only: bool = False,
 ) -> Session:
     """Open a session-scoped masking context: value->placeholder identity is
     stable for as long as it's open (or until ttl_seconds elapses). Use as a
@@ -378,7 +503,12 @@ def session(
     Passing `config=` explicitly bypasses discovery entirely -- see
     `maskflow.mask()`'s docstring for what a resolved config can change.
     """
-    return Session(ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config)
+    return Session(
+        ttl_seconds=ttl_seconds,
+        min_confidence=min_confidence,
+        config=config,
+        patterns_only=patterns_only,
+    )
 
 
 def async_session(
@@ -386,6 +516,12 @@ def async_session(
     ttl_seconds: float | None = 3600,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
     config: RootConfig | None = None,
+    patterns_only: bool = False,
 ) -> AsyncSession:
     """Async counterpart to session() -- see AsyncSession."""
-    return AsyncSession(ttl_seconds=ttl_seconds, min_confidence=min_confidence, config=config)
+    return AsyncSession(
+        ttl_seconds=ttl_seconds,
+        min_confidence=min_confidence,
+        config=config,
+        patterns_only=patterns_only,
+    )

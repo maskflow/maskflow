@@ -10,6 +10,7 @@ requires-python = ">=3.10"
 dependencies = [
     "maskflow-sdk",
     "maskflow-cli",
+    "maskflow-gateway[redis]",
 ]
 
 [tool.uv.sources]
@@ -18,6 +19,7 @@ maskflow-pack-intl = { workspace = true }
 maskflow-pack-india = { workspace = true }
 maskflow-sdk = { workspace = true }
 maskflow-cli = { workspace = true }
+maskflow-gateway = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -35,6 +37,14 @@ dev = [
     "pip-audit>=2.7",
     "pre-commit>=3.8",
     "hypothesis>=6.100",
+    # maskflow-gateway's test suite: async route tests (pytest-asyncio),
+    # mocked upstreams (respx over httpx), and a serverless Redis for the
+    # session-store tests (fakeredis). Kept in the shared dev group for the
+    # same reason cryptography is -- so `uv sync --all-extras` (CI's command)
+    # picks them up without a per-package dev extra install.
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "fakeredis>=2.23",
     # Not a maskflow-core runtime dependency (that's the optional
     # maskflow-core[store] extra) -- listed here purely so CI/dev environments
     # can exercise EncryptedFileMappingStore, the same way pack-intl pulling

@@ -82,6 +82,19 @@ Sessions are closeable (`with ... as s:` or `s.close()`) and TTL-bounded (`ttl_s
 Neither is thread-safe. See [`docs/agent-sessions.md`](../../docs/agent-sessions.md) for the
 concrete before/after this fixes.
 
+Two things a session-based server needs (added in 0.7.0, all additive):
+
+- **`s.snapshot() -> bytes` / `s.restore(blob)`** — serialize a session's full masking state
+  (mapping + every identity cache) and rebuild it in another process, so it keeps minting the
+  same tokens for the same values. `s.mapping` exposes the live `Mapping`. The blob holds raw
+  PII — encrypt it before it touches disk or a shared store.
+- **`session(patterns_only=True)`** — skip the spaCy NER pass entirely (routes through
+  `detect_patterns_only`): a large latency/throughput win in exchange for missing bare names and
+  addresses, the same tradeoff [`docs/logging.md`](../../docs/logging.md) makes for the log filter.
+
+`maskflow-gateway` (a drop-in OpenAI/Anthropic proxy) is built on exactly these — see
+[`docs/gateway.md`](../../docs/gateway.md).
+
 ## Configuration (`.maskflowrc`)
 
 `mask()`, `mask_and_call()`, and `session()`/`async_session()` all read a `.maskflowrc` file

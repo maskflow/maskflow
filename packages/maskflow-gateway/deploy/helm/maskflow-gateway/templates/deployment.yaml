@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "maskflow-gateway.fullname" . }}
+  labels:
+    {{- include "maskflow-gateway.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "maskflow-gateway.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "maskflow-gateway.selectorLabels" . | nindent 8 }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: gateway
+          image: {{ include "maskflow-gateway.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            {{- range $k, $v := .Values.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            {{- if .Values.redis.url }}
+            - name: MASKFLOW_GATEWAY_REDIS_URL
+              value: {{ .Values.redis.url | quote }}
+            {{- end }}
+            - name: MASKFLOW_GATEWAY_SESSION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sessionKey.existingSecret | default (include "maskflow-gateway.fullname" .) }}
+                  key: session-key
+                  optional: {{ not (or .Values.sessionKey.existingSecret .Values.sessionKey.value) }}
+            {{- if or .Values.upstreamApiKey.existingSecret .Values.upstreamApiKey.value }}
+            - name: MASKFLOW_GATEWAY_UPSTREAM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.upstreamApiKey.existingSecret | default (include "maskflow-gateway.fullname" .) }}
+                  key: upstream-api-key
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
