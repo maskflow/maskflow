@@ -5,11 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
-`maskflow-gateway`, `@maskflow/detection`).
+`maskflow-gateway`, `maskflow-litellm`, `@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-litellm` `0.1.0`** -- a new package: a
+  [LiteLLM](https://github.com/BerriAI/litellm) custom guardrail
+  (`maskflow_litellm.MaskflowGuardrail`) that masks PII before a request
+  leaves the proxy and restores it in the response. Point a `config.yaml`
+  guardrail at it with `mode: [pre_call, post_call]`.
+  - **Round-trip**: `async_pre_call_hook` masks `messages[].content`
+    (prose, multimodal text parts, Anthropic blocks), Anthropic `system`,
+    and `tool_calls[].function.arguments` (JSON walk -- string/number
+    *values* only, keys never); `async_post_call_success_hook` restores the
+    non-streaming response (OpenAI `ModelResponse` + Anthropic native
+    message dict). Inbound tool results are masked *through* the session,
+    never unmasked toward the model.
+  - **Streaming**: `async_post_call_streaming_iterator_hook` restores
+    `delta.content` and `tool_calls[].function.arguments` fragments with
+    the shared `StreamingUnmasker` (see below), so a placeholder split
+    across chunks is stitched back before the caller sees it. Fuzzed
+    against arbitrary chunk boundaries.
+  - **Sessions**: token identity is stable for one request always;
+    cross-turn identity via a `maskflow_session_id` metadata field or an
+    `X-Maskflow-Session` header. In-process TTL store by default (correct
+    for a single-worker proxy); an optional `[redis]` extra adds an
+    AES-256-GCM-encrypted snapshot store for multi-worker / multi-replica
+    proxies.
+  - **PII safety**: the token<->value map is held in memory only (or
+    encrypted in Redis); only an opaque session ref reaches request
+    metadata; no mapping or original value is ever logged. `-m leak` gate.
+  - **Detection**: MaskFlow's full engine, so the India identifiers
+    (Aadhaar, PAN, GSTIN, UPI, IFSC, ABHA, Indian names/addresses, ...)
+    are covered alongside the generic PII. `maskflow_patterns_only: true`
+    skips the spaCy NER pass for latency.
+  - `litellm` is a peer dependency (the proxy provides it); the
+    provider-agnostic logic is tested `litellm`-free, the `CustomGuardrail`
+    adapter against the real base class via `uv sync --group litellm`.
+
+- **`maskflow-sdk` `0.8.0`** -- `maskflow.streaming` (`StreamingUnmasker`,
+  `unmask_whole`) moved here from `maskflow-gateway` so every `Session`
+  consumer (the gateway, the LiteLLM guardrail, any custom integration)
+  builds a streamed unmasker from one fuzz-tested implementation.
+  `maskflow_gateway.streaming.unmask` is now a re-export shim -- no gateway
+  API change. Also ships a `py.typed` marker.
+
+- **`maskflow-gateway`** -- `streaming/unmask.py` re-exports
+  `maskflow.streaming`; requires `maskflow-sdk>=0.8.0`. No behaviour
+  change.
 
 - **`maskflow-gateway` `0.1.0`** -- a new package: a drop-in
   OpenAI/Anthropic-compatible reverse proxy (FastAPI + uvicorn) that masks

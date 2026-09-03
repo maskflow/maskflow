@@ -126,6 +126,27 @@ pip install "maskflow-gateway[redis]"   # or: docker run -p 8000:8000 ghcr.io/ma
 Full reference in [`packages/maskflow-gateway/README.md`](packages/maskflow-gateway/README.md) and
 [`docs/gateway.md`](docs/gateway.md).
 
+## LiteLLM: a guardrail on your existing proxy
+
+Already running a [LiteLLM](https://github.com/BerriAI/litellm) proxy? `maskflow-litellm` is a
+custom guardrail — no separate service. It masks PII (Indian identifiers included) before a
+request leaves the proxy and restores it in the response, streaming and tool calls included.
+
+```bash
+pip install maskflow-litellm
+```
+
+```yaml
+guardrails:
+  - guardrail_name: maskflow
+    litellm_params:
+      guardrail: maskflow_litellm.MaskflowGuardrail
+      mode: [pre_call, post_call]
+```
+
+Full reference in [`packages/maskflow-litellm/README.md`](packages/maskflow-litellm/README.md) and
+[`docs/litellm-guardrail.md`](docs/litellm-guardrail.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -270,7 +291,9 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
   [`docs/scan.md`](docs/scan.md), [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
-  [`docs/gateway.md`](docs/gateway.md), [`docs/data-refresh.md`](docs/data-refresh.md)
+  [`docs/gateway.md`](docs/gateway.md),
+  [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md),
+  [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
