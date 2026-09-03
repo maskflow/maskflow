@@ -1,8 +1,11 @@
-"""The streaming-unmask correctness gate (work order part 2).
+"""Byte-level streaming-unmask correctness gate for ``ByteStreamingUnmasker``.
 
-For any chunking of a masked text -- including splits mid-placeholder and
-mid-UTF-8 -- the concatenated streamed output must equal the non-streaming
-``maskflow_core.unmask`` result.
+For any *byte* chunking of a masked text -- including splits mid-placeholder
+and mid-UTF-8 code point -- the concatenated streamed output must equal the
+non-streaming ``maskflow_core.unmask`` result. The character-level trie
+logic underneath (``StreamingUnmasker``) moved to maskflow-sdk
+(``maskflow.streaming``) and is fuzzed there; this suite covers the byte
+decoder ``ByteStreamingUnmasker`` wraps it in.
 """
 
 from __future__ import annotations
@@ -16,10 +19,6 @@ _ENTITY_NAMES = ["EMAIL", "PHONE", "PERSON_NAME", "AADHAAR", "PAN", "INDIAN_ADDR
 for _name in _ENTITY_NAMES:
     PIIType.register(_name)
 
-# Originals: everything the round-trip rule calls sacred -- unicode, emoji,
-# RTL, zero-width, ZWJ sequences, and placeholder-lookalikes as literal
-# content. Built from variable-length pieces because a ZWJ emoji is several
-# code points and can't live in a single-char text alphabet.
 _ORIGINAL_PIECE = st.one_of(
     st.text(st.characters(codec="utf-8", min_codepoint=0x20), min_size=1, max_size=4),
     st.sampled_from(["😀", "🏳️‍🌈", "​", "‍", "क", "م", "א", "क़", "\U0001f1ee\U0001f1f3"]),
@@ -34,8 +33,6 @@ _TOKENS = st.builds(
     st.one_of(st.none(), st.text("0123456789abcdef", min_size=4, max_size=4)),
 )
 
-# Filler between tokens: no '<' or '>' so it can never contain a placeholder,
-# and encodable (real HTTP bytes never carry unpaired surrogates).
 _FILLER = st.text(st.characters(codec="utf-8", exclude_characters="<>"), max_size=12)
 
 
@@ -44,7 +41,6 @@ def _masked_document(draw: st.DrawFn) -> tuple[str, Mapping]:
     tokens = draw(st.lists(_TOKENS, min_size=1, max_size=6, unique=True))
     originals = draw(st.lists(_ORIGINALS, min_size=len(tokens), max_size=len(tokens)))
     pairs = dict(zip(tokens, originals, strict=True))
-    # Property 3: no placeholder may be an infix of any original.
     for tok in pairs:
         for original in pairs.values():
             assume(tok not in original)
@@ -62,7 +58,6 @@ def _masked_document(draw: st.DrawFn) -> tuple[str, Mapping]:
         }
     )
 
-    # Interleave tokens with filler into the masked text.
     parts: list[str] = [draw(_FILLER)]
     for tok in draw(st.lists(st.sampled_from(tokens), min_size=1, max_size=10)):
         parts.append(tok)
@@ -129,66 +124,9 @@ def test_split_mid_multibyte_codepoint() -> None:
         assert _stream_bytes(text, mapping, [cut]) == oracle, cut
 
 
-def test_placeholder_split_across_every_char_boundary() -> None:
-    PIIType.register("EMAIL")
-    mapping = Mapping(
-        {
-            "<EMAIL_1>": MappingEntry(
-                token="<EMAIL_1>",
-                entity_type=PIIType.register("EMAIL"),
-                strategy=Strategy.REPLACE,
-                reversible=True,
-                original="alice@example.com",
-            )
-        }
-    )
-    text = "reach me: <EMAIL_1> ok?"
-    oracle = unmask(text, mapping)
-    for cut in range(1, len(text)):
-        u = StreamingUnmasker(mapping)
-        assert u.feed(text[:cut]) + u.feed(text[cut:]) + u.flush() == oracle
+def test_bytestreamer_reuses_sdk_trie_layer() -> None:
+    # ByteStreamingUnmasker composes maskflow.streaming.StreamingUnmasker;
+    # this asserts the wiring so a future refactor can't silently swap it.
+    from maskflow.streaming import StreamingUnmasker as SdkStreamingUnmasker
 
-
-def test_unknown_placeholder_from_model_is_left_literal() -> None:
-    PIIType.register("EMAIL")
-    mapping = Mapping(
-        {
-            "<EMAIL_1>": MappingEntry(
-                token="<EMAIL_1>",
-                entity_type=PIIType.register("EMAIL"),
-                strategy=Strategy.REPLACE,
-                reversible=True,
-                original="alice@example.com",
-            )
-        }
-    )
-    u = StreamingUnmasker(mapping)
-    out = u.feed("see <EMAIL_1> and <EMAIL_2>") + u.flush()
-    assert out == "see alice@example.com and <EMAIL_2>"
-
-
-def test_non_incremental_fallback_when_token_is_infix_of_original() -> None:
-    PIIType.register("EMAIL")
-    PIIType.register("PHONE")
-    mapping = Mapping(
-        {
-            "<PHONE_1>": MappingEntry(
-                token="<PHONE_1>",
-                entity_type=PIIType.register("PHONE"),
-                strategy=Strategy.REPLACE,
-                reversible=True,
-                original="wrap <EMAIL_1> here",
-            ),
-            "<EMAIL_1>": MappingEntry(
-                token="<EMAIL_1>",
-                entity_type=PIIType.register("EMAIL"),
-                strategy=Strategy.REPLACE,
-                reversible=True,
-                original="alice@example.com",
-            ),
-        }
-    )
-    u = StreamingUnmasker(mapping)
-    assert u._safe_incremental is False
-    text = "x <PHONE_1> y"
-    assert u.feed(text[:4]) + u.feed(text[4:]) + u.flush() == unmask(text, mapping)
+    assert StreamingUnmasker is SdkStreamingUnmasker

@@ -9,8 +9,10 @@ dependencies = [
     # The masking engine + session identity + snapshot()/restore() (session
     # state across processes) all live in the SDK. 0.7.0 is the first
     # version with Session.snapshot()/restore() and the patterns_only flag
-    # the gateway's MASKFLOW_GATEWAY_NER=0 mode needs.
-    "maskflow-sdk>=0.7.0,<0.8",
+    # the gateway's MASKFLOW_GATEWAY_NER=0 mode needs. 0.8.0 moves
+    # StreamingUnmasker/unmask_whole into maskflow.streaming (the gateway's
+    # streaming.unmask is now a re-export shim over it).
+    "maskflow-sdk>=0.8.0,<0.9",
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
     # One async HTTP client for every upstream (OpenAI, Anthropic, or any
