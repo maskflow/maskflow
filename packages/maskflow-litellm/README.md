@@ -30,6 +30,9 @@ pip install maskflow-litellm
 pip install "maskflow-litellm[redis]"
 ```
 
+Runs wherever LiteLLM does (Python 3.11+; the current LiteLLM release does
+not import on 3.10).
+
 The first detection run downloads a small spaCy model for the name/address
 recognizers. Set `maskflow_patterns_only: true` (below) to skip the NER
 pass entirely if you only need the deterministic identifiers.
