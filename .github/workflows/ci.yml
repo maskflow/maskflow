@@ -14,6 +14,7 @@ jobs:
       pack_india: ${{ steps.filter.outputs.pack_india }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       gateway: ${{ steps.filter.outputs.gateway }}
+      litellm_guardrail: ${{ steps.filter.outputs.litellm_guardrail }}
       cli: ${{ steps.filter.outputs.cli }}
       cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
@@ -47,6 +48,13 @@ jobs:
               - 'pyproject.toml'
             gateway:
               - 'packages/maskflow-gateway/**'
+              - 'packages/maskflow-sdk/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
+            litellm_guardrail:
+              - 'packages/maskflow-litellm/**'
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
@@ -184,6 +192,32 @@ jobs:
       # Explicit rerun of the leak gate so a PII leak is an unmissable
       # distinct failure, same pattern as scan-fuzz.
       - run: uv run pytest packages/maskflow-gateway/tests -m leak -q
+
+  litellm-guardrail:
+    needs: changes
+    if: needs.changes.outputs.litellm_guardrail == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --group litellm --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-litellm
+      - run: uv run ruff format --check packages/maskflow-litellm
+      # Provider-agnostic suites (litellm-free) + the real-base-class
+      # integration suite (needs the litellm group).
+      - run: uv run --group litellm pytest packages/maskflow-litellm/tests -q
+      # Explicit rerun of the leak gate so a PII leak is an unmissable
+      # distinct failure, same pattern as the gateway job.
+      - run: uv run --group litellm pytest packages/maskflow-litellm/tests -m leak -q
 
   gateway-helm:
     needs: changes

@@ -1,0 +1,27 @@
+# Runnable LiteLLM proxy config with the MaskFlow guardrail.
+#
+#   pip install "maskflow-litellm" litellm[proxy]
+#   export OPENAI_API_KEY=sk-...
+#   litellm --config packages/maskflow-litellm/examples/config.yaml
+#
+# then see examples/README.md for the curl calls.
+
+model_list:
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+guardrails:
+  - guardrail_name: maskflow
+    litellm_params:
+      guardrail: maskflow_litellm.MaskflowGuardrail
+      mode: [pre_call, post_call]
+      default_on: true
+      # all optional -- shown with their defaults:
+      maskflow_min_confidence: 0.5
+      maskflow_patterns_only: false
+      maskflow_session_ttl_seconds: 3600
+      # multi-worker / multi-replica only (needs `pip install maskflow-litellm[redis]`):
+      # maskflow_redis_url: os.environ/MASKFLOW_REDIS_URL
+      # maskflow_session_encryption_key: os.environ/MASKFLOW_SESSION_KEY
