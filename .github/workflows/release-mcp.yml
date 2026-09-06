@@ -34,10 +34,11 @@ jobs:
       # PyPI description.
       - name: Wait for the release on PyPI
         run: |
-          v=${GITHUB_REF_NAME#mcp-v}
+          v=$(uv run python -c "import tomllib;print(tomllib.load(open('packages/maskflow-mcp/pyproject.toml','rb'))['project']['version'])")
+          echo "waiting for maskflow-mcp $v on PyPI"
           for i in $(seq 1 30); do
-            pip index versions maskflow-mcp 2>/dev/null | grep -q "$v" && exit 0
-            echo "maskflow-mcp $v not on PyPI yet (attempt $i)"; sleep 20
+            curl -sf "https://pypi.org/pypi/maskflow-mcp/$v/json" >/dev/null && exit 0
+            echo "not on PyPI yet (attempt $i)"; sleep 20
           done
           echo "gave up waiting for PyPI"; exit 1
       - name: Install mcp-publisher
