@@ -5,11 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
-`maskflow-gateway`, `maskflow-litellm`, `maskflow-langchain`, `@maskflow/detection`).
+`maskflow-gateway`, `maskflow-litellm`, `maskflow-langchain`, `maskflow-llamaindex`,
+`@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-llamaindex` `0.1.0`** -- a new package: MaskFlow for
+  [LlamaIndex](https://github.com/run-llama/llama_index). Covers **item 3 of
+  [#39](https://github.com/maskflow/maskflow/issues/39)**.
+  - **`MaskflowNodePostprocessor`** -- a drop-in for
+    `llama_index.core.postprocessor.PIINodePostprocessor` that masks PII in
+    retrieved nodes before the synthesizer. Same `mask_pii()` /
+    `_postprocess_nodes()` contract, same `__pii_node_info__` metadata key
+    and embed/LLM exclusions, so an existing unmask step keeps working. No
+    LLM call, no HuggingFace model. `consistent_across_nodes=True` (the
+    default) shares one `maskflow.Session` across every node in a call, so
+    `<PERSON_NAME_1>` is the same person in every chunk --
+    `PIINodePostprocessor` numbers each node independently. `mask_query=True`
+    masks the query through the same session.
+  - **`MaskflowIngestionTransform`** -- a `TransformComponent` that masks
+    node text at ingestion, so raw PII is never embedded or written to the
+    vector store. Default `strategy="redact"` is non-reversible by design
+    (no map to persist); `surrogate` / `replace` and an opt-in
+    `store_mapping` (which warns) are available.
+  - **`unmask_response` / `collect_node_mapping` / `response_unmasker` /
+    `MaskflowQueryEngine`** -- restore the originals in the synthesized
+    answer (string or streamed) from the per-node maps.
+  - `llama-index-core` (`>=0.12,<1`) is a runtime dependency; in the
+    workspace it is only installed by `uv sync --group llama-index` (large
+    dep tree), with a dedicated CI job. `maskflow_llamaindex._masking` has
+    no `llama_index` import. Ships `py.typed`. `release-llamaindex.yml` on
+    `llamaindex-v*` tags. Runnable example, `docs/llamaindex.md`, README.
 
 - **`maskflow-langchain` `0.1.0`** -- a new package: MaskFlow for
   [LangChain](https://github.com/langchain-ai/langchain).

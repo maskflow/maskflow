@@ -168,6 +168,29 @@ from maskflow_langchain import MaskflowReversibleAnonymizer as PresidioReversibl
 Full reference in [`packages/maskflow-langchain/README.md`](packages/maskflow-langchain/README.md)
 and [`docs/langchain.md`](docs/langchain.md).
 
+## LlamaIndex: keep PII out of RAG
+
+`maskflow-llamaindex` gives a LlamaIndex RAG pipeline two components and an unmask helper.
+`MaskflowNodePostprocessor` is a drop-in for `llama_index.core.postprocessor.PIINodePostprocessor`
+(same `__pii_node_info__` contract) that masks retrieved context before the synthesizer, with no
+LLM call. `MaskflowIngestionTransform` masks node text at ingestion so raw PII never reaches the
+vector store. `unmask_response()` / `MaskflowQueryEngine` restore the real values in the answer.
+
+```bash
+pip install maskflow-llamaindex
+```
+
+```python
+from maskflow_llamaindex import MaskflowNodePostprocessor, unmask_response
+
+engine = index.as_query_engine(node_postprocessors=[MaskflowNodePostprocessor()])
+response = engine.query("What is Ramesh's PAN?")
+answer = unmask_response(str(response), response.source_nodes)
+```
+
+Full reference in [`packages/maskflow-llamaindex/README.md`](packages/maskflow-llamaindex/README.md)
+and [`docs/llamaindex.md`](docs/llamaindex.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -315,6 +338,7 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/gateway.md`](docs/gateway.md),
   [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md),
   [`docs/langchain.md`](docs/langchain.md),
+  [`docs/llamaindex.md`](docs/llamaindex.md),
   [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
