@@ -11,7 +11,7 @@ jobs:
     environment: pypi
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # PyPI trusted publishing + MCP Registry OIDC
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -23,3 +23,27 @@ jobs:
         with:
           packages-dir: dist
           skip-existing: true
+
+      # Publish the server entry to the official MCP Registry
+      # (registry.modelcontextprotocol.io). OIDC auth -- no secret; the
+      # `id-token: write` above is what it needs. Namespace io.github.maskflow/*
+      # is granted because this workflow runs in the maskflow org's repo.
+      # Verification: packages/maskflow-mcp/README.md carries the
+      # `<!-- mcp-name: io.github.maskflow/mcp -->` marker, which becomes the
+      # PyPI description.
+      - name: Wait for the release on PyPI
+        run: |
+          v=${GITHUB_REF_NAME#mcp-v}
+          for i in $(seq 1 30); do
+            pip index versions maskflow-mcp 2>/dev/null | grep -q "$v" && exit 0
+            echo "maskflow-mcp $v not on PyPI yet (attempt $i)"; sleep 20
+          done
+          echo "gave up waiting for PyPI"; exit 1
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+      - name: Publish to the MCP Registry
+        working-directory: packages/maskflow-mcp
+        run: |
+          "$GITHUB_WORKSPACE/mcp-publisher" login github-oidc
+          "$GITHUB_WORKSPACE/mcp-publisher" publish

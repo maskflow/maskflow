@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.maskflow/mcp -->
+
 # maskflow-mcp
 
 A [Model Context Protocol](https://modelcontextprotocol.io) proxy that

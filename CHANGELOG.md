@@ -12,12 +12,15 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-mcp` `0.1.0`** -- a new package: a [Model Context
+- **`maskflow-mcp` `0.1.0` / `0.1.1`** -- a new package: a [Model Context
   Protocol](https://modelcontextprotocol.io) proxy that wraps any MCP
   server. It masks PII in outbound `tools/call` arguments before they reach
   the backend tool and restores it in the results, with placeholders that
   stay consistent for a whole agent run. Closes issue
   [#39](https://github.com/maskflow/maskflow/issues/39) (item 4, the last).
+  `0.1.1` adds `server.json` and the `mcp-name` README marker so
+  `release-mcp.yml` also publishes the entry to the official MCP Registry
+  (`registry.modelcontextprotocol.io`, `io.github.maskflow/mcp`) via OIDC.
   - **`maskflow-mcp` CLI** -- `maskflow-mcp stdio --backend "<cmd>"` (or
     `--config <claude-desktop.json> --backend-name <n>`), `maskflow-mcp http
     --backend <url> --port <n>`. Flags: `--min-confidence`,
