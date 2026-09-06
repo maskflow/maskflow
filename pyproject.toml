@@ -24,6 +24,7 @@ maskflow-cli = { workspace = true }
 maskflow-gateway = { workspace = true }
 maskflow-litellm = { workspace = true }
 maskflow-langchain = { workspace = true }
+maskflow-llamaindex = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -72,6 +73,15 @@ bench = [
 # unmask, session stores) is tested litellm-free in the default dev env.
 litellm = [
     "litellm>=1.60",
+]
+# Only for maskflow-llamaindex's node-postprocessor / transform / query-engine
+# tests. Same policy as `bench` / `litellm` above: never pulled by
+# `uv sync --all-extras`, only by `uv sync --group llama-index`, because
+# llama-index-core drags a large tree (sqlalchemy, nltk, tiktoken, aiohttp).
+# maskflow-llamaindex._masking (the plain str -> (masked, mapping) surface)
+# is tested without it.
+llama-index = [
+    "maskflow-llamaindex",
 ]
 
 [tool.ruff]
@@ -127,9 +137,17 @@ ignore_missing_imports = true
 module = "litellm.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# llama-index-core is a runtime dependency of maskflow-llamaindex, installed
+# only by `uv sync --group llama-index` -- CI's default type-check job doesn't
+# have it, same as litellm/spacy above.
+module = "llama_index.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 markers = [
     "benchmark: performance / regex-safety checks (opt-in via -m benchmark)",
     "leak: guards against PII reaching logs, exceptions, repr, or test output",
     "litellm: maskflow-litellm tests needing the real litellm package (uv sync --group litellm)",
+    "llamaindex: maskflow-llamaindex tests needing llama-index-core (uv sync --group llama-index)",
 ]
