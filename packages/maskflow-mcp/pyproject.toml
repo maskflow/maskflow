@@ -1,0 +1,49 @@
+[project]
+name = "maskflow-mcp"
+version = "0.1.0"
+description = "MaskFlow MCP proxy: wrap any MCP server, mask PII in outbound tool-call arguments, unmask results. Session-consistent placeholders. stdio and HTTP. Indian identifiers included."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # The masking engine, session identity (stable token <-> value across
+    # tool calls in an agent run), and the fuzz-tested StreamingUnmasker.
+    "maskflow-sdk>=0.8.0,<0.9",
+    # The proxy + middleware primitives (FastMCP.as_proxy, Middleware). The
+    # 2.x line uses the stable `mcp` 1.x SDK and does not pull LLM vendor
+    # SDKs (those arrived with fastmcp 4 / fastmcp-slim). In the *workspace*
+    # it is only installed by `uv sync --group mcp` (authlib / openapi-core /
+    # websockets / rich); the plain masking helpers in _masking.py have no
+    # fastmcp import.
+    "fastmcp>=2.11,<3",
+]
+
+[project.scripts]
+maskflow-mcp = "maskflow_mcp.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "hypothesis>=6.100",
+]
+
+[tool.uv.sources]
+maskflow-sdk = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "leak: guards against PII reaching logs, repr, or the wire to the backend server",
+    "mcp: needs fastmcp (uv sync --group mcp)",
+]

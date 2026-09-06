@@ -191,6 +191,29 @@ answer = unmask_response(str(response), response.source_nodes)
 Full reference in [`packages/maskflow-llamaindex/README.md`](packages/maskflow-llamaindex/README.md)
 and [`docs/llamaindex.md`](docs/llamaindex.md).
 
+## MCP: a masking proxy for agent tool calls
+
+`maskflow-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) proxy. Put it in
+front of any MCP server and PII in outbound `tools/call` arguments is masked before it reaches the
+tool, results are unmasked on the way back, and placeholders stay consistent for the whole agent
+run. Agent tooling is where PII leakage is least examined; this is a drop-in shim that stops the
+real values at the boundary.
+
+```jsonc
+{
+  "mcpServers": {
+    "github": {
+      "command": "maskflow-mcp",
+      "args": ["stdio", "--backend", "npx -y @modelcontextprotocol/server-github",
+               "--pass-env", "GITHUB_TOKEN"]
+    }
+  }
+}
+```
+
+Full reference in [`packages/maskflow-mcp/README.md`](packages/maskflow-mcp/README.md) and
+[`docs/mcp.md`](docs/mcp.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -339,6 +362,7 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md),
   [`docs/langchain.md`](docs/langchain.md),
   [`docs/llamaindex.md`](docs/llamaindex.md),
+  [`docs/mcp.md`](docs/mcp.md),
   [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
