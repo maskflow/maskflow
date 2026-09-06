@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.maskflow/mcp",
   "title": "MaskFlow PII proxy",
-  "description": "Wrap any MCP server; mask PII in outbound tools/call arguments before they reach the backend tool, restore it in the results. Indian identifiers included.",
+  "description": "Mask PII in outbound MCP tool-call arguments, unmask the results. Indian identifiers included.",
   "repository": {
     "url": "https://github.com/maskflow/maskflow",
     "source": "github",

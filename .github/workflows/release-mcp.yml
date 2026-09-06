@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "mcp-v*"
+  workflow_dispatch: {}  # manual re-run of the publish (e.g. MCP Registry retry)
 
 jobs:
   publish:
