@@ -1,0 +1,48 @@
+[project]
+name = "maskflow-langchain"
+version = "0.1.0"
+description = "MaskFlow for LangChain: a reversible PII anonymizer/deanonymizer pair (drop-in for langchain-experimental's Presidio anonymizer) plus a leak-guard callback. Indian identifiers included."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # The masking engine, session identity (stable token <-> value), and the
+    # fuzz-tested StreamingUnmasker (0.8.0 -> maskflow.streaming) that the
+    # streaming deanonymizer is built on.
+    "maskflow-sdk>=0.8.0,<0.9",
+    # BaseCallbackHandler + Runnable. Pure-python, small; a real dependency,
+    # not a peer -- you install maskflow-langchain to use it *with* LangChain.
+    # Range spans the 0.3 line (still widely deployed) and 1.x.
+    "langchain-core>=0.3,<2",
+]
+
+[project.optional-dependencies]
+# save_deanonymizer_mapping / load_deanonymizer_mapping with .yaml paths.
+yaml = [
+    "pyyaml>=6.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "hypothesis>=6.100",
+    "pyyaml>=6.0",
+]
+
+[tool.uv.sources]
+maskflow-sdk = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_langchain"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "leak: guards against PII reaching logs, repr, callback state, or saved mappings",
+]

@@ -12,6 +12,7 @@ dependencies = [
     "maskflow-cli",
     "maskflow-gateway[redis]",
     "maskflow-litellm[redis]",
+    "maskflow-langchain[yaml]",
 ]
 
 [tool.uv.sources]
@@ -22,6 +23,7 @@ maskflow-sdk = { workspace = true }
 maskflow-cli = { workspace = true }
 maskflow-gateway = { workspace = true }
 maskflow-litellm = { workspace = true }
+maskflow-langchain = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]

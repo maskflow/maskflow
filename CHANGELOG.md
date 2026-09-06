@@ -5,11 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
-`maskflow-gateway`, `maskflow-litellm`, `@maskflow/detection`).
+`maskflow-gateway`, `maskflow-litellm`, `maskflow-langchain`, `@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-langchain` `0.1.0`** -- a new package: MaskFlow for
+  [LangChain](https://github.com/langchain-ai/langchain).
+  - **`MaskflowReversibleAnonymizer` / `MaskflowAnonymizer`** -- drop-in
+    replacements for `langchain_experimental.data_anonymizer`'s
+    `PresidioReversibleAnonymizer` / `PresidioAnonymizer`. Same method
+    names, signatures, and return shapes a chain touches (`.anonymize`,
+    `.deanonymize`, `.reset_deanonymizer_mapping`, `.deanonymizer_mapping` /
+    `.anonymizer_mapping` in the nested `{ENTITY: {anon: original}}` shape,
+    JSON/YAML `save`/`load`), so migrating is one import line. The
+    reversible one holds a long-lived `maskflow.Session`, so a value keeps
+    its placeholder across every `.anonymize()` call. `add_recognizer` and
+    `add_operators` take MaskFlow-native arguments (documented).
+  - **`MaskflowDeanonymizer`** -- a streaming-aware `Runnable[str, str]`
+    (`anonymizer.deanonymizer`) for the chain tail. Unlike Presidio's
+    `RunnableLambda(deanonymize)`, it restores originals chunk by chunk
+    under `chain.stream()` via `maskflow.streaming.StreamingUnmasker`, so a
+    placeholder split across chunks is stitched. Fuzzed over arbitrary
+    chunk sizes.
+  - **`MaskflowLeakGuardCallback`** (+ async) -- a callback that tallies PII
+    crossing the LLM boundary by entity type and count, never values
+    (`.summary()`), and with `raise_on_prompt_pii=True` raises
+    `MaskflowPIILeakError` before the model is called so a forgotten
+    anonymizer fails closed.
+  - Covers **item 2 of
+    [#39](https://github.com/maskflow/maskflow/issues/39)**. `langchain-core`
+    (`>=0.3,<2`) is a real dependency; tests run in the normal CI matrix.
+    Runnable example under `packages/maskflow-langchain/examples/`, design
+    notes in `docs/langchain.md`.
 
 - **`maskflow-litellm` `0.1.0`** -- a new package: a
   [LiteLLM](https://github.com/BerriAI/litellm) custom guardrail

@@ -147,6 +147,27 @@ guardrails:
 Full reference in [`packages/maskflow-litellm/README.md`](packages/maskflow-litellm/README.md) and
 [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md).
 
+## LangChain: a one-line import swap
+
+`maskflow-langchain` is a drop-in for
+[`langchain-experimental`](https://github.com/langchain-ai/langchain-experimental)'s Presidio
+anonymizer — same `.anonymize()` / `.deanonymize()` / `.deanonymizer_mapping` — so an existing
+chain migrates by changing one import. The deanonymizer is a streaming-aware `Runnable` (a
+placeholder split across streamed chunks is stitched back), and there's an optional leak-guard
+callback that fails a call closed if PII reaches the model.
+
+```bash
+pip install maskflow-langchain
+```
+
+```python
+# from langchain_experimental.data_anonymizer import PresidioReversibleAnonymizer
+from maskflow_langchain import MaskflowReversibleAnonymizer as PresidioReversibleAnonymizer
+```
+
+Full reference in [`packages/maskflow-langchain/README.md`](packages/maskflow-langchain/README.md)
+and [`docs/langchain.md`](docs/langchain.md).
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -293,6 +314,7 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
   [`docs/gateway.md`](docs/gateway.md),
   [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md),
+  [`docs/langchain.md`](docs/langchain.md),
   [`docs/data-refresh.md`](docs/data-refresh.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
