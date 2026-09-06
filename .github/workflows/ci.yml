@@ -17,6 +17,7 @@ jobs:
       litellm_guardrail: ${{ steps.filter.outputs.litellm_guardrail }}
       langchain: ${{ steps.filter.outputs.langchain }}
       llamaindex: ${{ steps.filter.outputs.llamaindex }}
+      mcp: ${{ steps.filter.outputs.mcp }}
       cli: ${{ steps.filter.outputs.cli }}
       cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
@@ -71,6 +72,13 @@ jobs:
               - 'pyproject.toml'
             llamaindex:
               - 'packages/maskflow-llamaindex/**'
+              - 'packages/maskflow-sdk/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
+            mcp:
+              - 'packages/maskflow-mcp/**'
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
@@ -306,6 +314,29 @@ jobs:
       - run: uv run --group llama-index pytest packages/maskflow-llamaindex/tests -q
       # Explicit rerun of the leak gate as a distinct failure.
       - run: uv run --group llama-index pytest packages/maskflow-llamaindex/tests -m leak -q
+
+  mcp:
+    needs: changes
+    if: needs.changes.outputs.mcp == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --group mcp --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-mcp
+      - run: uv run ruff format --check packages/maskflow-mcp
+      - run: uv run --group mcp pytest packages/maskflow-mcp/tests -q
+      # Explicit rerun of the leak gate as a distinct failure.
+      - run: uv run --group mcp pytest packages/maskflow-mcp/tests -m leak -q
 
   gateway-helm:
     needs: changes

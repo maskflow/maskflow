@@ -6,11 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
 `maskflow-gateway`, `maskflow-litellm`, `maskflow-langchain`, `maskflow-llamaindex`,
-`@maskflow/detection`).
+`maskflow-mcp`, `@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-mcp` `0.1.0`** -- a new package: a [Model Context
+  Protocol](https://modelcontextprotocol.io) proxy that wraps any MCP
+  server. It masks PII in outbound `tools/call` arguments before they reach
+  the backend tool and restores it in the results, with placeholders that
+  stay consistent for a whole agent run. Closes issue
+  [#39](https://github.com/maskflow/maskflow/issues/39) (item 4, the last).
+  - **`maskflow-mcp` CLI** -- `maskflow-mcp stdio --backend "<cmd>"` (or
+    `--config <claude-desktop.json> --backend-name <n>`), `maskflow-mcp http
+    --backend <url> --port <n>`. Flags: `--min-confidence`,
+    `--patterns-only`, `--mask-tool-results` (off by default -- also mask
+    PII the tool *introduced*, not just unmask what it echoed),
+    `--session-ttl`, `--pass-env`.
+  - **`MaskflowMiddleware`** -- a `fastmcp` middleware (`on_call_tool`) that
+    walks the arguments dict (string / numeric values only, keys never) via
+    `Session.mask_json`, forwards the masked call, then unmasks the
+    `ToolResult` text and `structured_content`. `build_proxy(backend)`
+    wires it onto `FastMCP.as_proxy(...)`.
+  - **Sessions** -- one `maskflow.Session` per MCP connection (keyed by
+    session id; a constant for stdio), so identity is stable across every
+    tool call; in-memory only, never logged.
+  - `tools/list`, `prompts/*`, `resources/*` pass through unchanged.
+  - `fastmcp` (`>=2.11,<3` -- the line that builds on the stable `mcp` 1.x
+    SDK and does not bundle LLM vendor SDKs) is a runtime dependency,
+    installed in the workspace only by `uv sync --group mcp`, with a
+    dedicated CI job. `maskflow_mcp._masking` has no `fastmcp` import. Ships
+    `py.typed`. `release-mcp.yml` on `mcp-v*` tags. Runnable example,
+    `docs/mcp.md`, README + CHANGELOG.
 
 - **`maskflow-llamaindex` `0.1.0`** -- a new package: MaskFlow for
   [LlamaIndex](https://github.com/run-llama/llama_index). Covers **item 3 of

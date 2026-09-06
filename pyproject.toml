@@ -25,6 +25,7 @@ maskflow-gateway = { workspace = true }
 maskflow-litellm = { workspace = true }
 maskflow-langchain = { workspace = true }
 maskflow-llamaindex = { workspace = true }
+maskflow-mcp = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -82,6 +83,12 @@ litellm = [
 # is tested without it.
 llama-index = [
     "maskflow-llamaindex",
+]
+# maskflow-mcp's proxy/middleware tests. fastmcp pulls authlib/openapi-core/
+# websockets/rich; never in `uv sync --all-extras`, only `uv sync --group mcp`.
+# maskflow_mcp._masking has no fastmcp import.
+mcp = [
+    "maskflow-mcp",
 ]
 
 [tool.ruff]
@@ -144,10 +151,16 @@ ignore_missing_imports = true
 module = "llama_index.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# fastmcp: maskflow-mcp runtime dep, installed only by `uv sync --group mcp`.
+module = "fastmcp.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 markers = [
     "benchmark: performance / regex-safety checks (opt-in via -m benchmark)",
     "leak: guards against PII reaching logs, exceptions, repr, or test output",
     "litellm: maskflow-litellm tests needing the real litellm package (uv sync --group litellm)",
     "llamaindex: maskflow-llamaindex tests needing llama-index-core (uv sync --group llama-index)",
+    "mcp: maskflow-mcp tests needing fastmcp (uv sync --group mcp)",
 ]
