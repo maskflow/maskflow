@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow MCP proxy: wrap any MCP server, mask PII in outbound tool-call arguments, unmask results. Session-consistent placeholders. stdio and HTTP. Indian identifiers included."
 readme = "README.md"
 requires-python = ">=3.10"
