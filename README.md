@@ -292,8 +292,9 @@ unique types total.)
 `@maskflow/detection` on npm is a TypeScript port of the 10 pure regex/structural intl types
 (email, phone, SSN, credit card, IP, AWS key, API key, JWT, IBAN, street address) — same API
 shape as the Python SDK, tested against the same fixtures so both stay accuracy-matched.
-`PERSON_NAME`/`DATE_OF_BIRTH` (need spaCy NER) and the India pack's checksum-validated types stay
-Python-only for now. See [`packages/maskflow-js/README.md`](packages/maskflow-js/README.md).
+`PERSON_NAME`/`DATE_OF_BIRTH` (need spaCy NER) and the India pack's checksum-validated types are
+Python-only — `@maskflow/detection` is a deliberately narrow browser/Node helper, not a second
+full engine. See [`packages/maskflow-js/README.md`](packages/maskflow-js/README.md).
 
 ```ts
 import { mask, unmask } from "@maskflow/detection";
@@ -346,8 +347,6 @@ matching, and latency/memory numbers:
 
 Openly not done yet, so you know what you're signing up for:
 
-- Full India-pack parity in `@maskflow/detection` (checksum-validated Indian types, not just the
-  10 intl regex types).
 - `maskflow-gateway` hardening: more provider schemas, a Redis-cluster session backend, and
   first-class OpenTelemetry traces.
 
