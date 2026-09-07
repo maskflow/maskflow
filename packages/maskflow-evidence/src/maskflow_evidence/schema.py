@@ -18,7 +18,7 @@ import json
 import re
 import uuid
 from dataclasses import dataclass, fields
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any, Final
 
 # The four things that can happen to a detected span. Mirrors
@@ -62,7 +62,7 @@ class EvidenceSchemaError(ValueError):
 
 
 def _now_iso() -> str:
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _check(field_name: str, value: Any, pattern: re.Pattern[str]) -> None:
