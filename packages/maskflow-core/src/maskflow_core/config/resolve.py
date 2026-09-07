@@ -104,6 +104,8 @@ def _parse_env_key(key: str) -> tuple[str, ...] | None:
         return (section, parts[1], parts[2].lower())
     if section == "exclusions" and len(parts) == 2:
         return ("exclusions", parts[1].lower())
+    if section == "evidence" and len(parts) == 2:
+        return ("evidence", parts[1].lower())
     return None
 
 

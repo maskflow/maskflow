@@ -85,10 +85,19 @@ async def run_proxy(
     managed = await cm.__aenter__()
     detections: dict[str, int] = {}
     try:
+        tokens_before = frozenset(managed.session.mapping)
         t0 = time.perf_counter()
         masked_body = mask_request(managed, body, detections)
         metrics.STAGE_LATENCY.labels(stage="mask").observe(time.perf_counter() - t0)
         metrics.record_detections(detections, direction="request")
+
+        app.state.evidence.emit_request(
+            managed.session.mapping,
+            frozenset(managed.session.mapping) - tokens_before,
+            provider=provider,
+            model=body.get("model") if isinstance(body.get("model"), str) else None,
+            raw_session_id=session_id,
+        )
 
         await managed.persist()
 

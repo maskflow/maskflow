@@ -9,7 +9,7 @@ dependencies = [
     # The masking engine, session identity (stable token <-> value), and the
     # fuzz-tested StreamingUnmasker (0.8.0 -> maskflow.streaming) that the
     # streaming deanonymizer is built on.
-    "maskflow-sdk>=0.8.0,<0.9",
+    "maskflow-sdk>=0.9.0,<0.10",
     # BaseCallbackHandler + Runnable. Pure-python, small; a real dependency,
     # not a peer -- you install maskflow-langchain to use it *with* LangChain.
     # Range spans the 0.3 line (still widely deployed) and 1.x.

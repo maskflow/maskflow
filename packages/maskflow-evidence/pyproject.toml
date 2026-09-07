@@ -1,0 +1,51 @@
+[project]
+name = "maskflow-evidence"
+version = "0.1.0"
+description = "MaskFlow evidence layer: a metadata-only, verifiable record of what was masked -- never the values. Self-hosted emitters (stdout, file, syslog, webhook, OTLP), off by default."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # Span / Mapping / Strategy / PIIType come from the engine, and the
+    # metadata-only leak assertion reuses core's detect_patterns_only(). No
+    # SDK dependency -- the evidence layer never masks, it only records what
+    # a mask() call already decided.
+    "maskflow-core>=0.7.0,<0.8",
+]
+
+[project.optional-dependencies]
+# The webhook emitter POSTs one JSON object per event. httpx only; kept out
+# of the base install so `import maskflow_evidence` stays dependency-light
+# for the stdout/file/syslog sinks (all stdlib).
+webhook = [
+    "httpx>=0.27",
+]
+# The OTLP emitter ships events as OpenTelemetry log records. The OTel SDK
+# tree is large; opt in only if you already run an OTel collector.
+otlp = [
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp-proto-http>=1.25",
+]
+dev = [
+    "pytest>=8.0",
+    "hypothesis>=6.100",
+    "httpx>=0.27",
+]
+
+[tool.uv.sources]
+maskflow-core = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_evidence"]
+
+[tool.pytest.ini_options]
+markers = [
+    "leak: guards against a raw or masked value, or the mapping, reaching an evidence event",
+]

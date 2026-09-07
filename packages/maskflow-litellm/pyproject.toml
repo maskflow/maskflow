@@ -10,7 +10,7 @@ dependencies = [
     # turns), Session.snapshot()/restore(), and the fuzz-tested
     # StreamingUnmasker all live in the SDK. 0.8.0 is the first version with
     # maskflow.streaming (StreamingUnmasker moved out of maskflow-gateway).
-    "maskflow-sdk>=0.8.0,<0.9",
+    "maskflow-sdk>=0.9.0,<0.10",
 ]
 
 [project.optional-dependencies]

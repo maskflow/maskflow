@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-gateway"
-version = "0.1.0"
+version = "0.2.0"
 description = "MaskFlow Gateway: a drop-in OpenAI/Anthropic-compatible proxy that masks PII before it reaches an LLM provider and restores it in the response -- streaming included."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,12 @@ dependencies = [
     # the gateway's MASKFLOW_GATEWAY_NER=0 mode needs. 0.8.0 moves
     # StreamingUnmasker/unmask_whole into maskflow.streaming (the gateway's
     # streaming.unmask is now a re-export shim over it).
-    "maskflow-sdk>=0.8.0,<0.9",
+    "maskflow-sdk>=0.9.0,<0.10",
+    # Metadata-only evidence events (issue #41). Off by default; the gateway
+    # only emits when a discoverable .maskflowrc [evidence] section (or
+    # MASKFLOW_GATEWAY_EVIDENCE_* env vars) enables a sink. Base install is
+    # stdlib-only sinks; [webhook]/[otlp] stay opt-in on maskflow-evidence.
+    "maskflow-evidence>=0.1.0,<0.2",
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",
     # One async HTTP client for every upstream (OpenAI, Anthropic, or any
@@ -49,6 +54,7 @@ loadtest = [
 
 [tool.uv.sources]
 maskflow-sdk = { workspace = true }
+maskflow-evidence = { workspace = true }
 
 [tool.uv]
 package = true

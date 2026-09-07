@@ -12,6 +12,7 @@ from .resolve import ConfigResolutionError, ConfigWarning, ResolvedConfig, resol
 from .schema import (
     CustomEntityConfig,
     EntityConfig,
+    EvidenceSection,
     ExclusionsConfig,
     MaskflowSection,
     RootConfig,
@@ -23,6 +24,7 @@ __all__ = [
     "MaskflowSection",
     "EntityConfig",
     "CustomEntityConfig",
+    "EvidenceSection",
     "ExclusionsConfig",
     "validate_root_config",
     "resolve_config",

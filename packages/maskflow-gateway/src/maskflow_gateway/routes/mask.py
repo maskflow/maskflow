@@ -31,8 +31,16 @@ async def mask_endpoint(request: Request) -> JSONResponse:
     detections: dict[str, int] = {}
 
     async with manager.use(session_id, ttl_seconds=ttl) as managed:
+        tokens_before = frozenset(managed.session.mapping)
         masked = mask_text(managed.session, text, detections)
         metrics.record_detections(detections, direction="request")
+        request.app.state.evidence.emit_request(
+            managed.session.mapping,
+            frozenset(managed.session.mapping) - tokens_before,
+            provider="none",
+            model=None,
+            raw_session_id=session_id,
+        )
         if managed.keyed:
             await managed.persist()
             return JSONResponse({"masked_text": masked, "session": session_id})

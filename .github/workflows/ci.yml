@@ -13,6 +13,7 @@ jobs:
       pack_intl: ${{ steps.filter.outputs.pack_intl }}
       pack_india: ${{ steps.filter.outputs.pack_india }}
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
+      evidence: ${{ steps.filter.outputs.evidence }}
       gateway: ${{ steps.filter.outputs.gateway }}
       litellm_guardrail: ${{ steps.filter.outputs.litellm_guardrail }}
       langchain: ${{ steps.filter.outputs.langchain }}
@@ -49,8 +50,15 @@ jobs:
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
               - 'pyproject.toml'
+            evidence:
+              - 'packages/maskflow-evidence/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
             gateway:
               - 'packages/maskflow-gateway/**'
+              - 'packages/maskflow-evidence/**'
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
@@ -86,6 +94,7 @@ jobs:
               - 'pyproject.toml'
             cli:
               - 'packages/maskflow-cli/**'
+              - 'packages/maskflow-evidence/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
@@ -192,6 +201,31 @@ jobs:
       - run: uv run ruff check packages/maskflow-sdk
       - run: uv run ruff format --check packages/maskflow-sdk
       - run: uv run pytest packages/maskflow-sdk/tests -q
+
+  evidence:
+    needs: changes
+    if: needs.changes.outputs.evidence == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-evidence
+      - run: uv run ruff format --check packages/maskflow-evidence
+      - run: uv run mypy packages/maskflow-evidence/src --strict
+      - run: uv run pytest packages/maskflow-evidence/tests -q
+      # Explicit rerun of the metadata-only / leak gate as a distinct
+      # failure -- the whole evidence layer rests on it (issue #41 DoD).
+      - run: uv run pytest packages/maskflow-evidence/tests -m leak -q
 
   gateway:
     needs: changes
@@ -502,7 +536,7 @@ jobs:
 
   pip-audit:
     needs: changes
-    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.evidence == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

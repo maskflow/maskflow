@@ -42,6 +42,19 @@ def test_mask_round_trips_through_unmask() -> None:
     assert restored == text
 
 
+def test_mapping_entries_carry_detection_metadata() -> None:
+    """MappingEntry.score / .recognizer are populated from the originating
+    span (metadata only -- consumed by maskflow-evidence). Additive; every
+    strategy branch sets them."""
+    with session() as s:
+        s.mask("Email me at alice@example.com or call 415-555-0132.")
+        entries = list(s.mapping.values())
+    assert entries
+    for entry in entries:
+        assert entry.recognizer and entry.recognizer.startswith(("pattern:", "ner:"))
+        assert entry.score is not None and 0.0 <= entry.score <= 1.0
+
+
 def test_mask_json_only_masks_string_leaves_never_keys() -> None:
     with session() as s:
         result = s.mask_json({"email": "alice@example.com", "note": "no pii here"})

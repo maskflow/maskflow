@@ -69,3 +69,44 @@ def test_explain_bad_config_exits_nonzero(fixtures_dir: Path) -> None:
     result = runner.invoke(app, ["explain", "--config", str(fixtures_dir / "typo.toml"), "hello"])
     assert result.exit_code == 1
     assert "did you mean 'threshold'?" in result.stderr
+
+
+# --- --evidence -------------------------------------------------------
+
+
+def test_explain_evidence_file_writes_metadata_only(tmp_path: Path) -> None:
+    import json
+
+    out = tmp_path / "evidence.log"
+    result = runner.invoke(
+        app,
+        ["explain", "--evidence-file", str(out), "Email me at john.doe@example.com please"],
+    )
+    assert result.exit_code == 0
+    lines = out.read_text().strip().splitlines()
+    assert lines
+    record = json.loads(lines[0])
+    assert record["entity_type"] == "EMAIL"
+    assert record["action"] == "masked"
+    assert record["recognizer"] == "pattern:EMAIL"
+    # the value itself never appears
+    assert "john.doe@example.com" not in out.read_text()
+
+
+def test_explain_no_evidence_by_default(tmp_path: Path) -> None:
+    # no --evidence, no [evidence] config -> nothing written anywhere
+    result = runner.invoke(app, ["explain", "Email me at john.doe@example.com please"])
+    assert result.exit_code == 0
+    assert not (tmp_path / "evidence.log").exists()
+
+
+def test_explain_evidence_reports_near_misses_as_passed(tmp_path: Path) -> None:
+    import json
+
+    out = tmp_path / "e.log"
+    text = "Random unrelated text with a number 123456789 in it, nothing special."
+    result = runner.invoke(app, ["explain", "--evidence-file", str(out), text])
+    assert result.exit_code == 0
+    actions = {json.loads(line)["action"] for line in out.read_text().strip().splitlines()}
+    assert "passed" in actions
+    assert "123456789" not in out.read_text()

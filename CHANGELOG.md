@@ -12,6 +12,52 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-evidence` `0.1.0`** -- a new package: an open, **metadata-only**
+  record of *what was masked* -- never the values. Covers **item 1 of R5
+  (issue [#41](https://github.com/maskflow/maskflow/issues/41))**.
+  - **`EvidenceEvent`** -- one event per `(entity_type, recognizer, action)`
+    per masking call: `entity_type`, `count`, `score`, `recognizer`,
+    `action` (`masked`/`redacted`/`surrogate`/`passed`), `service`,
+    `environment`, `session_id`, `provider`, `model`, `pack_version`,
+    `engine_version`, plus a generated `event_id` and `ts`. **Every field
+    is a bounded slug, a bounded number, or a closed enum -- there is no
+    `str` field a caller fills in freely**, so a detected value cannot
+    appear. Enforced by `guard.assert_schema_is_metadata_only()` (static
+    field-set + validator audit), a Hypothesis property test, an AST check
+    that `derive.py` never reads `Span.text` / `MappingEntry.original`, and
+    a `detect_patterns_only()` pass over every serialized event. `-m leak`
+    gate, rerun as a distinct CI check.
+  - **Emitters** -- one `Emitter` interface, several self-hosted backends:
+    `stdout`, `file` (size-rotated JSON lines), `syslog` (all stdlib),
+    `webhook` (`maskflow-evidence[webhook]`), `otlp`
+    (`maskflow-evidence[otlp]`). **Off by default** (`NullEmitter`); an
+    emit failure is logged and dropped, never raised into the masking call.
+  - **`derive`** -- `events_from_spans()` / `events_from_mapping()` build
+    events from a `detect()` result or a session `Mapping` without ever
+    touching a value; `EventContext` carries the per-call context.
+  - **Config** -- a `.maskflowrc` `[evidence]` section (`enabled` = false by
+    default, `sink`, `path`, `url`, `service`, `environment`, …), validated
+    by `maskflow-core`; `EvidenceConfig.from_rootconfig()` /
+    `.from_env(prefix)` resolve it.
+  - Ships `py.typed`, `contrib/grafana-dashboard.json` (panels only -- no
+    compliance-control framing pending
+    [#42](https://github.com/maskflow/maskflow/issues/42)), `docs/evidence.md`
+    (schema, **what is deliberately not collected**, setup guide),
+    `release-evidence.yml` on `evidence-v*` tags, a dedicated CI job.
+
+- **`maskflow-gateway` `0.2.0`** -- **evidence emission.** When `[evidence]`
+  is enabled (via a discoverable `.maskflowrc` or `MASKFLOW_GATEWAY_EVIDENCE_*`
+  env vars, which win), every proxied request emits one metadata-only
+  `EvidenceEvent` per detected type. The client `X-Maskflow-Session` header
+  is **hashed** into `session_id`, never emitted raw. New Prometheus
+  counter `maskflow_evidence_emitted_total{sink}`. Off by default;
+  emission failures never affect a proxied request. Depends on
+  `maskflow-evidence` (stdlib sinks only in the base install).
+
+- **`maskflow-cli` `0.7.0`** -- `maskflow explain --evidence` /
+  `--evidence-file PATH` emits evidence events for a run (near-misses become
+  `action="passed"`). `maskflow doctor` gains an `evidence` readout line.
+
 - **`maskflow-mcp` `0.1.0` / `0.1.1`** -- a new package: a [Model Context
   Protocol](https://modelcontextprotocol.io) proxy that wraps any MCP
   server. It masks PII in outbound `tools/call` arguments before they reach
@@ -379,6 +425,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   widened bounds as a new release.
 
 ### Changed
+
+- **`maskflow-core` `0.6.0` -> `0.7.0`** -- additive, backward-compatible
+  (issue [#41](https://github.com/maskflow/maskflow/issues/41)):
+  - `MappingEntry` gains optional `score` / `recognizer` fields (metadata
+    about the detection, not the value), populated by `mask_with_policy()`
+    and round-tripped by `Mapping.to_json()` / `from_json()` **only when
+    set** -- an older serialized mapping loads unchanged. `mask()`,
+    `unmask()`, `mask_and_call()` and the round-trip guarantee are
+    untouched.
+  - New `[evidence]` `.maskflowrc` section + `EvidenceSection` schema (all
+    defaults off), so `maskflow config validate` accepts it. Core validates
+    the knobs only; the emitter lives in `maskflow-evidence`.
+- **`maskflow-sdk` `0.8.0` -> `0.9.0`** -- `Session` threads the originating
+  span's `score` / `recognizer` onto every `MappingEntry` it records, so the
+  gateway's evidence events are full-fidelity. Requires `maskflow-core`
+  `>=0.7.0`. No API change.
+- Dependency bounds widened to match: `maskflow-pack-intl` /
+  `maskflow-pack-india` / `maskflow-cli` now allow `maskflow-core <0.8`;
+  `maskflow-gateway` / `maskflow-litellm` / `maskflow-langchain` /
+  `maskflow-llamaindex` / `maskflow-mcp` now allow `maskflow-sdk <0.10`.
 
 - `maskflow-pack-india` `0.4.0` -> `0.5.0` (issue #28 closeout): grows two of
   the pack's bundled reference datasets using the new refresh script above.

@@ -9,7 +9,7 @@ dependencies = [
     # issue #21's pluggable interface, used by this pack's __init__.py) only
     # exists from core 0.6.0. Importing this pack against an older core
     # raises ImportError immediately.
-    "maskflow-core[nlp]>=0.6.0,<0.7",
+    "maskflow-core[nlp]>=0.6.0,<0.8",
     # PERSON_NAME (Indian) / INDIAN_ADDRESS gazetteer matching (~115k names) --
     # linear-time multi-pattern search, never "a regex loop" (CLAUDE.md rule 3).
     "pyahocorasick>=2.0,<3",
