@@ -380,36 +380,10 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Changed
 
-- Dependency bounds widened for the released `maskflow-core` `0.7.0` /
-  `maskflow-sdk` `0.9.0` (no code change in these packages, not yet
-  published): `maskflow-pack-intl` / `maskflow-pack-india` now allow
-  `maskflow-core <0.8`; `maskflow-litellm` / `maskflow-langchain` /
+- Dependency bounds widened for the released `maskflow-sdk` `0.9.0` (no code
+  change, not yet published): `maskflow-litellm` / `maskflow-langchain` /
   `maskflow-llamaindex` / `maskflow-mcp` now allow `maskflow-sdk <0.10`.
 
-- `maskflow-pack-india` `0.4.0` -> `0.5.0` (issue #28 closeout): grows two of
-  the pack's bundled reference datasets using the new refresh script above.
-  `IFSC_BANK_CODES` 56 -> 94 entries: cross-checked against
-  `razorpay/ifsc`'s public-domain data and added every code in scope
-  (foreign/private/small-finance/payments/local-area banks, plus 3
-  legitimate merged/retired PSU codes) that this pack's manual curation had
-  missed; also relabels `ESFB` (was miscommented "ESAF Small Finance Bank",
-  actually Equitas per the cross-check -- the `ESFB` *value* is unchanged,
-  only its comment). `INDIAN_CITIES` 368 -> 554 entries: unions the existing
-  Wikipedia-sourced list with Census 2011 town-population data (population
-  >= 100,000), clearing the "top-500" target from issue #28. **Behavior
-  change**: IFSC/VEHICLE_REG/DRIVING_LICENCE and INDIAN_ADDRESS's L1
-  gazetteer will now validate/match values they previously rejected/missed
-  -- e.g. an IFSC starting `IPPB`/`ESFB`/`USFB`/... now passes structural
-  validation, and 186 more real city names are recognized as address
-  context. No API change. `maskflow-sdk`/`maskflow-cli`'s
-  `maskflow-pack-india` bound widened from `<0.5` to `<0.6`. The
-  `PERSON_NAME` (Indian) gazetteer target (150k+ names) and India-specific
-  negative context terms remain open -- see docs/data-refresh.md and the two
-  follow-up issues filed from #28.
-- `maskflow-sdk` `0.5.0` -> `0.6.0` and `maskflow-cli` `0.4.0` -> `0.5.0`:
-  no code changes in either package -- dependency bounds widened for the
-  `maskflow-pack-india` bump above, so this bump exists purely to publish
-  those widened bounds as a new release.
 - `maskflow-sdk` `0.2.0` -> `0.3.0`: now depends on `maskflow-pack-india`
   (`>=0.1.0,<0.2`) in addition to `maskflow-pack-intl`, registered the same
   side-effect-import way in `maskflow/__init__.py`. This is a **behavior
@@ -623,7 +597,7 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
-## [evidence 0.1.0, gateway 0.2.0, cli 0.7.0, core 0.7.0, sdk 0.9.0] - 2026-09-09
+## [evidence 0.1.0, gateway 0.2.0, cli 0.7.0, core 0.7.0, sdk 0.9.0, pack-india 0.5.0, pack-intl 0.3.1] - 2026-09-09
 
 **R5 · Evidence, item 1 (issue
 [#41](https://github.com/maskflow/maskflow/issues/41), PR
@@ -632,6 +606,10 @@ metadata-only record of *what was masked* -- never the values. The
 compliance-clause mapping, retention default, and the dashboard's
 "controls covered" framing are deferred to issue
 [#42](https://github.com/maskflow/maskflow/issues/42).
+
+Publishing order: `pack-intl` / `pack-india` first (they gate the
+`maskflow-core` upper bound), then `core`, then `sdk` / `evidence`, then
+`gateway` / `cli`.
 
 ### Added
 
@@ -694,6 +672,29 @@ compliance-clause mapping, retention default, and the dashboard's
   span's `score` / `recognizer` onto every `MappingEntry` it records, so the
   gateway's evidence events are full-fidelity. Requires `maskflow-core`
   `>=0.7.0`. No API change.
+- **`maskflow-pack-intl` `0.3.0` -> `0.3.1`** -- no code change; the
+  `maskflow-core` bound is widened from `<0.7` to `<0.8` so it composes
+  with `maskflow-core` `0.7.0` (without this the whole `sdk` / `gateway` /
+  `cli` line is unresolvable).
+- **`maskflow-pack-india` `0.4.0` -> `0.5.0`** (issue #28 closeout): the
+  `maskflow-core` bound is likewise widened to `<0.8`, and two bundled
+  reference datasets grow via the refresh script.
+  - `IFSC_BANK_CODES` 56 -> 94 entries: cross-checked against `razorpay/ifsc`'s
+    public-domain data -- every in-scope code this pack's manual curation had
+    missed (foreign / private / small-finance / payments / local-area banks,
+    plus 3 merged/retired PSU codes); `ESFB`'s stale comment corrected
+    ("ESAF" -> "Equitas"), the value unchanged.
+  - `INDIAN_CITIES` 368 -> 554 entries: unions the existing Wikipedia list
+    with Census 2011 towns of population >= 100,000, clearing the #28
+    "top-500" target.
+  - **Behavior change** (additive, no API change): IFSC / VEHICLE_REG /
+    DRIVING_LICENCE structural validation and the INDIAN_ADDRESS L1
+    gazetteer now accept/match values they previously rejected/missed --
+    e.g. an IFSC starting `IPPB` / `ESFB` / `USFB`, and 186 more city names
+    as address context.
+  - Still open (see `docs/data-refresh.md` and the #28 follow-up issues):
+    the `PERSON_NAME` (Indian) 150k-name gazetteer target and India-specific
+    negative-context terms.
 
 ## [core 0.3.0, pack-intl 0.2.0, sdk 0.2.0] - 2026-08-21
 
