@@ -428,25 +428,12 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Changed
 
-- **`maskflow-core` `0.6.0` -> `0.7.0`** -- additive, backward-compatible
-  (issue [#41](https://github.com/maskflow/maskflow/issues/41)):
-  - `MappingEntry` gains optional `score` / `recognizer` fields (metadata
-    about the detection, not the value), populated by `mask_with_policy()`
-    and round-tripped by `Mapping.to_json()` / `from_json()` **only when
-    set** -- an older serialized mapping loads unchanged. `mask()`,
-    `unmask()`, `mask_and_call()` and the round-trip guarantee are
-    untouched.
-  - New `[evidence]` `.maskflowrc` section + `EvidenceSection` schema (all
-    defaults off), so `maskflow config validate` accepts it. Core validates
-    the knobs only; the emitter lives in `maskflow-evidence`.
-- **`maskflow-sdk` `0.8.0` -> `0.9.0`** -- `Session` threads the originating
-  span's `score` / `recognizer` onto every `MappingEntry` it records, so the
-  gateway's evidence events are full-fidelity. Requires `maskflow-core`
-  `>=0.7.0`. No API change.
-- Dependency bounds widened to match: `maskflow-pack-intl` /
-  `maskflow-pack-india` / `maskflow-cli` now allow `maskflow-core <0.8`;
-  `maskflow-gateway` / `maskflow-litellm` / `maskflow-langchain` /
-  `maskflow-llamaindex` / `maskflow-mcp` now allow `maskflow-sdk <0.10`.
+- Dependency bounds widened for the released `maskflow-core` `0.7.0` /
+  `maskflow-sdk` `0.9.0` below (no code change in these packages):
+  `maskflow-pack-intl` / `maskflow-pack-india` / `maskflow-cli` now allow
+  `maskflow-core <0.8`; `maskflow-gateway` / `maskflow-litellm` /
+  `maskflow-langchain` / `maskflow-llamaindex` / `maskflow-mcp` now allow
+  `maskflow-sdk <0.10`.
 
 - `maskflow-pack-india` `0.4.0` -> `0.5.0` (issue #28 closeout): grows two of
   the pack's bundled reference datasets using the new refresh script above.
@@ -684,6 +671,28 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
+
+## [maskflow-core 0.7.0, maskflow-sdk 0.9.0] - 2026-09-08
+
+Support for the evidence layer (issue
+[#41](https://github.com/maskflow/maskflow/issues/41)). Both changes are
+additive and backward-compatible -- `mask()` / `unmask()` / `mask_and_call()`
+and the round-trip guarantee are untouched.
+
+### Changed
+
+- **`maskflow-core` `0.6.0` -> `0.7.0`**:
+  - `MappingEntry` gains optional `score` / `recognizer` fields (metadata
+    about the detection, not the value), populated by `mask_with_policy()`
+    and round-tripped by `Mapping.to_json()` / `from_json()` **only when
+    set** -- an older serialized mapping loads unchanged.
+  - New `[evidence]` `.maskflowrc` section + `EvidenceSection` schema (all
+    defaults off), so `maskflow config validate` accepts it. Core validates
+    the knobs only; the emitter lives in `maskflow-evidence`.
+- **`maskflow-sdk` `0.8.0` -> `0.9.0`** -- `Session` threads the originating
+  span's `score` / `recognizer` onto every `MappingEntry` it records, so the
+  gateway's evidence events are full-fidelity. Requires `maskflow-core`
+  `>=0.7.0`. No API change.
 
 ## [core 0.3.0, pack-intl 0.2.0, sdk 0.2.0] - 2026-08-21
 
