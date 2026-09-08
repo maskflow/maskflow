@@ -56,7 +56,9 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 - **`maskflow-cli` `0.7.0`** -- `maskflow explain --evidence` /
   `--evidence-file PATH` emits evidence events for a run (near-misses become
-  `action="passed"`). `maskflow doctor` gains an `evidence` readout line.
+  `action="passed"`). Needs the opt-in `maskflow-cli[evidence]` extra
+  (imported lazily -- every other command runs without it, and so does the
+  standalone binary). `maskflow doctor` gains an `evidence` readout line.
 
 - **`maskflow-mcp` `0.1.0` / `0.1.1`** -- a new package: a [Model Context
   Protocol](https://modelcontextprotocol.io) proxy that wraps any MCP

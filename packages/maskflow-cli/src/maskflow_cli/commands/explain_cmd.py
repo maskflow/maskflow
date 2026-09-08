@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 from maskflow_core.config.resolve import ConfigResolutionError, resolve_config
 
-from ..evidence import emit_explain_evidence
+from ..evidence import EvidenceExtraMissing, emit_explain_evidence
 from ..explain import build_explain_result, detect_for_explain
 from ..explain_render import make_console, render_explain
 
@@ -58,12 +58,16 @@ def explain(
     render_explain(make_console(), result)
 
     enabled = resolved.config.evidence.enabled if evidence is None else evidence
-    emitted = emit_explain_evidence(
-        accepted,
-        rejected,
-        resolved.config,
-        enabled=enabled,
-        evidence_file=evidence_file,
-    )
+    try:
+        emitted = emit_explain_evidence(
+            accepted,
+            rejected,
+            resolved.config,
+            enabled=enabled,
+            evidence_file=evidence_file,
+        )
+    except EvidenceExtraMissing as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
     if emitted and evidence_file is not None:
         typer.echo(f"\n{emitted} evidence event(s) written to {evidence_file}", err=True)

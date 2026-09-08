@@ -35,10 +35,6 @@ dependencies = [
     # side effect. All additive only -- no API change, so the existing
     # lower bound still holds.
     "maskflow-pack-india>=0.1.0,<0.6",
-    # `maskflow explain --evidence`: metadata-only evidence events (issue
-    # #41). Base install pulls only the stdlib sinks; [webhook]/[otlp] stay
-    # opt-in on maskflow-evidence.
-    "maskflow-evidence>=0.1.0,<0.2",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",
@@ -56,6 +52,14 @@ maskflow = "maskflow_cli.app:main"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+]
+# `maskflow explain --evidence` / `--evidence-file`: metadata-only evidence
+# events (issue #41). Opt-in so a bare CLI install (and the standalone
+# PyInstaller binary) doesn't require it; `maskflow_cli.evidence` imports it
+# lazily and every other command runs without it. Base pull is the
+# stdlib-only sinks; [webhook]/[otlp] stay opt-in on maskflow-evidence.
+evidence = [
+    "maskflow-evidence>=0.1.0,<0.2",
 ]
 # `maskflow scan s3://...` -- only pulled by an explicit
 # `pip install 'maskflow-cli[s3]'`, so boto3 (large) never taxes the common

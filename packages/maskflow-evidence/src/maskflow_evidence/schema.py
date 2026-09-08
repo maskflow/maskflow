@@ -38,8 +38,13 @@ _SLUG_RE: Final = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._+:-]{0,63})$")
 # cannot carry a free-text timestamp.
 _TS_RE: Final = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
-# 32 lowercase hex chars -- uuid4().hex.
-_EVENT_ID_RE: Final = re.compile(r"^[0-9a-f]{32}$")
+# Canonical dashed uuid4 -- str(uuid.uuid4()), not .hex. The dashes cap the
+# longest all-digit run at 12, one short of the 13-digit floor the
+# credit-card detector needs, so this generated field can never itself trip
+# assert_no_pii (a bare 32-hex string occasionally can).
+_EVENT_ID_RE: Final = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
 
 # session_id is caller-supplied and opaque by contract (a hash or a uuid,
 # never a username/email). We still bound it hard: hex/uuid/base32-ish only,
@@ -100,7 +105,7 @@ class EvidenceEvent:
     ts: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "event_id", self.event_id or uuid.uuid4().hex)
+        object.__setattr__(self, "event_id", self.event_id or str(uuid.uuid4()))
         object.__setattr__(self, "ts", self.ts or _now_iso())
 
         _check("event_id", self.event_id, _EVENT_ID_RE)
@@ -154,14 +159,33 @@ class EvidenceEvent:
         }
 
     def to_json(self) -> str:
-        """One compact JSON line. Runs the serialized form through the
-        metadata-only guard as a last line of defence before it leaves the
-        process -- see ``guard.assert_no_pii``."""
+        """One compact JSON line. As a last line of defence, the
+        caller-supplied string fields are run through the pattern/checksum
+        detectors before the line leaves the process (see
+        ``guard.assert_no_pii``). The generated fields (``event_id``,
+        ``ts``) and the numerics are not scanned -- they are structurally
+        incapable of carrying a value, and a random id must not be able to
+        spuriously trip a detector."""
         from .guard import assert_no_pii
 
-        line = json.dumps(self.to_dict(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
-        assert_no_pii(line)
-        return line
+        assert_no_pii(
+            "\n".join(
+                str(v)
+                for v in (
+                    self.session_id,
+                    self.service,
+                    self.environment,
+                    self.entity_type,
+                    self.recognizer,
+                    self.provider,
+                    self.model,
+                    self.pack_version,
+                    self.engine_version,
+                )
+                if v
+            )
+        )
+        return json.dumps(self.to_dict(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> EvidenceEvent:

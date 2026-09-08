@@ -9,8 +9,6 @@ any error, and the timeout here is deliberately tight.
 
 from __future__ import annotations
 
-import json
-
 from ..schema import EvidenceEvent
 
 
@@ -28,14 +26,13 @@ class WebhookEmitter:
         self._client = httpx.Client(timeout=timeout)
 
     def emit(self, event: EvidenceEvent) -> None:
-        # to_dict() (not to_json()) so httpx sets Content-Type and we still
-        # get the guard pass via json.dumps below.
-        payload = event.to_dict()
-        body = json.dumps(payload)
-        from ..guard import assert_no_pii
-
-        assert_no_pii(body)
-        self._client.post(self._url, content=body, headers={"content-type": "application/json"})
+        # to_json() runs the metadata-only guard and produces a valid JSON
+        # object body.
+        self._client.post(
+            self._url,
+            content=event.to_json(),
+            headers={"content-type": "application/json"},
+        )
 
     def close(self) -> None:
         self._client.close()

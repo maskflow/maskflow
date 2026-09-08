@@ -3186,7 +3186,6 @@ source = { editable = "packages/maskflow-cli" }
 dependencies = [
     { name = "httpx" },
     { name = "maskflow-core", extra = ["yaml"] },
-    { name = "maskflow-evidence" },
     { name = "maskflow-pack-india" },
     { name = "maskflow-pack-intl" },
     { name = "rich" },
@@ -3197,6 +3196,9 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "pytest" },
+]
+evidence = [
+    { name = "maskflow-evidence" },
 ]
 postgres = [
     { name = "psycopg", extra = ["binary"] },
@@ -3210,7 +3212,7 @@ requires-dist = [
     { name = "boto3", marker = "extra == 's3'", specifier = ">=1.34" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "maskflow-core", extras = ["yaml"], editable = "packages/maskflow-core" },
-    { name = "maskflow-evidence", editable = "packages/maskflow-evidence" },
+    { name = "maskflow-evidence", marker = "extra == 'evidence'", editable = "packages/maskflow-evidence" },
     { name = "maskflow-pack-india", editable = "packs/maskflow-pack-india" },
     { name = "maskflow-pack-intl", editable = "packs/maskflow-pack-intl" },
     { name = "psycopg", extras = ["binary"], marker = "extra == 'postgres'", specifier = ">=3.1" },
@@ -3219,7 +3221,7 @@ requires-dist = [
     { name = "tomli-w", specifier = ">=1.0" },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["dev", "s3", "postgres"]
+provides-extras = ["dev", "evidence", "s3", "postgres"]
 
 [[package]]
 name = "maskflow-core"
