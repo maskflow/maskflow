@@ -8,7 +8,7 @@ license = { text = "MIT" }
 dependencies = [
     # The masking engine, session identity (stable token <-> value across
     # tool calls in an agent run), and the fuzz-tested StreamingUnmasker.
-    "maskflow-sdk>=0.8.0,<0.9",
+    "maskflow-sdk>=0.9.0,<0.10",
     # The proxy + middleware primitives (FastMCP.as_proxy, Middleware). The
     # 2.x line uses the stable `mcp` 1.x SDK and does not pull LLM vendor
     # SDKs (those arrived with fastmcp 4 / fastmcp-slim). In the *workspace*

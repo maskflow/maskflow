@@ -54,6 +54,13 @@ ACTIVE_SESSIONS = Gauge(
     registry=REGISTRY,
 )
 
+EVIDENCE_EMITTED = Counter(
+    "maskflow_evidence_emitted_total",
+    "Metadata-only evidence events emitted, by sink. Zero unless [evidence] is enabled.",
+    ["sink"],
+    registry=REGISTRY,
+)
+
 
 def record_detections(counts: Mapping[str, int], direction: str) -> None:
     for entity_type, n in counts.items():

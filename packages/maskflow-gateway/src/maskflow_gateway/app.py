@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 from . import __version__
 from .config import Settings, get_settings
 from .errors import GatewayError
+from .observability.evidence import GatewayEvidence
 from .observability.logging import configure_logging
 from .ratelimit import RateLimiter
 from .routes import ROUTERS
@@ -34,6 +35,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_manager = SessionManager(store, settings)
         app.state.upstream = Upstream(settings)
         app.state.rate_limiter = RateLimiter(settings, store.redis)
+        app.state.evidence = GatewayEvidence.from_config()
         logger.info(
             "gateway starting",
             extra={
@@ -41,6 +43,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "ner": settings.ner,
                 "sessions": "redis" if settings.redis_url else "in-process",
                 "rate_limit_per_minute": settings.rate_limit_per_minute,
+                "evidence": app.state.evidence.enabled,
             },
         )
         try:
@@ -48,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             await app.state.upstream.aclose()
             await app.state.session_manager.aclose()
+            app.state.evidence.close()
 
     app = FastAPI(title="MaskFlow Gateway", version=__version__, lifespan=lifespan)
 

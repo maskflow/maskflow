@@ -214,6 +214,26 @@ real values at the boundary.
 Full reference in [`packages/maskflow-mcp/README.md`](packages/maskflow-mcp/README.md) and
 [`docs/mcp.md`](docs/mcp.md).
 
+### Evidence — a record of what was masked
+
+`maskflow-evidence` emits a **metadata-only** record of *what* was masked — entity type, count,
+recognizer, action, versions — and never a value, a placeholder, or the mapping. Off by default;
+one line in `.maskflowrc` turns it on, to a self-hosted sink (stdout / file / syslog / webhook /
+OTLP). The gateway emits automatically when enabled; `maskflow explain --evidence` does it for a
+single run.
+
+```toml
+[evidence]
+enabled = true
+sink    = "file"
+path    = "evidence.log"
+```
+
+That no event field can carry free text is enforced in CI. Full reference in
+[`docs/evidence.md`](docs/evidence.md). Compliance-control mapping and signed accuracy
+attestations (R5 items 2–3) are still being validated with practitioners and are not yet part of
+this layer.
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an

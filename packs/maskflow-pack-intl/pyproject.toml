@@ -9,7 +9,7 @@ dependencies = [
     # issue #21's pluggable interface, used by this pack's __init__.py) only
     # exists from core 0.6.0. Importing this pack against an older core
     # raises ImportError immediately.
-    "maskflow-core[nlp]>=0.6.0,<0.7",
+    "maskflow-core[nlp]>=0.6.0,<0.8",
 ]
 
 [project.entry-points."maskflow.recognizers"]

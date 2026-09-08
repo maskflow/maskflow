@@ -13,6 +13,7 @@ dependencies = [
     "maskflow-gateway[redis]",
     "maskflow-litellm[redis]",
     "maskflow-langchain[yaml]",
+    "maskflow-evidence[webhook]",
 ]
 
 [tool.uv.sources]
@@ -26,6 +27,7 @@ maskflow-litellm = { workspace = true }
 maskflow-langchain = { workspace = true }
 maskflow-llamaindex = { workspace = true }
 maskflow-mcp = { workspace = true }
+maskflow-evidence = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -154,6 +156,12 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # fastmcp: maskflow-mcp runtime dep, installed only by `uv sync --group mcp`.
 module = "fastmcp.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# opentelemetry: only for maskflow-evidence's optional OTLP emitter
+# (maskflow-evidence[otlp]) -- not installed by `uv sync --all-extras`.
+module = "opentelemetry.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

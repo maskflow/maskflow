@@ -70,16 +70,29 @@ def suggested_threshold(score: float) -> float:
     return math.floor(score * 20) / 20
 
 
-def run_explain(text: str, root_config: RootConfig, *, full: bool = False) -> ExplainResult:
+def detect_for_explain(text: str, root_config: RootConfig) -> tuple[list[Span], list[Span]]:
+    """The `(accepted, rejected)` span split `explain` is built on. Exposed
+    so the command can reuse the same spans for `--evidence` without a
+    second detect() pass."""
     compiled = compile_config(root_config)
-
     accepted, rejected = detect(
         text,
         min_confidence=DEFAULT_MIN_CONFIDENCE,
         return_rejected=True,
         **compiled.detect_kwargs(),
     )
+    return list(accepted), list(rejected)
 
+
+def build_explain_result(
+    text: str,
+    accepted: list[Span],
+    rejected: list[Span],
+    root_config: RootConfig,
+    *,
+    full: bool = False,
+) -> ExplainResult:
+    compiled = compile_config(root_config)
     masked = [_view(s, full=full, threshold=None) for s in accepted]
     near_misses = [
         _view(
@@ -90,3 +103,8 @@ def run_explain(text: str, root_config: RootConfig, *, full: bool = False) -> Ex
         for s in rejected
     ]
     return ExplainResult(text_length=len(text), masked=masked, near_misses=near_misses)
+
+
+def run_explain(text: str, root_config: RootConfig, *, full: bool = False) -> ExplainResult:
+    accepted, rejected = detect_for_explain(text, root_config)
+    return build_explain_result(text, accepted, rejected, root_config, full=full)

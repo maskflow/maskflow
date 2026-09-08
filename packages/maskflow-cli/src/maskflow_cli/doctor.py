@@ -127,6 +127,16 @@ def _check_config() -> tuple[ComponentCheck, ResolvedConfig | None]:
     return ComponentCheck(".maskflowrc", None, status, detail), resolved
 
 
+def _check_evidence(resolved: ResolvedConfig | None) -> ComponentCheck:
+    """Reports whether the metadata-only evidence layer is on, and to where.
+    Off by default -- an informational line, never an error."""
+    section = resolved.config.evidence if resolved is not None else None
+    if section is None or not section.enabled:
+        return ComponentCheck("evidence", None, "ok", "disabled (default) -- no events emitted")
+    where = section.path if section.sink == "file" else (section.url or section.sink)
+    return ComponentCheck("evidence", None, "ok", f"enabled -- sink: {section.sink} ({where})")
+
+
 def _check_redis() -> ComponentCheck:
     # RedisMappingStore (maskflow_core.mapping_store) is an interface-only
     # stub -- every method raises NotImplementedError regardless of whether
@@ -177,6 +187,7 @@ def run_checks() -> DoctorReport:
     config_check, resolved = _check_config()
     components.append(config_check)
 
+    components.append(_check_evidence(resolved))
     components.append(_check_redis())
 
     entities = _entity_checks(resolved, spacy_ready=model_check.status == "ok")

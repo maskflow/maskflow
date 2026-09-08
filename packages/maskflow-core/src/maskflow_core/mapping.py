@@ -19,13 +19,22 @@ from .strategies import Strategy
 class MappingEntry:
     """One substitution mask_with_policy() made. `original` is repr-excluded
     -- same discipline as Span.text (CLAUDE.md rule 1: raw PII must never
-    surface via default dataclass repr)."""
+    surface via default dataclass repr).
+
+    `score` and `recognizer` carry the originating Span's confidence and the
+    recognizer id that produced it (e.g. "pattern:AADHAAR"). They are
+    metadata *about* the detection, never the value -- safe to surface in an
+    evidence event or a metric. Optional and defaulted so this stays a
+    backward-compatible, additive change: a mapping deserialized from an
+    older store simply has them as None."""
 
     token: str
     entity_type: PIIType
     strategy: Strategy
     reversible: bool
     original: str = field(repr=False)
+    score: float | None = None
+    recognizer: str | None = None
 
 
 class Mapping:
@@ -86,6 +95,10 @@ class Mapping:
                 "strategy": entry.strategy.value,
                 "reversible": entry.reversible,
                 "original": entry.original,
+                # Only serialized when present, so a store written by an
+                # older core stays byte-identical on round-trip.
+                **({"score": entry.score} if entry.score is not None else {}),
+                **({"recognizer": entry.recognizer} if entry.recognizer is not None else {}),
             }
             for token, entry in self._entries.items()
         }
@@ -99,6 +112,8 @@ class Mapping:
                 strategy=Strategy(fields["strategy"]),
                 reversible=fields["reversible"],
                 original=fields["original"],
+                score=fields.get("score"),
+                recognizer=fields.get("recognizer"),
             )
             for token, fields in data.items()
         }

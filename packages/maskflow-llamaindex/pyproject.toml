@@ -9,7 +9,7 @@ dependencies = [
     # The masking engine, session identity, and the fuzz-tested
     # StreamingUnmasker (0.8.0 -> maskflow.streaming) the streaming unmask
     # helper is built on.
-    "maskflow-sdk>=0.8.0,<0.9",
+    "maskflow-sdk>=0.9.0,<0.10",
     # BaseNodePostprocessor, TransformComponent, TextNode, NodeWithScore --
     # a real runtime dependency. In the *workspace* it is only installed by
     # `uv sync --group llama-index` (its dep tree is large: sqlalchemy, nltk,

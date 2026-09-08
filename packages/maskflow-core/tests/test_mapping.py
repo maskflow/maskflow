@@ -61,3 +61,34 @@ def test_mapping_json_round_trip_preserves_entries() -> None:
     assert restored[entry.token].strategy == entry.strategy
     assert restored[entry.token].reversible == entry.reversible
     assert restored[entry.token].original == entry.original
+
+
+def test_mapping_entry_score_and_recognizer_default_none() -> None:
+    entry = _entry()
+    assert entry.score is None
+    assert entry.recognizer is None
+
+
+def test_mapping_json_round_trip_preserves_score_and_recognizer() -> None:
+    pii_type = PIIType.register("TEST_MAPPING_TYPE")
+    entry = MappingEntry(
+        token="<TEST_1>",
+        entity_type=pii_type,
+        strategy=Strategy.REPLACE,
+        reversible=True,
+        original="245-11-2222",
+        score=0.87,
+        recognizer="pattern:TEST",
+    )
+    restored = Mapping.from_json(Mapping({entry.token: entry}).to_json())
+    assert restored[entry.token].score == 0.87
+    assert restored[entry.token].recognizer == "pattern:TEST"
+
+
+def test_mapping_to_json_omits_absent_metadata() -> None:
+    """A mapping written by an older core (no score/recognizer) round-trips
+    byte-identically -- the keys are only added when set."""
+    entry = _entry()
+    serialized = Mapping({entry.token: entry}).to_json()
+    assert "score" not in serialized[entry.token]
+    assert "recognizer" not in serialized[entry.token]

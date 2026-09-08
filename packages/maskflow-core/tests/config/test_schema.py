@@ -95,3 +95,65 @@ def test_not_a_table_reported_clearly() -> None:
     _config, issues = validate_root_config({"entities": "nope"})
     assert issues
     assert "table" in issues[0].message
+
+
+# --- [evidence] section ------------------------------------------------
+
+
+def test_evidence_defaults_off() -> None:
+    config = RootConfig()
+    assert config.evidence.enabled is False
+    assert config.evidence.sink == "file"
+    assert config.evidence.service == "maskflow"
+
+
+def test_valid_evidence_section() -> None:
+    config, issues = validate_root_config(
+        {
+            "evidence": {
+                "enabled": True,
+                "sink": "file",
+                "path": "/var/log/mf-evidence.log",
+                "max_bytes": 5_000_000,
+                "backups": 3,
+                "service": "kyc-bot",
+                "environment": "prod",
+            }
+        }
+    )
+    assert issues == []
+    assert config.evidence.enabled is True
+    assert config.evidence.path == "/var/log/mf-evidence.log"
+    assert config.evidence.max_bytes == 5_000_000
+
+
+def test_evidence_unknown_key_rejected() -> None:
+    _config, issues = validate_root_config({"evidence": {"snik": "file"}})
+    assert issues
+    assert issues[0].suggestion == "sink"
+
+
+def test_evidence_bad_sink_rejected() -> None:
+    _config, issues = validate_root_config({"evidence": {"sink": "smoke-signals"}})
+    assert any(i.path == ("evidence", "sink") for i in issues)
+
+
+def test_evidence_webhook_requires_url() -> None:
+    _config, issues = validate_root_config({"evidence": {"sink": "webhook"}})
+    assert any(i.path == ("evidence", "url") and "url" in i.message for i in issues)
+
+
+def test_evidence_wrong_types_rejected() -> None:
+    _config, issues = validate_root_config(
+        {"evidence": {"enabled": "yes", "max_bytes": "big", "timeout": -1}}
+    )
+    paths = {i.path for i in issues}
+    assert ("evidence", "enabled") in paths
+    assert ("evidence", "max_bytes") in paths
+    assert ("evidence", "timeout") in paths
+
+
+def test_evidence_not_a_table_reported() -> None:
+    _config, issues = validate_root_config({"evidence": "on"})
+    assert issues
+    assert "table" in issues[0].message

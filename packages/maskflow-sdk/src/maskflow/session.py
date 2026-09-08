@@ -173,11 +173,12 @@ class Session:
             )
         return detect(text, min_confidence=threshold, **kwargs)
 
-    def _substitute_for(self, entity_type: PIIType, value: str) -> str:
+    def _substitute_for(self, entity_type: PIIType, value: str, span: Span | None = None) -> str:
         """Session-scoped token for (entity_type, value): the same pair
         always returns the same token, and a new pair mints the next
         counter -- this is the identity guarantee the whole module exists
-        for."""
+        for. `span`, when given, carries the detection's score/recognizer
+        onto the MappingEntry (metadata only -- see MappingEntry)."""
         cache_key = (entity_type, value)
         token = self._value_tokens.get(cache_key)
         if token is not None:
@@ -193,6 +194,8 @@ class Session:
             strategy=Strategy.REPLACE,
             reversible=True,
             original=value,
+            score=span.score if span is not None else None,
+            recognizer=span.recognizer if span is not None else None,
         )
         return token
 
@@ -219,6 +222,8 @@ class Session:
             strategy=Strategy.SURROGATE,
             reversible=True,
             original=span.text,
+            score=span.score,
+            recognizer=span.recognizer,
         )
         return substitute
 
@@ -244,13 +249,15 @@ class Session:
             strategy=strategy,
             reversible=False,
             original=span.text,
+            score=span.score,
+            recognizer=span.recognizer,
         )
         return substitute
 
     def _substitute_for_span(self, span: Span) -> str:
         strategy = self._compiled.policy.strategy_for(span.entity_type)
         if strategy is Strategy.REPLACE:
-            return self._substitute_for(span.entity_type, span.text)
+            return self._substitute_for(span.entity_type, span.text, span)
         if strategy is Strategy.SURROGATE:
             return self._surrogate_for(span)
         return self._policy_substitute_for(span, strategy)
@@ -299,6 +306,8 @@ class Session:
             strategy=Strategy.SURROGATE,
             reversible=True,
             original=digits,
+            score=span.score,
+            recognizer=span.recognizer,
         )
         return int(sign + surrogate_digits)
 

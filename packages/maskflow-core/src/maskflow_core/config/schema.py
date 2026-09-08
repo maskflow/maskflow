@@ -24,11 +24,25 @@ from .redos import UnsafePatternError, check_pattern_safety_with_probe
 # starting with a letter.
 _ENTITY_NAME_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 
-_TOP_LEVEL_KEYS = {"maskflow", "entities", "custom", "exclusions"}
+_TOP_LEVEL_KEYS = {"maskflow", "entities", "custom", "exclusions", "evidence"}
 _MASKFLOW_KEYS = {"packs", "default_strategy"}
 _ENTITY_KEYS = {"enabled", "threshold", "strategy"}
 _CUSTOM_KEYS = {"pattern", "score", "context"}
 _EXCLUSIONS_KEYS = {"values", "patterns"}
+_EVIDENCE_KEYS = {
+    "enabled",
+    "sink",
+    "path",
+    "max_bytes",
+    "backups",
+    "url",
+    "timeout",
+    "syslog_host",
+    "syslog_port",
+    "service",
+    "environment",
+}
+_EVIDENCE_SINKS = ("stdout", "file", "syslog", "webhook", "otlp")
 
 
 @dataclass(frozen=True)
@@ -62,11 +76,32 @@ class ExclusionsConfig:
 
 
 @dataclass(frozen=True)
+class EvidenceSection:
+    """`.maskflowrc` `[evidence]` -- the metadata-only "what was masked"
+    record (see maskflow-evidence). Off by default; core only validates the
+    knobs so `maskflow config validate` accepts the section. The emitter is
+    built by maskflow-evidence's EvidenceConfig.from_rootconfig()."""
+
+    enabled: bool = False
+    sink: str = "file"
+    path: str = "evidence.log"
+    max_bytes: int = 10_000_000
+    backups: int = 5
+    url: str = ""
+    timeout: float = 2.0
+    syslog_host: str = ""
+    syslog_port: int = 514
+    service: str = "maskflow"
+    environment: str = "production"
+
+
+@dataclass(frozen=True)
 class RootConfig:
     maskflow: MaskflowSection = field(default_factory=MaskflowSection)
     entities: dict[str, EntityConfig] = field(default_factory=dict)
     custom: dict[str, CustomEntityConfig] = field(default_factory=dict)
     exclusions: ExclusionsConfig = field(default_factory=ExclusionsConfig)
+    evidence: EvidenceSection = field(default_factory=EvidenceSection)
 
 
 @dataclass(frozen=True)
@@ -295,6 +330,86 @@ def _validate_exclusions(
     return ExclusionsConfig(values=values, patterns=patterns)
 
 
+def _validate_evidence(data: Any, path: tuple[str, ...], issues: list[RawIssue]) -> EvidenceSection:
+    if not isinstance(data, dict):
+        issues.append(RawIssue(path, f"must be a table, got {_typename(data)}"))
+        return EvidenceSection()
+    _check_unknown_keys(data, _EVIDENCE_KEYS, path, issues)
+
+    base = EvidenceSection()
+
+    def _str(key: str, default: str) -> str:
+        if key not in data:
+            return default
+        value = data[key]
+        if not isinstance(value, str):
+            issues.append(RawIssue(path + (key,), f"must be a string, got {_typename(value)}"))
+            return default
+        return value
+
+    def _int(key: str, default: int) -> int:
+        if key not in data:
+            return default
+        value = data[key]
+        if isinstance(value, bool) or not isinstance(value, int):
+            issues.append(RawIssue(path + (key,), f"must be an integer, got {_typename(value)}"))
+            return default
+        if value < 0:
+            issues.append(RawIssue(path + (key,), f"must be >= 0, got {value}"))
+            return default
+        return value
+
+    enabled = base.enabled
+    if "enabled" in data:
+        if isinstance(data["enabled"], bool):
+            enabled = data["enabled"]
+        else:
+            issues.append(
+                RawIssue(
+                    path + ("enabled",), f"must be a boolean, got {_typename(data['enabled'])}"
+                )
+            )
+
+    sink = _str("sink", base.sink)
+    if sink not in _EVIDENCE_SINKS:
+        issues.append(
+            RawIssue(
+                path + ("sink",),
+                f"'{sink}' is not a valid sink (expected one of {', '.join(_EVIDENCE_SINKS)})",
+                _closest(sink, _EVIDENCE_SINKS),
+            )
+        )
+        sink = base.sink
+
+    timeout = base.timeout
+    if "timeout" in data:
+        if isinstance(data["timeout"], bool) or not isinstance(data["timeout"], (int, float)):
+            issues.append(
+                RawIssue(path + ("timeout",), f"must be a number, got {_typename(data['timeout'])}")
+            )
+        elif data["timeout"] <= 0:
+            issues.append(RawIssue(path + ("timeout",), f"must be > 0, got {data['timeout']}"))
+        else:
+            timeout = float(data["timeout"])
+
+    if (sink in ("webhook", "otlp")) and not _str("url", base.url):
+        issues.append(RawIssue(path + ("url",), f"sink '{sink}' requires a non-empty url"))
+
+    return EvidenceSection(
+        enabled=enabled,
+        sink=sink,
+        path=_str("path", base.path),
+        max_bytes=_int("max_bytes", base.max_bytes),
+        backups=_int("backups", base.backups),
+        url=_str("url", base.url),
+        timeout=timeout,
+        syslog_host=_str("syslog_host", base.syslog_host),
+        syslog_port=_int("syslog_port", base.syslog_port),
+        service=_str("service", base.service),
+        environment=_str("environment", base.environment),
+    )
+
+
 def validate_root_config(merged: dict[str, Any]) -> tuple[RootConfig, list[RawIssue]]:
     """Validate a merged raw config dict, returning a best-effort
     RootConfig (schema defaults fill in for anything invalid/missing) and
@@ -322,6 +437,17 @@ def validate_root_config(merged: dict[str, Any]) -> tuple[RootConfig, list[RawIs
         if "exclusions" in merged
         else ExclusionsConfig()
     )
+    evidence = (
+        _validate_evidence(merged["evidence"], ("evidence",), issues)
+        if "evidence" in merged
+        else EvidenceSection()
+    )
 
-    root = RootConfig(maskflow=maskflow, entities=entities, custom=custom, exclusions=exclusions)
+    root = RootConfig(
+        maskflow=maskflow,
+        entities=entities,
+        custom=custom,
+        exclusions=exclusions,
+        evidence=evidence,
+    )
     return root, issues

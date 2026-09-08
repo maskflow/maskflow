@@ -158,6 +158,8 @@ def mask_with_policy(
                 strategy=strategy,
                 reversible=strategy in REVERSIBLE_STRATEGIES,
                 original=span.text,
+                score=span.score,
+                recognizer=span.recognizer,
             )
 
         pieces.append(text[cursor : span.start])
