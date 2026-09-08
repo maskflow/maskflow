@@ -159,32 +159,16 @@ class EvidenceEvent:
         }
 
     def to_json(self) -> str:
-        """One compact JSON line. As a last line of defence, the
-        caller-supplied string fields are run through the pattern/checksum
-        detectors before the line leaves the process (see
-        ``guard.assert_no_pii``). The generated fields (``event_id``,
-        ``ts``) and the numerics are not scanned -- they are structurally
-        incapable of carrying a value, and a random id must not be able to
-        spuriously trip a detector."""
-        from .guard import assert_no_pii
+        """One compact JSON line.
 
-        assert_no_pii(
-            "\n".join(
-                str(v)
-                for v in (
-                    self.session_id,
-                    self.service,
-                    self.environment,
-                    self.entity_type,
-                    self.recognizer,
-                    self.provider,
-                    self.model,
-                    self.pack_version,
-                    self.engine_version,
-                )
-                if v
-            )
-        )
+        No runtime PII scan happens here: every field is already a bounded
+        slug, a bounded number, or a closed enum (validated in
+        ``__post_init__``), so free text is structurally impossible -- and a
+        scan of the serialized form would false-positive on a random
+        ``event_id`` / ``session_id`` hash whose digit run happens to look
+        like a card number. ``guard.assert_no_pii`` and
+        ``guard.assert_schema_is_metadata_only`` enforce the property over a
+        corpus of real events in CI instead."""
         return json.dumps(self.to_dict(), ensure_ascii=False, separators=(",", ":"), sort_keys=True)
 
     @classmethod

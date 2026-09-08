@@ -7,10 +7,13 @@ Two checks, both run in CI (``tests/test_schema_metadata_only.py``):
   set, and every field's declared type is one this module recognises as
   incapable of holding free text. Add a bare ``str`` field with no validator
   and this fails the build.
-* :func:`assert_no_pii` -- a *runtime* check of a serialized event: the
-  string is run through ``maskflow_core.detect_patterns_only`` (regex +
-  checksum, no NER) and any hit raises. This is the belt-and-suspenders
-  pass ``EvidenceEvent.to_json`` makes on every line it emits.
+* :func:`assert_no_pii` -- a check of a serialized event: the string is run
+  through ``maskflow_core.detect_patterns_only`` (regex + checksum, no NER)
+  and any hit raises. The metadata-only test suite runs it over events
+  emitted from a corpus of real PII. It is *not* on the ``to_json`` hot
+  path -- the typed schema already makes free text impossible, and scanning
+  the serialized form would false-positive on a random ``event_id`` /
+  ``session_id`` hash whose digits happen to look like a card number.
 """
 
 from __future__ import annotations

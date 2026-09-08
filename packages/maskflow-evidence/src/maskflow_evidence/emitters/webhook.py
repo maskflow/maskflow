@@ -26,8 +26,6 @@ class WebhookEmitter:
         self._client = httpx.Client(timeout=timeout)
 
     def emit(self, event: EvidenceEvent) -> None:
-        # to_json() runs the metadata-only guard and produces a valid JSON
-        # object body.
         self._client.post(
             self._url,
             content=event.to_json(),

@@ -104,9 +104,21 @@ def test_free_text_is_rejected_or_never_stored(blob: str) -> None:
         assert "\n" not in blob and " " not in blob
 
 
-def test_to_json_runs_the_pii_guard() -> None:
+def test_assert_no_pii_flags_a_value() -> None:
     with pytest.raises(MetadataOnlyViolation):
         assert_no_pii(json.dumps({"note": f"aadhaar {AADHAAR}"}))
+
+
+def _semantic_text(event) -> str:  # type: ignore[no-untyped-def]
+    """The descriptive fields an app or the engine populates -- what a leak
+    could realistically ride in on. Excludes the generated event_id / ts and
+    the caller-opaque session_id (a random hash, scanned nowhere)."""
+    d = event.to_dict()
+    return "\n".join(
+        str(d[k])
+        for k in ("service", "environment", "entity_type", "recognizer", "provider", "model")
+        if d[k]
+    )
 
 
 def test_masking_run_never_leaks_a_value_into_any_event() -> None:
@@ -114,18 +126,18 @@ def test_masking_run_never_leaks_a_value_into_any_event() -> None:
     result = mask_with_policy(SECRET_TEXT)
     ctx = _ctx()
 
-    lines = [ev.to_json() for ev in events_from_spans(spans, ctx)]
-    lines += [ev.to_json() for ev in events_from_mapping(result.mapping, ctx)]
-    assert lines, "expected at least one detection in the fixture"
+    events = [*events_from_spans(spans, ctx), *events_from_mapping(result.mapping, ctx)]
+    assert events, "expected at least one detection in the fixture"
 
-    blob = "\n".join(lines)
+    blob = "\n".join(ev.to_json() for ev in events)
     for fragment in SECRET_FRAGMENTS:
         assert fragment not in blob
-    # No digit run anywhere in the serialized events is long enough to be a
-    # card/id (the generated event_id is a dashed uuid precisely so it can't
-    # be), and to_json() itself has already run the metadata-only guard over
-    # every event's semantic fields.
+    # No digit run long enough to be a card / long id anywhere in the output
+    # (the generated event_id is a dashed uuid precisely so it can't be one).
     assert not re.search(r"\d{12,}", blob)
+    # And the descriptive fields carry nothing the detectors recognise.
+    for event in events:
+        assert_no_pii(_semantic_text(event))
 
 
 def test_from_dict_rejects_unknown_fields() -> None:

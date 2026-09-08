@@ -25,8 +25,8 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
     appear. Enforced by `guard.assert_schema_is_metadata_only()` (static
     field-set + validator audit), a Hypothesis property test, an AST check
     that `derive.py` never reads `Span.text` / `MappingEntry.original`, and
-    a `detect_patterns_only()` pass over every serialized event. `-m leak`
-    gate, rerun as a distinct CI check.
+    a `detect_patterns_only()` pass (`guard.assert_no_pii`) over events
+    emitted from a PII corpus. `-m leak` gate, rerun as a distinct CI check.
   - **Emitters** -- one `Emitter` interface, several self-hosted backends:
     `stdout`, `file` (size-rotated JSON lines), `syslog` (all stdlib),
     `webhook` (`maskflow-evidence[webhook]`), `otlp`

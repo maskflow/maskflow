@@ -43,9 +43,9 @@ One event per `(entity_type, recognizer, action)` per masking call:
 no place for a value to appear. This is enforced structurally in
 `schema.py` and in CI by `test_schema_metadata_only.py` (a static field-set
 audit, a property test over arbitrary input, and an AST check that the
-derivation code never reads a detected value). Serialized events are also
-run through `maskflow-core`'s pattern/checksum detectors as a last check
-before emission.
+derivation code never reads a detected value). The CI suite also runs
+events emitted from a PII corpus through `maskflow-core`'s pattern/checksum
+detectors (`guard.assert_no_pii`) and asserts nothing is found.
 
 ## What is deliberately **not** collected
 
