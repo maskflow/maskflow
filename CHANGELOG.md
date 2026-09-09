@@ -378,6 +378,21 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `maskflow_core.recognizer`), so this bump exists purely to publish those
   widened bounds as a new release.
 
+### Fixed
+
+- `maskflow-core`: the ReDoS adversarial probe
+  (`maskflow_core.config.redos`) no longer counts interpreter-`spawn`
+  startup latency against a pattern's time budget. It previously did
+  `proc.join(timeout=0.5s)` on a freshly spawned child, so on a slow or
+  loaded machine the interpreter boot alone could exceed the budget and a
+  trivial pattern (`\bEMP-\d{6}\b`) was falsely rejected as catastrophic
+  backtracking -- surfacing as an intermittent `config validate` / `config
+  show` exit-1 in CI. The child now times each `re.search()` call itself
+  and reports the elapsed seconds; the parent flags a pattern only when a
+  *match* exceeds the budget (`_PROBE_MATCH_BUDGET_SECONDS`, 0.2s) or a
+  probe never reports back. All probes for one pattern now share a single
+  child process rather than one spawn each (~0.13s vs ~1s per pattern).
+
 ### Changed
 
 - Dependency bounds widened for the released `maskflow-sdk` `0.9.0` (no code

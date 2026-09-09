@@ -193,9 +193,13 @@ through:
    pattern that happens to share the shape. Rejections explain the rule
    that fired and suggest a bounded rewrite (e.g. `{1,20}` instead of `+`).
 2. **An adversarial timing probe** — the compiled pattern is run against
-   several generated pathological inputs at a few lengths, each under a
-   hard per-probe timeout in a child process (not the main process, so a
-   genuine hang gets killed rather than wedging the CLI).
+   several generated pathological inputs at a few lengths, inside a child
+   process (not the main process, so a genuine hang gets killed rather than
+   wedging the CLI). The child times each match on its own and reports how
+   long it took; a pattern is rejected if a match exceeds a small budget,
+   or if the child stops reporting back. Interpreter-startup time for the
+   child is deliberately excluded from that budget, so a slow or loaded
+   machine never flags an otherwise-fine pattern.
 3. **A size cap at match time.** `maskflow_core.config.redos.safe_match()`
    is the sanctioned way to run one of these patterns against arbitrary
    text; `detect()` doesn't call it directly (core's detection code stays
