@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-sdk"
-version = "0.9.0"
+version = "0.9.1"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -15,7 +15,7 @@ dependencies = [
     # 0.7.0 adds MappingEntry.score / .recognizer (detection metadata the
     # Session now threads through for maskflow-evidence). Session writes
     # those kwargs unconditionally, so the floor moves to 0.7.0.
-    "maskflow-core>=0.7.0,<0.8",
+    "maskflow-core>=0.7.0,<0.9",
     # pack-intl 0.1.0 itself requires core<0.3 (register_surrogate_generator
     # didn't exist yet), unsatisfiable alongside core>=0.3.0 above -- 0.2.0
     # is the first version that requires (and works with) the new core.

@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-evidence"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow evidence layer: a metadata-only, verifiable record of what was masked -- never the values. Self-hosted emitters (stdout, file, syslog, webhook, OTLP), off by default."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -10,7 +10,7 @@ dependencies = [
     # metadata-only leak assertion reuses core's detect_patterns_only(). No
     # SDK dependency -- the evidence layer never masks, it only records what
     # a mask() call already decided.
-    "maskflow-core>=0.7.0,<0.8",
+    "maskflow-core>=0.7.0,<0.9",
 ]
 
 [project.optional-dependencies]

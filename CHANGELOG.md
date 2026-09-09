@@ -596,7 +596,7 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
-## [core 0.8.0, pack-india 0.5.1, pack-intl 0.3.2] - 2026-09-09
+## [core 0.8.0, pack-india 0.5.1, pack-intl 0.3.2, sdk 0.9.1, cli 0.7.1, evidence 0.1.1] - 2026-09-09
 
 ### Added
 
@@ -654,13 +654,23 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Changed
 
-- `maskflow-pack-india` / `maskflow-pack-intl`: `maskflow-core[nlp]`
-  dependency bound moved from `>=0.6.0,<0.8` to `>=0.8.0,<0.9`.
-  `maskflow-sdk` / `maskflow-cli` / `maskflow-evidence` are unchanged and
-  still cap `maskflow-core<0.8`, so `pip install maskflow-sdk` continues to
-  resolve `maskflow-core` `0.7.0` with `pack-india` `0.5.0` /
-  `pack-intl` `0.3.1` until a future coordinated SDK/CLI release widens
-  those bounds.
+- **`maskflow-core` dependency bounds widened for the `0.8.0` bump** (no
+  code change in these three -- the bump exists purely to publish the
+  widened bound as a new release, same as the `sdk 0.4.0 -> 0.5.0` /
+  `cli 0.3.0 -> 0.4.0` bump for `core 0.6.0`):
+  - `maskflow-pack-india` `0.5.0` -> `0.5.1` and `maskflow-pack-intl`
+    `0.3.1` -> `0.3.2`: `maskflow-core[nlp]` bound `>=0.6.0,<0.8` ->
+    `>=0.8.0,<0.9` (they import `NEGATIVE_CONTEXT_KEYWORDS`, new in `0.8.0`).
+  - `maskflow-sdk` `0.9.0` -> `0.9.1`: `maskflow-core` bound
+    `>=0.7.0,<0.8` -> `>=0.7.0,<0.9`.
+  - `maskflow-cli` `0.7.0` -> `0.7.1`: `maskflow-core[yaml]` bound
+    `>=0.6.0,<0.8` -> `>=0.6.0,<0.9`.
+  - `maskflow-evidence` `0.1.0` -> `0.1.1`: `maskflow-core` bound
+    `>=0.7.0,<0.8` -> `>=0.7.0,<0.9`.
+  - `maskflow-gateway` / `maskflow-litellm` / `maskflow-langchain` /
+    `maskflow-llamaindex` / `maskflow-mcp` are unaffected -- they depend on
+    `maskflow-sdk` (`>=0.9.0,<0.10`, satisfied by `0.9.1`), not on
+    `maskflow-core` directly.
 
 ## [evidence 0.1.0, gateway 0.2.0, cli 0.7.0, core 0.7.0, sdk 0.9.0, pack-india 0.5.0, pack-intl 0.3.1] - 2026-09-09
 
