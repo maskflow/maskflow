@@ -1,0 +1,13 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question, idea, or "is this a bug?" → Discussions
+    url: https://github.com/maskflow/maskflow/discussions
+    about: >-
+      Usage questions, feature ideas, and open-ended discussion live here.
+      Confirmed bugs and detection-accuracy misses (false negatives /
+      false positives) still belong in Issues — use the templates above.
+  - name: Security vulnerability
+    url: https://github.com/maskflow/maskflow/blob/main/SECURITY.md
+    about: >-
+      Do not open a public issue for security problems. See SECURITY.md for
+      how to report privately.
