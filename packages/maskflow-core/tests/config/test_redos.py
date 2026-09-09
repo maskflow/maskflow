@@ -63,11 +63,34 @@ def test_full_check_accepts_safe_pattern_through_probe() -> None:
     check_pattern_safety_with_probe(r"\bEMP-\d{6}\b")  # must not raise
 
 
-def test_probe_rejects_on_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
-    # An unreasonably small budget makes even a trivial pattern "time out"
-    # against child-process spawn overhead alone -- a deterministic way to
-    # exercise the timeout->rejection path without a genuinely catastrophic
-    # regex (which the static check would normally catch first anyway).
-    monkeypatch.setattr(redos, "_PROBE_TIMEOUT_SECONDS", 0.0001)
-    with pytest.raises(UnsafePatternError, match="took longer than"):
+def test_probe_rejects_slow_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    # A zero budget makes any *real* match time (measured in the child,
+    # microseconds) exceed it -- deterministically exercises the slow-match
+    # rejection path without a genuinely catastrophic regex.
+    monkeypatch.setattr(redos, "_PROBE_MATCH_BUDGET_SECONDS", 0.0)
+    with pytest.raises(UnsafePatternError, match="budget"):
         redos._adversarial_probe(r"abc")
+
+
+def test_probe_rejects_genuine_catastrophic_backtracking(monkeypatch: pytest.MonkeyPatch) -> None:
+    # `(0+){10}1` is a real evil regex the static shape check misses -- the
+    # `{10}` counted repeat isn't an unbounded quantifier, so the inner `0+`
+    # is never examined. Against a run of 0s with no trailing 1 it partitions
+    # the run every possible way and backtracks catastrophically (>100s for a
+    # 40-char probe locally). `0` is also the probe alphabet's lowest char, so
+    # the generated probes actually hit it. The probe step is what has to
+    # catch it; timeouts are trimmed so the hang is detected in ~1s.
+    check_pattern_safety(r"(0+){10}1")  # sanity: the static layer lets it through
+    monkeypatch.setattr(redos, "_PROBE_STARTUP_CEILING_SECONDS", 3.0)
+    monkeypatch.setattr(redos, "_PROBE_HANG_TIMEOUT_SECONDS", 0.5)
+    with pytest.raises(UnsafePatternError, match="did not complete"):
+        redos._adversarial_probe(r"(0+){10}1")
+
+
+def test_probe_measures_match_time_not_spawn_latency(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Regression for the CI flake: with the budget set well below typical
+    # `spawn` startup (~0.1-1s) but far above an actual safe-pattern match
+    # (~microseconds), a trivial pattern must still pass -- proving the
+    # budget clock runs only around `compiled.search()` inside the child.
+    monkeypatch.setattr(redos, "_PROBE_MATCH_BUDGET_SECONDS", 0.02)
+    redos._adversarial_probe(r"\bEMP-\d{6}\b")  # must not raise

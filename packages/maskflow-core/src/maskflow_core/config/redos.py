@@ -12,8 +12,13 @@ Three layers, in order:
      rather than adopted here.
   2. _adversarial_probe() -- after the static check passes, actually run
      the compiled pattern against a handful of generated pathological
-     inputs under a hard per-probe time budget, in a child process so a
-     genuine hang gets killed rather than wedging the CLI.
+     inputs in a child process (so a genuine hang gets killed rather than
+     wedging the CLI). The child times each `re.search()` call on its own
+     and reports the elapsed seconds; the parent flags a pattern whose
+     *match* exceeds a small budget, or whose child never returns a result.
+     Interpreter-`spawn` startup latency is deliberately excluded from that
+     budget -- otherwise a slow/loaded CI runner would falsely flag a
+     trivial pattern.
   3. safe_match() -- a size-capped match wrapper, used by the probe step
      above and exposed for whatever eventually runs these patterns against
      real text (not called anywhere else in this package yet).
@@ -23,11 +28,29 @@ from __future__ import annotations
 
 import multiprocessing
 import re
+import time
+from collections.abc import Sequence
 from dataclasses import dataclass
+from queue import Empty as _QueueEmpty
 
 MAX_MATCH_LEN = 10_000
 _PROBE_LENGTHS = (20, 40, 80)
-_PROBE_TIMEOUT_SECONDS = 0.5
+
+# Wall-clock budget for the regex match *itself*, measured inside the child
+# process so interpreter-`spawn` startup latency is excluded. Any pattern
+# that isn't catastrophically backtracking matches an <=80-char probe in
+# well under a millisecond; 0.2s is a generous margin for a loaded CI box.
+_PROBE_MATCH_BUDGET_SECONDS = 0.2
+
+# How long to wait for the child's *first* result -- covers `spawn`
+# interpreter startup + module import + the first probe match. Spawn is
+# ~0.1-2s in practice; 15s is comfortably clear of that without letting a
+# genuine hang on the first probe wedge the caller indefinitely.
+_PROBE_STARTUP_CEILING_SECONDS = 15.0
+
+# Once the child is warm, every subsequent probe result should arrive almost
+# immediately; if one doesn't within this window, that probe is hanging.
+_PROBE_HANG_TIMEOUT_SECONDS = 2.0
 
 
 class UnsafePatternError(ValueError):
@@ -140,36 +163,71 @@ def check_pattern_safety(pattern: str) -> None:
             )
 
 
-def _run_probe(pattern: str, probe: str, result_queue: multiprocessing.Queue[bool]) -> None:
-    compiled = re.compile(pattern)
-    compiled.search(probe)
-    result_queue.put(True)
+def _run_probes(
+    pattern: str,
+    probes: Sequence[str],
+    result_queue: multiprocessing.Queue[float | str],
+) -> None:
+    """Child-process body: compile once, then time each probe's `search()`
+    on its own and put the elapsed seconds on the queue. A `str` on the
+    queue is an error message (compile failure) rather than a timing --
+    normally unreachable, since the parent's static check already compiled
+    the pattern, but `_adversarial_probe()` can be called directly."""
+    try:
+        compiled = re.compile(pattern)
+    except re.error as exc:  # pragma: no cover - parent already compiled it
+        result_queue.put(f"pattern failed to compile inside the probe: {exc}")
+        return
+    for probe in probes:
+        start = time.perf_counter()
+        compiled.search(probe)
+        result_queue.put(time.perf_counter() - start)
 
 
 def _adversarial_probe(pattern: str) -> None:
-    """Run `pattern` against several generated pathological inputs, each
-    under a hard per-probe timeout in a child process. Raises
-    UnsafePatternError on the first timeout."""
+    """Run `pattern` against several generated pathological inputs in one
+    child process, timing each match individually. Raises UnsafePatternError
+    when a match exceeds `_PROBE_MATCH_BUDGET_SECONDS` or when a probe never
+    reports back (a genuine hang). Interpreter-`spawn` startup latency is
+    absorbed by `_PROBE_STARTUP_CEILING_SECONDS` and never counted against a
+    pattern."""
     alphabet_chars = sorted(set(re.sub(r"[^A-Za-z0-9]", "", pattern)))
     probe_char = alphabet_chars[0] if alphabet_chars else "a"
 
+    probes: list[tuple[int, str]] = []
     for length in _PROBE_LENGTHS:
-        for probe in (probe_char * length, (probe_char * length) + "!"):
-            probe = probe[:MAX_MATCH_LEN]
-            ctx = multiprocessing.get_context("spawn")
-            queue: multiprocessing.Queue[bool] = ctx.Queue()
-            proc = ctx.Process(target=_run_probe, args=(pattern, probe, queue))
-            proc.start()
-            proc.join(timeout=_PROBE_TIMEOUT_SECONDS)
-            if proc.is_alive():
-                proc.terminate()
-                proc.join()
+        for text in (probe_char * length, (probe_char * length) + "!"):
+            probes.append((length, text[:MAX_MATCH_LEN]))
+
+    ctx = multiprocessing.get_context("spawn")
+    result_queue: multiprocessing.Queue[float | str] = ctx.Queue()
+    proc = ctx.Process(target=_run_probes, args=(pattern, [t for _, t in probes], result_queue))
+    proc.start()
+    try:
+        for index, (length, _) in enumerate(probes):
+            wait = _PROBE_STARTUP_CEILING_SECONDS if index == 0 else _PROBE_HANG_TIMEOUT_SECONDS
+            try:
+                outcome = result_queue.get(timeout=wait)
+            except _QueueEmpty:
                 raise UnsafePatternError(
-                    f"unsafe pattern: took longer than {_PROBE_TIMEOUT_SECONDS}s to "
-                    f"match against a {length}-character adversarial probe -- likely "
-                    "catastrophic backtracking. Rewrite with bounded repeats."
+                    f"unsafe pattern: matching a {length}-character adversarial probe "
+                    "did not complete -- almost certainly catastrophic backtracking. "
+                    "Rewrite with bounded repeats."
+                ) from None
+            if isinstance(outcome, str):
+                raise UnsafePatternError(outcome)
+            if outcome > _PROBE_MATCH_BUDGET_SECONDS:
+                raise UnsafePatternError(
+                    f"unsafe pattern: matching a {length}-character adversarial probe "
+                    f"took {outcome:.3f}s, over the {_PROBE_MATCH_BUDGET_SECONDS}s "
+                    "budget -- likely catastrophic backtracking. Rewrite with bounded "
+                    "repeats."
                 )
-            proc.close()
+    finally:
+        if proc.is_alive():
+            proc.terminate()
+        proc.join()
+        proc.close()
 
 
 def check_pattern_safety_with_probe(pattern: str) -> None:
