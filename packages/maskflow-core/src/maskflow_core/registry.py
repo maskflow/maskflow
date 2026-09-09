@@ -4,9 +4,10 @@ maskflow-core.
 A pack (e.g. maskflow-pack-intl, maskflow-pack-india) calls register_pattern()
 for a regex-based recognizer or register_ner_recognizer() for a spaCy-label-based
 one; both register the PIIType itself first if it isn't already known, and both
-accept optional context_keywords that feed context.apply_context_boost(). Core
-owns none of the state these populate -- PATTERNS and NER_RECOGNIZERS start
-empty, and detection.py/ner.py read from whatever's been registered so far.
+accept optional context_keywords that feed context.apply_context_boost() and
+negative_context_keywords that feed context.apply_negative_context(). Core owns
+none of the state these populate -- PATTERNS and NER_RECOGNIZERS start empty,
+and detection.py/ner.py read from whatever's been registered so far.
 
 This is a manual registration function, not the entry-point-based plugin
 auto-discovery ("maskflow.recognizers") described for the target architecture
@@ -21,7 +22,7 @@ import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from .context import CONTEXT_KEYWORDS
+from .context import CONTEXT_KEYWORDS, NEGATIVE_CONTEXT_KEYWORDS
 from .entities import PIIType
 
 # A plain type-alias assignment, not an annotation -- `from __future__ import
@@ -83,6 +84,7 @@ def register_pattern(
     base_confidence: float,
     validator: Validator | None = None,
     context_keywords: tuple[str, ...] | None = None,
+    negative_context_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Register a new (regex, base_confidence, validator) rule for `pii_type`,
     registering the PIIType itself first if it isn't already known."""
@@ -90,6 +92,8 @@ def register_pattern(
     PATTERNS.setdefault(registered_type, []).append((regex, base_confidence, validator))
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
+    if negative_context_keywords:
+        NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
     return registered_type
 
 
@@ -98,6 +102,7 @@ def register_custom_recognizer(
     match_fn: CustomMatchFn,
     validator: Validator | None = None,
     context_keywords: tuple[str, ...] | None = None,
+    negative_context_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Register a non-regex match source (e.g. a gazetteer automaton) for
     `pii_type`, registering the PIIType itself first if it isn't already
@@ -108,6 +113,8 @@ def register_custom_recognizer(
     CUSTOM_RECOGNIZERS.setdefault(registered_type, []).append((match_fn, validator))
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
+    if negative_context_keywords:
+        NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
     return registered_type
 
 
@@ -118,6 +125,7 @@ def register_ner_recognizer(
     threshold: float = 0.0,
     context_keywords: tuple[str, ...] | None = None,
     agreement_boost: float = 0.0,
+    negative_context_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Map a spaCy entity label (e.g. "PERSON") onto `pii_type`, registering the
     PIIType itself first if it isn't already known. ner.py's generic NER pass
@@ -129,6 +137,8 @@ def register_ner_recognizer(
     )
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
+    if negative_context_keywords:
+        NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
     return registered_type
 
 

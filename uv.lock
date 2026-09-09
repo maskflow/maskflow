@@ -3462,7 +3462,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-pack-india"
-version = "0.5.0"
+version = "0.5.1"
 source = { editable = "packs/maskflow-pack-india" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },
@@ -3477,7 +3477,7 @@ requires-dist = [
 
 [[package]]
 name = "maskflow-pack-intl"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "packs/maskflow-pack-intl" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },

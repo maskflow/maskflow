@@ -59,6 +59,26 @@ def test_ner_threshold_drops_low_confidence_matches(monkeypatch: pytest.MonkeyPa
     assert spans == []
 
 
+def test_ner_negative_context_suppresses_below_threshold(monkeypatch: pytest.MonkeyPatch) -> None:
+    register_ner_recognizer(
+        "TEST_NEG_LABEL",
+        "TEST_NEG",
+        0.7,
+        threshold=0.6,
+        negative_context_keywords=("fictional",),
+    )
+    fake_doc = _FakeDoc([_FakeEnt("TEST_NEG_LABEL", "Testville", 24, 33)])
+    monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
+
+    # 0.7 base clears the 0.6 bar; "fictional" nearby pulls it to 0.4.
+    spans = ner_module.detect_ner("Meet our fictional friend Testville today.")
+    assert spans == []
+
+    spans = ner_module.detect_ner("Meet our real-world friend Testville today.")
+    neg_step = next(s for s in spans[0].explanation if s.rule == "negative_context")
+    assert neg_step.outcome == "no_match"
+
+
 def test_get_nlp_warns_once_and_disables_ner_when_spacy_is_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

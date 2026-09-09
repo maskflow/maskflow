@@ -117,6 +117,44 @@ an ML model) -- is only imported the first time `.recognizers` or
 same object (e.g. once from your own eager import, once via
 `RecognizerRegistry`) registers the pattern once, not twice.
 
+## Context keywords
+
+All three base classes take two optional keyword-proximity arguments. Both
+match case-insensitively within 40 characters on either side of the
+candidate:
+
+- **`context_keywords`** -- a nearby match *raises* confidence by `0.4`
+  (capped at `0.99`). Use it for a type whose `base_confidence` is
+  deliberately below the detection threshold on its own (`EMP-123456` is
+  only an employee ID when "employee id" / "staff number" is nearby).
+- **`negative_context_keywords`** -- a nearby match *lowers* confidence by
+  `0.3` (floored at `0.0`), applied *after* the positive boost and even when
+  a checksum validator passed. Use it to suppress illustrative values: a
+  marker like "for example" / "sample data" / "dummy" next to an otherwise
+  valid-looking identifier pulls it back under the threshold so it is never
+  masked.
+
+```python
+PatternRecognizer(
+    "EMPLOYEE_ID",
+    EMPLOYEE_ID_RE,
+    base_confidence=0.4,
+    validator=validate_employee_id,
+    context_keywords=("employee id", "emp id", "staff number"),
+    negative_context_keywords=("for example", "sample", "specimen", "dummy"),
+)
+```
+
+Both lists match as **plain case-folded substrings** (same as the positive
+list), so pick phrases specific enough not to fire inside ordinary text --
+avoid a bare `"example"` (it matches every `@example.com` address) or a bare
+`"test"` (`"latest"`, `"greatest"`). The bundled packs register a shared
+type-independent negative set for every entity they own.
+
+Every candidate's `explanation` trail records both a `context` and a
+`negative_context` step (`not_configured` when that keyword set is empty),
+so `maskflow explain` shows exactly which keyword moved a score.
+
 ## Sharing the NLP pass
 
 If your recognizer needs spaCy, subclass `NlpRecognizer` rather than

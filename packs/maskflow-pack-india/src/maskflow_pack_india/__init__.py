@@ -5,11 +5,12 @@ BANK_ACCOUNT_IN, PERSON_NAME, INDIAN_ADDRESS) against maskflow-core on
 import. Importing this package is the side effect that makes
 detect()/mask()/unmask() aware of these types.
 
-Context keywords are positive-only (English, Hindi/Devanagari, and Hinglish
-transliterations) -- maskflow-core's context.apply_context_boost() has no
-negative-context mechanism yet (CLAUDE.md's confidence formula documents one
-as a target, but it isn't implemented in core), so "example/test/dummy"-style
-suppression is out of scope for this pack until core grows that hook.
+Positive context keywords are per entity type (English, Hindi/Devanagari,
+and Hinglish transliterations). Negative context keywords -- the
+illustrative-value markers ("example", "sample", "udaharan", ...) that
+maskflow-core's context.apply_negative_context() uses to suppress a
+candidate (#63) -- are type-independent and registered once for every type
+this pack owns, near the bottom of this module (`_NEGATIVE_CONTEXT`).
 
 Each recognizer below is a declarative Recognizer object (see
 maskflow_core.recognizer -- issue #21's pluggable interface) rather than a
@@ -24,7 +25,7 @@ RecognizerRegistry-based discovery for this pack registers each pattern
 once, not twice.
 """
 
-from maskflow_core.context import CONTEXT_KEYWORDS
+from maskflow_core.context import CONTEXT_KEYWORDS, NEGATIVE_CONTEXT_KEYWORDS
 from maskflow_core.entities import PIIType
 from maskflow_core.recognizer import (
     GazetteerRecognizer,
@@ -38,6 +39,7 @@ from . import gazetteer, patterns, surrogates
 from .data.indian_places import INDIAN_STATE_UT_NAMES
 
 _RECOGNIZERS: list[Recognizer] = []
+_REGISTERED_TYPES: set[PIIType] = set()
 
 
 def _add(recognizer: Recognizer) -> PIIType:
@@ -46,7 +48,9 @@ def _add(recognizer: Recognizer) -> PIIType:
     the registered PIIType, like register_pattern()/register_custom_recognizer()
     used to, for any call site that needs it."""
     _RECOGNIZERS.append(recognizer)
-    return recognizer.register()
+    pii_type = recognizer.register()
+    _REGISTERED_TYPES.add(pii_type)
+    return pii_type
 
 
 _add(
@@ -531,6 +535,79 @@ _add(PatternRecognizer("INDIAN_ADDRESS", patterns.INDIAN_ADDRESS_LOCALITY_RE, 0.
 # no context) -- confirmed PRE-EXISTING in pack-intl alone, not introduced
 # this session; see the L3 report.
 _add(NlpRecognizer("PERSON", "PERSON_NAME", 0.75, agreement_boost=0.2))
+
+
+# ---------------------------------------------------------------------------
+# Negative context -- illustrative-value suppression (#63).
+#
+# These markers are type-independent: an Aadhaar, a PAN, or a mobile number
+# introduced as "for example" / "sample" / "udaharan" / "फर्जी" is equally
+# not a real person's data. maskflow-core's context.apply_negative_context()
+# lowers a candidate's confidence by 0.3 (floored at 0) when one of these is
+# within 40 chars -- enough to pull the shape-only, unvalidated types
+# (PIN_CODE 0.3, INDIAN_MOBILE 0.35, BANK_ACCOUNT_IN 0.3, ABHA_NUMBER 0.35,
+# AADHAAR_MASKED 0.45) back under threshold even after a positive context
+# boost, while a checksum-validated Aadhaar/PAN/GSTIN stays above it (a fake
+# but shape-valid number being masked is harmless; the round-trip is
+# unaffected).
+#
+# Registered once per PIIType directly (like the PERSON_NAME positive union
+# above), NOT via each register_*() call: that kwarg is stored per type, not
+# per pattern, and the last write wins -- several types here register
+# multiple patterns. dict.fromkeys() unions with anything a co-installed
+# pack (pack-intl) already set for a shared type (PERSON_NAME).
+#
+# apply_negative_context() matches plain case-folded substrings (same as the
+# positive keyword lists), so every entry is a phrase specific enough not to
+# fire inside ordinary text -- no bare "test" ("latest", "greatest") and, in
+# particular, NO bare "example": RFC 2606 makes "@example.com" ubiquitous in
+# real corpora and it must not suppress a name or number next to a sample
+# email address. Same discipline the positive lists already follow (no bare
+# "pin"/"name").
+# ---------------------------------------------------------------------------
+_NEGATIVE_CONTEXT: tuple[str, ...] = (
+    # English
+    "for example",
+    "for instance",
+    "as an example",
+    "just an example",
+    "an example of",
+    "e.g.",
+    "sample",
+    "sample data",
+    "specimen",
+    "dummy",
+    "placeholder",
+    "test data",
+    "test value",
+    "for testing",
+    "for illustration",
+    "illustration only",
+    "illustrative",
+    "not a real",
+    "fictitious",
+    "fictional",
+    "redacted",
+    # Devanagari
+    "उदाहरण",  # example
+    "उदाहरण के लिए",  # for example
+    "नमूना",  # sample
+    "काल्पनिक",  # fictional / imaginary
+    "फर्जी",  # fake
+    "जाँच के लिए",  # for testing
+    # Hinglish transliterations
+    "udaharan",
+    "namoona",
+    "farzi",  # fake
+    "nakli",  # fake
+    "test ke liye",
+    "sirf udaharan",  # "only an example"
+)
+
+for _pii_type in _REGISTERED_TYPES:
+    NEGATIVE_CONTEXT_KEYWORDS[_pii_type] = tuple(
+        dict.fromkeys((*NEGATIVE_CONTEXT_KEYWORDS.get(_pii_type, ()), *_NEGATIVE_CONTEXT))
+    )
 
 
 # ---------------------------------------------------------------------------
