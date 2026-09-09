@@ -1,0 +1,79 @@
+name: Wait for a release on PyPI
+description: >
+  Block until an exact package version is fully published on PyPI -- version
+  metadata present AND downloadable files attached -- confirmed on several
+  consecutive cache-busted probes. PyPI serves the index through Fastly and
+  propagation across edges is not atomic: a single probe can hit a fresh
+  edge and return a false "ready" while a `pip install` moments later on a
+  different edge still 404s (exactly what broke a `release-cli` docker
+  build). Requiring N consecutive fresh confirmations rides that window out.
+  Uses `curl` straight to the JSON API with a unique query string per
+  request so nothing (pip's HTTP cache, Fastly) can serve a stale answer.
+
+inputs:
+  package:
+    description: PyPI project name, e.g. maskflow-cli
+    required: true
+  version:
+    description: Exact version string to wait for, e.g. 0.7.1
+    required: true
+  initial-delay:
+    description: Seconds to wait before the first probe
+    required: false
+    default: "20"
+  interval:
+    description: Seconds between probes
+    required: false
+    default: "20"
+  attempts:
+    description: Maximum probes before giving up
+    required: false
+    default: "40"
+  confirmations:
+    description: Consecutive successful probes required to declare it live
+    required: false
+    default: "3"
+
+runs:
+  using: composite
+  steps:
+    - name: Wait for ${{ inputs.package }} ${{ inputs.version }} on PyPI
+      shell: bash
+      run: |
+        set -u
+        pkg='${{ inputs.package }}'
+        ver='${{ inputs.version }}'
+        need='${{ inputs.confirmations }}'
+        attempts='${{ inputs.attempts }}'
+        interval='${{ inputs.interval }}'
+
+        echo "Waiting for ${pkg} ${ver} on PyPI (need ${need} consecutive confirmations)"
+        sleep '${{ inputs.initial-delay }}'
+
+        ok=0
+        for i in $(seq 1 "${attempts}"); do
+          # Unique URL per request defeats every layer of HTTP caching
+          # (pip's, Fastly's). The "packagetype" grep appears once per file
+          # in the release's `urls` array, so it also fails a metadata stub
+          # with no downloadable artifacts -- no jq dependency.
+          if curl -fs \
+               -H 'Cache-Control: no-cache' -H 'Pragma: no-cache' \
+               "https://pypi.org/pypi/${pkg}/${ver}/json?cachebust=$(date +%s)-${i}-${RANDOM}" \
+               2>/dev/null \
+               | grep -q '"packagetype"'; then
+            ok=$((ok + 1))
+            echo "attempt ${i}/${attempts}: confirmed ${ok}/${need}"
+            if [ "${ok}" -ge "${need}" ]; then
+              echo "${pkg} ${ver} is live on PyPI."
+              exit 0
+            fi
+          else
+            [ "${ok}" -ne 0 ] && echo "attempt ${i}/${attempts}: missed after ${ok} ok -- resetting"
+            ok=0
+            echo "attempt ${i}/${attempts}: ${pkg} ${ver} not fully on PyPI yet"
+          fi
+          sleep "${interval}"
+        done
+
+        echo "gave up waiting for ${pkg} ${ver} on PyPI after ${attempts} attempts"
+        exit 1

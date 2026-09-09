@@ -32,15 +32,16 @@ jobs:
       # Verification: packages/maskflow-mcp/README.md carries the
       # `<!-- mcp-name: io.github.maskflow/mcp -->` marker, which becomes the
       # PyPI description.
-      - name: Wait for the release on PyPI
+      # Read the version from pyproject rather than the tag so a manual
+      # `workflow_dispatch` re-run (e.g. an MCP Registry retry) still works.
+      - id: mcpver
         run: |
           v=$(uv run python -c "import tomllib;print(tomllib.load(open('packages/maskflow-mcp/pyproject.toml','rb'))['project']['version'])")
-          echo "waiting for maskflow-mcp $v on PyPI"
-          for i in $(seq 1 30); do
-            curl -sf "https://pypi.org/pypi/maskflow-mcp/$v/json" >/dev/null && exit 0
-            echo "not on PyPI yet (attempt $i)"; sleep 20
-          done
-          echo "gave up waiting for PyPI"; exit 1
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/wait-for-pypi
+        with:
+          package: maskflow-mcp
+          version: ${{ steps.mcpver.outputs.v }}
       - name: Install mcp-publisher
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
