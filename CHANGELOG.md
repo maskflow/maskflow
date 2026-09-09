@@ -378,21 +378,6 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `maskflow_core.recognizer`), so this bump exists purely to publish those
   widened bounds as a new release.
 
-### Fixed
-
-- `maskflow-core`: the ReDoS adversarial probe
-  (`maskflow_core.config.redos`) no longer counts interpreter-`spawn`
-  startup latency against a pattern's time budget. It previously did
-  `proc.join(timeout=0.5s)` on a freshly spawned child, so on a slow or
-  loaded machine the interpreter boot alone could exceed the budget and a
-  trivial pattern (`\bEMP-\d{6}\b`) was falsely rejected as catastrophic
-  backtracking -- surfacing as an intermittent `config validate` / `config
-  show` exit-1 in CI. The child now times each `re.search()` call itself
-  and reports the elapsed seconds; the parent flags a pattern only when a
-  *match* exceeds the budget (`_PROBE_MATCH_BUDGET_SECONDS`, 0.2s) or a
-  probe never reports back. All probes for one pattern now share a single
-  child process rather than one spawn each (~0.13s vs ~1s per pattern).
-
 ### Changed
 
 - Dependency bounds widened for the released `maskflow-sdk` `0.9.0` (no code
@@ -611,9 +596,13 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
-- `maskflow-core`: negative-context suppression hook
-  ([#63](https://github.com/maskflow/maskflow/issues/63)). The confidence
-  formula's `- negative_context` half is now implemented:
+## [core 0.8.0, pack-india 0.5.1, pack-intl 0.3.2, sdk 0.9.1, cli 0.7.1, evidence 0.1.1] - 2026-09-09
+
+### Added
+
+- **`maskflow-core` `0.7.0` -> `0.8.0`** -- negative-context suppression
+  hook ([#63](https://github.com/maskflow/maskflow/issues/63)). The
+  confidence formula's `- negative_context` half is now implemented:
   `context.apply_negative_context()` lowers a candidate's confidence by
   `PENALTY` (`0.3`, floored at `0.0`) when a registered negative keyword for
   its type sits within the same `WINDOW` as the positive
@@ -626,8 +615,8 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   so a checksum-valid *synthetic* identifier next to "example"/"sample" can
   be pulled below threshold and dropped. Adds a `negative_context`
   `ExplanationStep` (`not_configured` / `suppressed` / `no_match`) to every
-  candidate's trail. Backward-compatible; no behavior change until a pack
-  registers negative keywords. **Closes
+  candidate's trail. Additive and backward-compatible; no behavior change
+  until a pack registers negative keywords. **Closes
   [#63](https://github.com/maskflow/maskflow/issues/63).**
 - `maskflow-pack-india` `0.5.0` -> `0.5.1`: registers negative-context
   keywords (`_NEGATIVE_CONTEXT`) for every entity type it owns -- English,
@@ -639,12 +628,49 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `INDIAN_MOBILE 0.35`, `BANK_ACCOUNT_IN 0.3`, `ABHA_NUMBER 0.35`,
   `AADHAAR_MASKED 0.45`) introduced as an example is now pulled back under
   threshold and left unmasked, while a checksum-validated Aadhaar/PAN/GSTIN
-  stays above it.
+  stays above it. Requires `maskflow-core>=0.8.0` (imports the new
+  `NEGATIVE_CONTEXT_KEYWORDS`).
 - `maskflow-pack-intl` `0.3.1` -> `0.3.2`: registers the English
   illustrative-value negative-context keywords for every type it owns.
   Suppresses `SSN_PLAIN` and a bare IPv4 next to "for example" / "sample";
   `EMAIL`, dashed `SSN`, `AWS_KEY` and other high-confidence matches are
-  unaffected.
+  unaffected. Requires `maskflow-core>=0.8.0`.
+
+### Fixed
+
+- `maskflow-core`: the ReDoS adversarial probe
+  (`maskflow_core.config.redos`) no longer counts interpreter-`spawn`
+  startup latency against a pattern's time budget
+  ([#88](https://github.com/maskflow/maskflow/pull/88)). It previously did
+  `proc.join(timeout=0.5s)` on a freshly spawned child, so on a slow or
+  loaded machine the interpreter boot alone could exceed the budget and a
+  trivial pattern (`\bEMP-\d{6}\b`) was falsely rejected as catastrophic
+  backtracking -- surfacing as an intermittent `config validate` / `config
+  show` exit-1 in CI. The child now times each `re.search()` call itself
+  and reports the elapsed seconds; the parent flags a pattern only when a
+  *match* exceeds the budget (`_PROBE_MATCH_BUDGET_SECONDS`, 0.2s) or a
+  probe never reports back. All probes for one pattern now share a single
+  child process rather than one spawn each (~0.13s vs ~1s per pattern).
+
+### Changed
+
+- **`maskflow-core` dependency bounds widened for the `0.8.0` bump** (no
+  code change in these three -- the bump exists purely to publish the
+  widened bound as a new release, same as the `sdk 0.4.0 -> 0.5.0` /
+  `cli 0.3.0 -> 0.4.0` bump for `core 0.6.0`):
+  - `maskflow-pack-india` `0.5.0` -> `0.5.1` and `maskflow-pack-intl`
+    `0.3.1` -> `0.3.2`: `maskflow-core[nlp]` bound `>=0.6.0,<0.8` ->
+    `>=0.8.0,<0.9` (they import `NEGATIVE_CONTEXT_KEYWORDS`, new in `0.8.0`).
+  - `maskflow-sdk` `0.9.0` -> `0.9.1`: `maskflow-core` bound
+    `>=0.7.0,<0.8` -> `>=0.7.0,<0.9`.
+  - `maskflow-cli` `0.7.0` -> `0.7.1`: `maskflow-core[yaml]` bound
+    `>=0.6.0,<0.8` -> `>=0.6.0,<0.9`.
+  - `maskflow-evidence` `0.1.0` -> `0.1.1`: `maskflow-core` bound
+    `>=0.7.0,<0.8` -> `>=0.7.0,<0.9`.
+  - `maskflow-gateway` / `maskflow-litellm` / `maskflow-langchain` /
+    `maskflow-llamaindex` / `maskflow-mcp` are unaffected -- they depend on
+    `maskflow-sdk` (`>=0.9.0,<0.10`, satisfied by `0.9.1`), not on
+    `maskflow-core` directly.
 
 ## [evidence 0.1.0, gateway 0.2.0, cli 0.7.0, core 0.7.0, sdk 0.9.0, pack-india 0.5.0, pack-intl 0.3.1] - 2026-09-09
 
