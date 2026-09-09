@@ -172,6 +172,22 @@ def test_nlp_recognizer_analyze_drops_below_threshold() -> None:
     assert list(recognizer.analyze("Something happened.", ctx)) == []
 
 
+def test_nlp_recognizer_negative_context_suppresses_below_threshold() -> None:
+    fake_doc = _FakeDoc([_FakeEnt("TEST_NEG_LABEL", "Testville", 24, 33)])
+    recognizer = NlpRecognizer(
+        "TEST_NEG_LABEL",
+        "TEST_NEG2",
+        0.7,
+        threshold=0.6,
+        negative_context_keywords=("fictional",),
+    )
+    recognizer.register()  # negative keywords live in a module global, like context_keywords
+    text = "Meet our fictional friend Testville today."
+    ctx = AnalysisContext(text=text, nlp_loader=lambda: lambda t: fake_doc)
+
+    assert list(recognizer.analyze(text, ctx)) == []
+
+
 def test_nlp_recognizer_agreement_boost_promotes_overlapping_candidate() -> None:
     fake_doc = _FakeDoc([_FakeEnt("TEST_AGREE_LABEL", "Priya", 0, 5)])
     recognizer = NlpRecognizer(

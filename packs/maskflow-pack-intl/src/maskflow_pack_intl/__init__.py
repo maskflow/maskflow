@@ -15,6 +15,7 @@ that uses both the import-time path and RecognizerRegistry-based discovery
 for this pack registers each pattern once, not twice.
 """
 
+from maskflow_core.context import NEGATIVE_CONTEXT_KEYWORDS
 from maskflow_core.entities import PIIType
 from maskflow_core.recognizer import NlpRecognizer, PatternRecognizer, Recognizer
 from maskflow_core.registry import register_surrogate_generator
@@ -22,6 +23,7 @@ from maskflow_core.registry import register_surrogate_generator
 from . import ner, patterns, surrogates
 
 _RECOGNIZERS: list[Recognizer] = []
+_REGISTERED_TYPES: set[PIIType] = set()
 
 
 def _add(recognizer: Recognizer) -> PIIType:
@@ -30,7 +32,9 @@ def _add(recognizer: Recognizer) -> PIIType:
     the registered PIIType, like register_pattern()/register_ner_recognizer()
     used to, for any call site that needs it."""
     _RECOGNIZERS.append(recognizer)
-    return recognizer.register()
+    pii_type = recognizer.register()
+    _REGISTERED_TYPES.add(pii_type)
+    return pii_type
 
 
 _add(PatternRecognizer("EMAIL", patterns.EMAIL_RE, 0.95))
@@ -125,6 +129,57 @@ _add(
         context_keywords=("dob", "date of birth", "born on", "birthdate"),
     )
 )
+
+# ---------------------------------------------------------------------------
+# Negative context -- illustrative-value suppression (#63). Type-independent
+# "this is not a real value" markers: a card number, SSN, or email address
+# introduced as "for example" / "sample" / "dummy" is not a real person's
+# data. maskflow-core's context.apply_negative_context() lowers a candidate's
+# confidence by 0.3 (floored at 0) when one is within 40 chars -- enough to
+# suppress the shape-only unvalidated matches (SSN_PLAIN 0.35, a bare IPv4
+# 0.75) while validated/structural high-confidence matches (EMAIL 0.95,
+# Luhn-valid CREDIT_CARD, AWS_KEY 0.97) stay above threshold. Registered once
+# per PIIType directly rather than via each register_*() call (that kwarg is
+# per type, last write wins, and several types register multiple patterns);
+# dict.fromkeys() unions with anything a co-installed pack (pack-india) set
+# for a shared type (PERSON_NAME).
+#
+# apply_negative_context() matches plain case-folded substrings, so every
+# entry is a phrase specific enough not to fire inside ordinary text. In
+# particular NO bare "example" -- RFC 2606 makes "@example.com" ubiquitous
+# in real corpora and it must not suppress a name or number sitting next to
+# a sample email address. Same discipline the positive keyword lists already
+# follow (no bare "pin"/"name"/"mr").
+# ---------------------------------------------------------------------------
+_NEGATIVE_CONTEXT: tuple[str, ...] = (
+    "for example",
+    "for instance",
+    "as an example",
+    "just an example",
+    "an example of",
+    "e.g.",
+    "sample",
+    "sample data",
+    "specimen",
+    "dummy",
+    "placeholder",
+    "test data",
+    "test value",
+    "for testing",
+    "for illustration",
+    "illustration only",
+    "illustrative",
+    "not a real",
+    "fictitious",
+    "fictional",
+    "redacted",
+)
+
+for _pii_type in _REGISTERED_TYPES:
+    NEGATIVE_CONTEXT_KEYWORDS[_pii_type] = tuple(
+        dict.fromkeys((*NEGATIVE_CONTEXT_KEYWORDS.get(_pii_type, ()), *_NEGATIVE_CONTEXT))
+    )
+
 
 # Strategy.SURROGATE fake-value generators -- see surrogates.py for the
 # reserved/invalid range or corpus each one draws from. AWS_KEY, API_KEY,

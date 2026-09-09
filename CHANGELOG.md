@@ -596,6 +596,40 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
+- `maskflow-core`: negative-context suppression hook
+  ([#63](https://github.com/maskflow/maskflow/issues/63)). The confidence
+  formula's `- negative_context` half is now implemented:
+  `context.apply_negative_context()` lowers a candidate's confidence by
+  `PENALTY` (`0.3`, floored at `0.0`) when a registered negative keyword for
+  its type sits within the same `WINDOW` as the positive
+  `apply_context_boost()` check. `register_pattern()`,
+  `register_custom_recognizer()`, `register_ner_recognizer()` and the
+  matching `PatternRecognizer` / `GazetteerRecognizer` / `NlpRecognizer`
+  classes gain an optional `negative_context_keywords` argument; core ships
+  none of its own, exactly like `context_keywords`. Applied after the
+  positive boost and regardless of whether a checksum validator passed --
+  so a checksum-valid *synthetic* identifier next to "example"/"sample" can
+  be pulled below threshold and dropped. Adds a `negative_context`
+  `ExplanationStep` (`not_configured` / `suppressed` / `no_match`) to every
+  candidate's trail. Backward-compatible; no behavior change until a pack
+  registers negative keywords. **Closes
+  [#63](https://github.com/maskflow/maskflow/issues/63).**
+- `maskflow-pack-india` `0.5.0` -> `0.5.1`: registers negative-context
+  keywords (`_NEGATIVE_CONTEXT`) for every entity type it owns -- English,
+  Devanagari (`उदाहरण`, `नमूना`, `काल्पनिक`, `फर्जी`, ...) and Hinglish
+  transliterations (`udaharan`, `farzi`, `nakli`, ...) of "example / sample /
+  specimen / dummy / test data / for illustration". Type-independent, set
+  once per `PIIType` (unioned with any co-installed pack's keys) rather than
+  per pattern. Effect: a shape-only, context-gated match (`PIN_CODE 0.3`,
+  `INDIAN_MOBILE 0.35`, `BANK_ACCOUNT_IN 0.3`, `ABHA_NUMBER 0.35`,
+  `AADHAAR_MASKED 0.45`) introduced as an example is now pulled back under
+  threshold and left unmasked, while a checksum-validated Aadhaar/PAN/GSTIN
+  stays above it.
+- `maskflow-pack-intl` `0.3.1` -> `0.3.2`: registers the English
+  illustrative-value negative-context keywords for every type it owns.
+  Suppresses `SSN_PLAIN` and a bare IPv4 next to "for example" / "sample";
+  `EMAIL`, dashed `SSN`, `AWS_KEY` and other high-confidence matches are
+  unaffected.
 
 ## [evidence 0.1.0, gateway 0.2.0, cli 0.7.0, core 0.7.0, sdk 0.9.0, pack-india 0.5.0, pack-intl 0.3.1] - 2026-09-09
 

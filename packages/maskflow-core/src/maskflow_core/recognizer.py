@@ -33,7 +33,7 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from .context import apply_context_boost
+from .context import apply_context_boost, apply_negative_context
 from .entities import ExplanationStep, PIIType, Span
 from .registry import (
     CustomMatchFn,
@@ -55,11 +55,11 @@ def _finish_match(
     recognizer: str,
 ) -> Span | None:
     """Shared by every non-NLP recognizer kind: run the optional checksum
-    validator, apply the context-keyword boost, and build the resulting
-    Span -- or return None if a validator rejected the match outright.
-    Moved here from detection.py (same body, not reimplemented) so
-    PatternRecognizer/GazetteerRecognizer.analyze() and detection.py's
-    dict-based pattern pass share one implementation."""
+    validator, apply the positive then negative context-keyword adjustment,
+    and build the resulting Span -- or return None if a validator rejected
+    the match outright. Moved here from detection.py (same body, not
+    reimplemented) so PatternRecognizer/GazetteerRecognizer.analyze() and
+    detection.py's dict-based pattern pass share one implementation."""
     explanation: list[ExplanationStep] = [ExplanationStep(rule=recognizer, outcome="matched")]
 
     confidence = base_confidence
@@ -78,6 +78,9 @@ def _finish_match(
 
     confidence, context_step = apply_context_boost(text, start, end, pii_type, confidence)
     explanation.append(context_step)
+
+    confidence, negative_step = apply_negative_context(text, start, end, pii_type, confidence)
+    explanation.append(negative_step)
 
     return Span(
         start=start,
@@ -229,6 +232,7 @@ class PatternRecognizer(Recognizer):
         validator: Validator | None = None,
         context_keywords: tuple[str, ...] | None = None,
         default_threshold: float = 0.0,
+        negative_context_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.entity_type = pii_type
         self.regex = regex
@@ -236,6 +240,7 @@ class PatternRecognizer(Recognizer):
         self.validator = validator
         self.context_keywords = context_keywords
         self.default_threshold = default_threshold
+        self.negative_context_keywords = negative_context_keywords
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         registered_type = PIIType.register(self.entity_type)
@@ -250,6 +255,7 @@ class PatternRecognizer(Recognizer):
             self.base_confidence,
             self.validator,
             self.context_keywords,
+            self.negative_context_keywords,
         )
 
 
@@ -264,12 +270,14 @@ class GazetteerRecognizer(Recognizer):
         validator: Validator | None = None,
         context_keywords: tuple[str, ...] | None = None,
         default_threshold: float = 0.0,
+        negative_context_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.entity_type = pii_type
         self.match_fn = match_fn
         self.validator = validator
         self.context_keywords = context_keywords
         self.default_threshold = default_threshold
+        self.negative_context_keywords = negative_context_keywords
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         registered_type = PIIType.register(self.entity_type)
@@ -277,7 +285,11 @@ class GazetteerRecognizer(Recognizer):
 
     def _do_register(self) -> PIIType:
         return register_custom_recognizer(
-            self.entity_type, self.match_fn, self.validator, self.context_keywords
+            self.entity_type,
+            self.match_fn,
+            self.validator,
+            self.context_keywords,
+            self.negative_context_keywords,
         )
 
 
@@ -308,6 +320,7 @@ class NlpRecognizer(Recognizer):
         threshold: float = 0.0,
         context_keywords: tuple[str, ...] | None = None,
         agreement_boost: float = 0.0,
+        negative_context_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.spacy_label = spacy_label
         self.entity_type = pii_type
@@ -315,6 +328,7 @@ class NlpRecognizer(Recognizer):
         self.default_threshold = threshold
         self.context_keywords = context_keywords
         self.agreement_boost = agreement_boost
+        self.negative_context_keywords = negative_context_keywords
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         doc = ctx.nlp_doc
@@ -362,6 +376,11 @@ class NlpRecognizer(Recognizer):
             )
             explanation.append(context_step)
 
+            confidence, negative_step = apply_negative_context(
+                text, ent.start_char, ent.end_char, registered_type, confidence
+            )
+            explanation.append(negative_step)
+
             if confidence >= self.default_threshold:
                 yield Span(
                     start=ent.start_char,
@@ -381,6 +400,7 @@ class NlpRecognizer(Recognizer):
             self.default_threshold,
             self.context_keywords,
             self.agreement_boost,
+            self.negative_context_keywords,
         )
 
 

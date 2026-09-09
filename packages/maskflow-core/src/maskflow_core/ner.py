@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from functools import lru_cache
 from typing import Any
 
-from .context import apply_context_boost
+from .context import apply_context_boost, apply_negative_context
 from .entities import ExplanationStep, PIIType, Span
 from .registry import NER_RECOGNIZERS
 
@@ -111,6 +111,11 @@ def detect_ner(
             text, ent.start_char, ent.end_char, mapping.pii_type, confidence
         )
         explanation.append(context_step)
+
+        confidence, negative_step = apply_negative_context(
+            text, ent.start_char, ent.end_char, mapping.pii_type, confidence
+        )
+        explanation.append(negative_step)
 
         if confidence >= mapping.threshold:
             spans.append(

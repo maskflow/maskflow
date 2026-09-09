@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-pack-intl"
-version = "0.3.1"
+version = "0.3.2"
 description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone, SSN, credit card, IP, AWS/API keys, JWT, IBAN, address, person name, date of birth)"
 requires-python = ">=3.10"
 license = { text = "MIT" }
