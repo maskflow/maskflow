@@ -18,9 +18,7 @@ class TestSuppressesContextGatedTypes:
     def test_pin_code_with_state_name_but_example_marker_is_dropped(self) -> None:
         # "Karnataka" alone would clear PIN_CODE's bar (0.3 + 0.4 boost).
         assert PIIType.PIN_CODE in _types("Ship to Bengaluru, Karnataka - 560001.")
-        assert PIIType.PIN_CODE not in _types(
-            "Sample record -- Bengaluru, Karnataka - 560001."
-        )
+        assert PIIType.PIN_CODE not in _types("Sample record -- Bengaluru, Karnataka - 560001.")
 
     def test_indian_mobile_with_keyword_but_sample_marker_is_dropped(self) -> None:
         assert PIIType.INDIAN_MOBILE in _types("My mobile number is 9876543211, call anytime.")
@@ -51,9 +49,7 @@ class TestValidatedIdentifiersSurvive:
         # 234567890124 is Verhoeff-valid; validator -> 0.9, "aadhaar" boosts,
         # -0.3 still leaves it well above threshold. Deliberate: a fake but
         # shape-valid number being masked costs nothing.
-        assert PIIType.AADHAAR in _types(
-            "For example, an Aadhaar number looks like 234567890124."
-        )
+        assert PIIType.AADHAAR in _types("For example, an Aadhaar number looks like 234567890124.")
 
 
 class TestNoFalseSuppression:
