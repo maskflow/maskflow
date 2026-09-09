@@ -5,11 +5,12 @@ description = "MaskFlow's original intl/US-shaped PII recognizers (email, phone,
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    # maskflow_core.recognizer (Recognizer/PatternRecognizer/NlpRecognizer --
-    # issue #21's pluggable interface, used by this pack's __init__.py) only
-    # exists from core 0.6.0. Importing this pack against an older core
-    # raises ImportError immediately.
-    "maskflow-core[nlp]>=0.6.0,<0.8",
+    # This pack's __init__.py imports maskflow_core.recognizer (issue #21's
+    # pluggable interface, from core 0.6.0) and, from 0.3.2,
+    # maskflow_core.context.NEGATIVE_CONTEXT_KEYWORDS (the #63 suppression
+    # hook, from core 0.8.0). Importing this pack against an older core
+    # raises ImportError immediately, so the floor is 0.8.0.
+    "maskflow-core[nlp]>=0.8.0,<0.9",
 ]
 
 [project.entry-points."maskflow.recognizers"]
