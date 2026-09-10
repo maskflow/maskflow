@@ -513,13 +513,17 @@ jobs:
       # test_ci_regression.py.
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
-      - run: uv run ruff check bench/intlpii
-      - run: uv run ruff format --check bench/intlpii
+      - run: uv run ruff check bench/intlpii bench/scanbench
+      - run: uv run ruff format --check bench/intlpii bench/scanbench
       - run: uv run pytest bench/indiapii/harness/tests -m benchmark -q
       # intl harness: the F1 regression gate (-m benchmark, maskflow adapter
       # only) plus the generator-reproducibility / corpus-well-formedness
       # checks (no third-party adapter deps). Mirrors indiapii above.
       - run: uv run pytest bench/intlpii/harness/tests -q
+      # scan-log harness: F1 regression gate + the scan-pipeline plumbing
+      # check (both -m benchmark) + generator reproducibility + structural
+      # checks. Runs the real maskflow-cli scan pipeline (workspace pkg).
+      - run: uv run pytest bench/scanbench/harness/tests -q
       # Pure/deterministic pieces only (task generation, scoring, cache,
       # pipeline masking against a fake model) -- no Anthropic key needed.
       # The live task-model/judge path (pipeline.py's TaskModel.generate(),
