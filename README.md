@@ -363,6 +363,35 @@ matching, and latency/memory numbers:
 `uv sync --group bench && uv run python -m bench.indiapii.harness run`; harness source in
 [`bench/indiapii/harness/`](bench/indiapii/harness/).
 
+### International / US-shaped types
+
+Generic PII is not a surface MaskFlow is built to win — Presidio and mask-privacy own it — but
+"measured, not asserted" applies to the intl pack too. Scored on
+[`intl-pii-v1.0`](bench/intlpii/data/intl-pii-v1.0.jsonl), 1800 synthetic documents (Luhn-valid
+cards, mod-97-valid IBANs, SSNs in real-but-unassigned area ranges), same harness, partial-overlap
+F1:
+
+| Entity | MaskFlow | Presidio (stock) | mask-privacy |
+|---|---|---|---|
+| Email / IP address | 100% | 100% | 100% |
+| Phone | 100% | 86.7% | 64.1% |
+| Credit card | 99.4% | **100%** | 78.2% |
+| IBAN | 99.4% | 76.3% | **100%** |
+| AWS key / API key / JWT | 100% | not supported | not supported |
+| SSN | 100% | 100% | not detected at defaults |
+| Street address | 99.8% | 6.5%¹ | 81.1% |
+| Person name | 74.0% | **84.1%** | **86.1%** |
+| Date of birth | 63.6% | 29.5%¹ | **79.8%** |
+
+Competitors are ahead on **person name** (MaskFlow's NER recognizer over-trusts spaCy's `PERSON`
+tag on sentence-initial words) and, for mask-privacy, on **date of birth** (it ships a dedicated
+birth-date regex; MaskFlow's spaCy-only `DATE` pass misses numeric formats and the pack's
+context-keyword list omits "birth date"). Both are tracked follow-ups. ¹ `LOCATION` / `DATE_TIME`
+are mapped generously to `ADDRESS` / `DATE_OF_BIRTH` so those engines score non-zero at all — see
+[`bench/intlpii/harness/labels.py`](bench/intlpii/harness/labels.py). Full table (all 12 types,
+strict + partial, latency/memory): [`bench/reports/intl-pii-v1.0/results.md`](bench/reports/intl-pii-v1.0/results.md).
+Reproduce with `uv sync --group bench && uv run python -m bench.intlpii.harness run`.
+
 ## Roadmap
 
 Openly not done yet, so you know what you're signing up for:
