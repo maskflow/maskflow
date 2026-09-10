@@ -1,0 +1,845 @@
+{
+  "corpus": "intl-pii-v1.0",
+  "generated_at": "2026-09-10T08:32:13.175305+00:00",
+  "num_docs": 1800,
+  "canonical_labels": [
+    "ADDRESS",
+    "API_KEY",
+    "AWS_KEY",
+    "CREDIT_CARD",
+    "DATE_OF_BIRTH",
+    "EMAIL",
+    "IBAN",
+    "IP_ADDRESS",
+    "JWT",
+    "PERSON_NAME",
+    "PHONE",
+    "SSN"
+  ],
+  "adapters": {
+    "maskflow": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "ADDRESS": {
+          "precision": 1.0,
+          "recall": 0.9962962962962963,
+          "f1": 0.9981447124304267,
+          "tp": 1076,
+          "fp": 0,
+          "fn": 4
+        },
+        "API_KEY": {
+          "precision": 0.9888888888888889,
+          "recall": 0.9888888888888889,
+          "f1": 0.9888888888888889,
+          "tp": 356,
+          "fp": 4,
+          "fn": 4
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9884169884169884,
+          "recall": 1.0,
+          "f1": 0.9941747572815534,
+          "tp": 512,
+          "fp": 6,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 0.6428571428571429,
+          "recall": 0.3,
+          "f1": 0.4090909090909091,
+          "tp": 108,
+          "fp": 60,
+          "fn": 252
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 0.9878296146044625,
+          "f1": 0.9938775510204082,
+          "tp": 487,
+          "fp": 0,
+          "fn": 6
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 0.984375,
+          "recall": 0.984375,
+          "f1": 0.984375,
+          "tp": 252,
+          "fp": 4,
+          "fn": 4
+        },
+        "PERSON_NAME": {
+          "precision": 0.18493336959477835,
+          "recall": 0.3148148148148148,
+          "f1": 0.23299640226143567,
+          "tp": 680,
+          "fp": 2997,
+          "fn": 1480
+        },
+        "PHONE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1080,
+          "fp": 0,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "ADDRESS": {
+          "precision": 1.0,
+          "recall": 0.9962962962962963,
+          "f1": 0.9981447124304267,
+          "tp": 1076,
+          "fp": 0,
+          "fn": 4
+        },
+        "API_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9884169884169884,
+          "recall": 1.0,
+          "f1": 0.9941747572815534,
+          "tp": 512,
+          "fp": 6,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 1.0,
+          "recall": 0.4666666666666667,
+          "f1": 0.6363636363636364,
+          "tp": 168,
+          "fp": 0,
+          "fn": 192
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 0.9878296146044625,
+          "f1": 0.9938775510204082,
+          "tp": 487,
+          "fp": 0,
+          "fn": 6
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 256,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.5874354093010606,
+          "recall": 1.0,
+          "f1": 0.7401062189480897,
+          "tp": 2160,
+          "fp": 1517,
+          "fn": 0
+        },
+        "PHONE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1080,
+          "fp": 0,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 69.80559221198308,
+      "median_doc_ms": 17.62534599401988,
+      "p95_doc_ms": 39.512264978839085,
+      "peak_memory_mb": 1.8671875,
+      "doc_errors": 0
+    },
+    "presidio_oob": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "ADDRESS": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 244,
+          "fn": 1080
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 512,
+          "fp": 0,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 0.1693936477382098,
+          "recall": 0.9777777777777777,
+          "f1": 0.2887612797374897,
+          "tp": 352,
+          "fp": 1726,
+          "fn": 8
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 0.6166328600405679,
+          "f1": 0.7628607277289837,
+          "tp": 304,
+          "fp": 0,
+          "fn": 189
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 256
+        },
+        "PERSON_NAME": {
+          "precision": 0.7836538461538461,
+          "recall": 0.7546296296296297,
+          "f1": 0.7688679245283019,
+          "tp": 1630,
+          "fp": 450,
+          "fn": 530
+        },
+        "PHONE": {
+          "precision": 0.8731203007518797,
+          "recall": 0.8601851851851852,
+          "f1": 0.8666044776119403,
+          "tp": 929,
+          "fp": 135,
+          "fn": 151
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "ADDRESS": {
+          "precision": 0.1762295081967213,
+          "recall": 0.03981481481481482,
+          "f1": 0.0649546827794562,
+          "tp": 43,
+          "fp": 201,
+          "fn": 1037
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 512,
+          "fp": 0,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 0.17324350336862368,
+          "recall": 1.0,
+          "f1": 0.29532403609515995,
+          "tp": 360,
+          "fp": 1718,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 0.6166328600405679,
+          "f1": 0.7628607277289837,
+          "tp": 304,
+          "fp": 0,
+          "fn": 189
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 256
+        },
+        "PERSON_NAME": {
+          "precision": 0.8567307692307692,
+          "recall": 0.825,
+          "f1": 0.8405660377358489,
+          "tp": 1782,
+          "fp": 298,
+          "fn": 378
+        },
+        "PHONE": {
+          "precision": 0.8731203007518797,
+          "recall": 0.8601851851851852,
+          "f1": 0.8666044776119403,
+          "tp": 929,
+          "fp": 135,
+          "fn": 151
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 45.562107936616634,
+      "median_doc_ms": 12.81818698043935,
+      "p95_doc_ms": 18.56992600369267,
+      "peak_memory_mb": 2.76953125,
+      "doc_errors": 0
+    },
+    "mask_privacy": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "ADDRESS": {
+          "precision": 0.5831683168316831,
+          "recall": 0.5453703703703704,
+          "f1": 0.5636363636363636,
+          "tp": 589,
+          "fp": 421,
+          "fn": 491
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 0.642578125,
+          "f1": 0.7824019024970273,
+          "tp": 329,
+          "fp": 0,
+          "fn": 183
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 1.0,
+          "recall": 0.6638888888888889,
+          "f1": 0.7979966611018364,
+          "tp": 239,
+          "fp": 0,
+          "fn": 121
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 493,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 256
+        },
+        "PERSON_NAME": {
+          "precision": 0.8204613841524574,
+          "recall": 0.7574074074074074,
+          "f1": 0.7876745305729417,
+          "tp": 1636,
+          "fp": 358,
+          "fn": 524
+        },
+        "PHONE": {
+          "precision": 0.4714098646879092,
+          "recall": 1.0,
+          "f1": 0.6407594185701572,
+          "tp": 1080,
+          "fp": 1211,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 187
+        }
+      },
+      "partial": {
+        "ADDRESS": {
+          "precision": 0.8396039603960396,
+          "recall": 0.7851851851851852,
+          "f1": 0.8114832535885168,
+          "tp": 848,
+          "fp": 162,
+          "fn": 232
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 0.642578125,
+          "f1": 0.7824019024970273,
+          "tp": 329,
+          "fp": 0,
+          "fn": 183
+        },
+        "DATE_OF_BIRTH": {
+          "precision": 1.0,
+          "recall": 0.6638888888888889,
+          "f1": 0.7979966611018364,
+          "tp": 239,
+          "fp": 0,
+          "fn": 121
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 493,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 256
+        },
+        "PERSON_NAME": {
+          "precision": 0.8966900702106319,
+          "recall": 0.8277777777777777,
+          "f1": 0.8608570052961001,
+          "tp": 1788,
+          "fp": 206,
+          "fn": 372
+        },
+        "PHONE": {
+          "precision": 0.4714098646879092,
+          "recall": 1.0,
+          "f1": 0.6407594185701572,
+          "tp": 1080,
+          "fp": 1211,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 187
+        }
+      },
+      "latency_ms_per_kb": 34.80164093820681,
+      "median_doc_ms": 10.007117001805454,
+      "p95_doc_ms": 13.75806998112239,
+      "peak_memory_mb": 0.5078125,
+      "doc_errors": 0
+    },
+    "naive_regex": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1080
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.42953020134228187,
+          "recall": 1.0,
+          "f1": 0.6009389671361502,
+          "tp": 512,
+          "fp": 680,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 493
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333,
+          "tp": 315,
+          "fp": 0,
+          "fn": 45
+        },
+        "JWT": {
+          "precision": 0.984375,
+          "recall": 0.984375,
+          "f1": 0.984375,
+          "tp": 252,
+          "fp": 4,
+          "fn": 4
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 2160
+        },
+        "PHONE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1080,
+          "fp": 0,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "ADDRESS": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1080
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 360,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.42953020134228187,
+          "recall": 1.0,
+          "f1": 0.6009389671361502,
+          "tp": 512,
+          "fp": 680,
+          "fn": 0
+        },
+        "DATE_OF_BIRTH": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 360
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 2160,
+          "fp": 0,
+          "fn": 0
+        },
+        "IBAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 493
+        },
+        "IP_ADDRESS": {
+          "precision": 1.0,
+          "recall": 0.875,
+          "f1": 0.9333333333333333,
+          "tp": 315,
+          "fp": 0,
+          "fn": 45
+        },
+        "JWT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 256,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 2160
+        },
+        "PHONE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 1080,
+          "fp": 0,
+          "fn": 0
+        },
+        "SSN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 187,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 0.23832802702752431,
+      "median_doc_ms": 0.06665100227110088,
+      "p95_doc_ms": 0.11994002852588892,
+      "peak_memory_mb": 0.03125,
+      "doc_errors": 0
+    },
+    "llm_detector": {
+      "available": false,
+      "skipped_reason": "ANTHROPIC_API_KEY not set"
+    }
+  }
+}

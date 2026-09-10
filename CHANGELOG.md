@@ -12,6 +12,44 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`bench/intlpii` -- `intl-pii-v1.0` benchmark for `maskflow-pack-intl`.**
+  The intl pack's 12 international / US-shaped types (EMAIL, PHONE, SSN,
+  CREDIT_CARD, IP_ADDRESS, AWS_KEY, API_KEY, JWT, IBAN, ADDRESS,
+  PERSON_NAME, DATE_OF_BIRTH) previously had unit-test fixtures but no
+  published, reproducible accuracy number -- the one advertised surface
+  whose accuracy was asserted, not measured. Item A of the
+  benchmark-coverage epic
+  ([#92](https://github.com/maskflow/maskflow/issues/92)); the reproducible
+  *publishing* pipeline (HuggingFace, doc-site PR, `maskflow bench
+  --my-data`) remains [#36](https://github.com/maskflow/maskflow/issues/36).
+  - **Corpus** (`bench/intlpii/data/intl-pii-v1.0.jsonl`): 1800 synthetic
+    documents across 5 domains (signup form, support ticket, CRM note,
+    security incident report, invoice email), CC-BY-4.0. Every value is
+    synthetic -- Luhn-valid cards, mod-97-valid IBANs, SSNs in
+    real-but-unassigned area ranges, phones in the NANP `555-01xx` fiction
+    range -- and `generate.py`'s `self_check()` re-validates every
+    checksum-bearing value against the pack's own validators. Deterministic
+    from a recorded seed; `test_generator_intl.py` fails if the committed
+    corpus drifts from the generator.
+  - **Harness** (`bench/intlpii/harness/`): reuses
+    `bench.indiapii.harness`'s scoring core wholesale; adds only the intl
+    label vocabulary, the Presidio / mask-privacy label maps (both are real
+    competitors on generic PII), and an intl naive-regex baseline. The
+    `mask_privacy` adapter calls the scanner with a no-op `encode_fn` so
+    its stateful format-preserving-encryption vault (which raised
+    `TokenCollisionError` on ~980 of 1800 docs via the convenience wrapper)
+    does not corrupt a detection-only measurement.
+  - **Results** (`bench/reports/intl-pii-v1.0/results.md`): per-entity
+    strict + partial F1 for all 12 types vs stock Presidio, mask-privacy,
+    and a naive regex, plus latency/memory. MaskFlow leads on the
+    structured/validated types and the secret types neither competitor
+    detects; Presidio and mask-privacy are ahead on `PERSON_NAME`, and
+    mask-privacy on `DATE_OF_BIRTH` -- shown, not hidden, in the README
+    benchmark section.
+  - **CI**: `bench/baselines-intl.json` + a 2.0-point F1-regression gate
+    (`test_ci_regression.py`, maskflow adapter only, 300-doc subset) wired
+    into the `benchmark` job. `make rebaseline-bench-intl` to update it.
+
 - **`maskflow-mcp` `0.1.0` / `0.1.1`** -- a new package: a [Model Context
   Protocol](https://modelcontextprotocol.io) proxy that wraps any MCP
   server. It masks PII in outbound `tools/call` arguments before they reach
