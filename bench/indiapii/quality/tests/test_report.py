@@ -82,5 +82,17 @@ def test_missing_condition_for_a_task_is_skipped_not_crashed() -> None:
 def test_to_json_dict_and_markdown_do_not_crash_on_empty_records() -> None:
     data = to_json_dict([])
     assert data["num_records"] == 0
+    assert data["meta"] == {}
     markdown = to_markdown(data)
     assert "indiapii-quality-v1.0" in markdown
+
+
+def test_meta_models_are_recorded_and_rendered() -> None:
+    data = to_json_dict(
+        [_record("t1", "summarize", "unmasked", 5, 5, 5)],
+        meta={"task_model": "claude-haiku-4-5", "judge_model": "claude-sonnet-5"},
+    )
+    assert data["meta"]["task_model"] == "claude-haiku-4-5"
+    md = to_markdown(data)
+    assert "task model `claude-haiku-4-5`" in md
+    assert "judge `claude-sonnet-5`" in md

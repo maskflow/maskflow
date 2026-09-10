@@ -12,6 +12,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`bench/indiapii/quality` — instrumented for a publishable run** (#92 item
+  B). The 200-task LLM-utility benchmark (does masking degrade the model's
+  answer?) was built but never run; this makes running it a one-command job
+  and records provenance:
+  - `run` now writes `meta` into `results.{json,md}` — the exact task-model
+    and judge model ids that produced the numbers. A published quality
+    figure that doesn't say which models judged it isn't reproducible.
+  - `--task-model` / `--judge-model` flags (alternative to the
+    `MASKFLOW_BENCH_QUALITY_TASK_MODEL` / `_JUDGE_MODEL` env vars) and
+    `--sample-per-type N` for a cheap smoke run across all three task types.
+  - `make quality-bench` (haiku task / sonnet judge, ~1200 disk-cached
+    calls, ~$1.50) and `make quality-bench-smoke` (~36 calls, ~$0.05).
+  - A keyless `claude -p` backend was prototyped and **rejected**: the CLI
+    carries Claude Code's own PII-redaction behaviour, so the task model
+    emits `<PERSON_NAME_1>`-style tokens itself even in the unmasked
+    condition, corrupting the leak-rate metric. The run needs a real API
+    endpoint.
+  - README "Benchmark" section documents the method; a published run is
+    still pending an `ANTHROPIC_API_KEY`.
+
 - **`bench/intlpii` -- `intl-pii-v1.0` benchmark for `maskflow-pack-intl`.**
   The intl pack's 12 international / US-shaped types (EMAIL, PHONE, SSN,
   CREDIT_CARD, IP_ADDRESS, AWS_KEY, API_KEY, JWT, IBAN, ADDRESS,
