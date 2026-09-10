@@ -95,9 +95,10 @@ def aggregate(records: list[TaskConditionRecord]) -> dict:
     return result
 
 
-def to_json_dict(records: list[TaskConditionRecord]) -> dict:
+def to_json_dict(records: list[TaskConditionRecord], meta: dict | None = None) -> dict:
     return {
         "generated_at": datetime.now(UTC).isoformat(),
+        "meta": meta or {},
         "num_records": len(records),
         "records": [asdict(r) for r in records],
         "aggregate": aggregate(records),
@@ -117,6 +118,7 @@ def _fmt_mean(cell: dict | None) -> str:
 
 
 def to_markdown(data: dict) -> str:
+    meta = data.get("meta") or {}
     lines = [
         "# indiapii-quality-v1.0 benchmark results",
         "",
@@ -125,6 +127,18 @@ def to_markdown(data: dict) -> str:
         "95% CI from a 2000-resample nonparametric bootstrap.",
         "",
     ]
+    if meta:
+        bits = []
+        if meta.get("backend"):
+            bits.append(f"backend `{meta['backend']}`")
+        if meta.get("task_model"):
+            bits.append(f"task model `{meta['task_model']}`")
+        if meta.get("judge_model"):
+            bits.append(f"judge `{meta['judge_model']}`")
+        if bits:
+            lines += [" · ".join(bits), ""]
+        if meta.get("note"):
+            lines += [f"> **{meta['note']}**", ""]
     for task_type, entry in data["aggregate"]["task_types"].items():
         lines.append(f"## {task_type}")
         lines.append("")
@@ -158,8 +172,10 @@ def to_markdown(data: dict) -> str:
     return "\n".join(lines)
 
 
-def write_report(out_dir: Path, records: list[TaskConditionRecord]) -> None:
-    data = to_json_dict(records)
+def write_report(
+    out_dir: Path, records: list[TaskConditionRecord], meta: dict | None = None
+) -> None:
+    data = to_json_dict(records, meta)
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "results.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     (out_dir / "results.md").write_text(to_markdown(data), encoding="utf-8")

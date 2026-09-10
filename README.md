@@ -392,6 +392,16 @@ are mapped generously to `ADDRESS` / `DATE_OF_BIRTH` so those engines score non-
 strict + partial, latency/memory): [`bench/reports/intl-pii-v1.0/results.md`](bench/reports/intl-pii-v1.0/results.md).
 Reproduce with `uv sync --group bench && uv run python -m bench.intlpii.harness run`.
 
+### Does masking hurt the LLM's answer?
+
+[`bench/indiapii/quality`](bench/indiapii/quality) is a 200-task, LLM-judged benchmark that runs each
+task unmasked, with placeholder masking, and with surrogate masking, then measures the
+masked-minus-unmasked delta in task completion, fluency, factual consistency, and field-extraction
+accuracy (plus a hard leak check — a `<PAN_1>` token must never survive `unmask()` into the final
+answer). Method and scoring are built and unit-tested; a **published run is pending** an
+`ANTHROPIC_API_KEY` (`make quality-bench` — ~1200 disk-cached calls, ~$1.50). Once run,
+`bench/reports/indiapii-quality-v1.0/results.md`.
+
 ## Roadmap
 
 Openly not done yet, so you know what you're signing up for:

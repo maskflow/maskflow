@@ -59,9 +59,11 @@ Call report_judgment with your scores and a one-or-two-sentence rationale."""
 class Judge:
     name = "judge"
 
-    def __init__(self, cache: DiskCache) -> None:
+    def __init__(self, cache: DiskCache, model: str | None = None) -> None:
         self._cache = cache
-        self._model = os.environ.get("MASKFLOW_BENCH_QUALITY_JUDGE_MODEL", _DEFAULT_JUDGE_MODEL)
+        self._model = model or os.environ.get(
+            "MASKFLOW_BENCH_QUALITY_JUDGE_MODEL", _DEFAULT_JUDGE_MODEL
+        )
         self._client: Any = None
 
     def available(self) -> tuple[bool, str]:
