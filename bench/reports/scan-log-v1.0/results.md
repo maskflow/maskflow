@@ -1,6 +1,6 @@
 # scan-log-v1.0 benchmark results
 
-2000 documents, 13 canonical entity types. F1 shown per entity per adapter; "—" means the adapter produced no matching predictions or the entity has no gold spans in this run; "skipped" means the adapter's dependency/API key wasn't available in this environment.
+2000 documents, 13 canonical entity types. F1 shown per entity per adapter. "0.0%" is a *measured* zero -- the adapter made predictions for this type but none matched a gold span. "—" means F1 is undefined: the adapter made no prediction for this type at all (its recognizer / label map doesn't cover it), or the corpus has no gold spans for it. "skipped" means the adapter's dependency/API key wasn't available in this environment.
 
 ### Strict-span F1
 
@@ -42,10 +42,10 @@
 
 | adapter | ms/KB | median ms/doc | p95 ms/doc | peak memory (MB) | doc errors |
 |---|---|---|---|---|---|
-| maskflow_deep | 52.374 | 13.318 | 27.133 | 7.7 | 0 |
-| maskflow_patterns | 1.842 | 0.465 | 0.762 | 0.0 | 0 |
-| presidio_oob | 45.470 | 11.107 | 20.035 | 1.2 | 0 |
-| naive_regex | 0.212 | 0.052 | 0.089 | 0.0 | 0 |
+| maskflow_deep | 52.360 | 13.228 | 27.334 | 6.8 | 0 |
+| maskflow_patterns | 1.825 | 0.459 | 0.746 | 0.0 | 0 |
+| presidio_oob | 45.927 | 11.289 | 20.190 | 2.3 | 0 |
+| naive_regex | 0.216 | 0.053 | 0.091 | 0.0 | 0 |
 
 ### Audit cost (false positives on log noise)
 

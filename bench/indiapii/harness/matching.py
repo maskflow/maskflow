@@ -44,9 +44,16 @@ class PRFResult:
 
     @property
     def f1(self) -> float | None:
+        """None only when there was nothing to score on one side (precision
+        or recall has no denominator -- no predictions AND/OR no gold). A
+        detector that fired on this type but matched no gold span (tp=0,
+        fp>0, fn>0) has a *measured* F1 of 0.0, not "not applicable" -- the
+        report renders that as `0.0%`, distinct from `—`."""
         p, r = self.precision, self.recall
-        if not p or not r or (p + r) == 0:
+        if p is None or r is None:
             return None
+        if p + r == 0:
+            return 0.0
         return 2 * p * r / (p + r)
 
 

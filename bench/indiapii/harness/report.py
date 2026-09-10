@@ -114,9 +114,12 @@ def to_markdown(
         f"# {corpus_name} benchmark results",
         "",
         f"{num_docs} documents, {len(canonical_labels)} canonical entity types. "
-        'F1 shown per entity per adapter; "—" means the adapter produced no '
-        'matching predictions or the entity has no gold spans in this run; "skipped" '
-        "means the adapter's dependency/API key wasn't available in this environment.",
+        'F1 shown per entity per adapter. "0.0%" is a *measured* zero -- the adapter '
+        "made predictions for this type but none matched a gold span. \"—\" means F1 "
+        "is undefined: the adapter made no prediction for this type at all (its "
+        "recognizer / label map doesn't cover it), or the corpus has no gold spans "
+        "for it. \"skipped\" means the adapter's dependency/API key wasn't available "
+        "in this environment.",
         "",
         _pivot_table(results, adapter_names, canonical_labels, "strict", "Strict-span F1"),
         "",

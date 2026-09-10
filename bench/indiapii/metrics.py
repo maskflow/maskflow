@@ -47,9 +47,14 @@ class PRFResult:
 
     @property
     def f1(self) -> float | None:
+        # None only when one side has no denominator; a measured 0 (fired but
+        # matched nothing / had gold but found nothing) is 0.0, not None --
+        # mirrors bench.indiapii.harness.matching.PRFResult.f1.
         p, r = self.precision, self.recall
-        if not p or not r or (p + r) == 0:
+        if p is None or r is None:
             return None
+        if p + r == 0:
+            return 0.0
         return 2 * p * r / (p + r)
 
 

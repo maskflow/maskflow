@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from bench.integrations.adapters import (
     ALL_ADAPTERS,
     LiteLLMAdapter,
@@ -54,6 +56,7 @@ def test_compare_flags_a_deliberately_broken_run() -> None:
 
 
 def test_litellm_tool_argument_json_stays_valid_and_round_trips() -> None:
+    pytest.importorskip("maskflow_litellm._masking")
     from maskflow import Session
     from maskflow_litellm._masking import _mask_json_string, _unmask_arguments
 
@@ -67,6 +70,7 @@ def test_litellm_tool_argument_json_stays_valid_and_round_trips() -> None:
 
 
 def test_mcp_nested_arguments_round_trip_and_keys_untouched() -> None:
+    pytest.importorskip("maskflow_mcp._masking")
     from maskflow import Session
     from maskflow_mcp._masking import mask_arguments, unmask_json
 

@@ -1,6 +1,6 @@
 {
   "corpus": "scan-log-v1.0",
-  "generated_at": "2026-09-10T09:45:01.225724+00:00",
+  "generated_at": "2026-09-10T14:40:19.237854+00:00",
   "num_docs": 2000,
   "canonical_labels": [
     "AADHAAR",
@@ -233,10 +233,10 @@
           "fn": 0
         }
       },
-      "latency_ms_per_kb": 52.37407871362137,
-      "median_doc_ms": 13.317565026227385,
-      "p95_doc_ms": 27.132696006447077,
-      "peak_memory_mb": 7.7109375,
+      "latency_ms_per_kb": 52.360301231114754,
+      "median_doc_ms": 13.22750301915221,
+      "p95_doc_ms": 27.334456011885777,
+      "peak_memory_mb": 6.80078125,
       "doc_errors": 0
     },
     "maskflow_patterns": {
@@ -454,9 +454,9 @@
           "fn": 0
         }
       },
-      "latency_ms_per_kb": 1.8415401852922824,
-      "median_doc_ms": 0.46487999497912824,
-      "p95_doc_ms": 0.7620239921379834,
+      "latency_ms_per_kb": 1.8248121071879222,
+      "median_doc_ms": 0.4594610072672367,
+      "p95_doc_ms": 0.7463950023520738,
       "peak_memory_mb": 0.0,
       "doc_errors": 0
     },
@@ -675,10 +675,10 @@
           "fn": 571
         }
       },
-      "latency_ms_per_kb": 45.469713120999074,
-      "median_doc_ms": 11.107412981800735,
-      "p95_doc_ms": 20.034971996210515,
-      "peak_memory_mb": 1.234375,
+      "latency_ms_per_kb": 45.927076553128686,
+      "median_doc_ms": 11.288785986835137,
+      "p95_doc_ms": 20.18973999656737,
+      "peak_memory_mb": 2.33203125,
       "doc_errors": 0
     },
     "naive_regex": {
@@ -896,9 +896,9 @@
           "fn": 571
         }
       },
-      "latency_ms_per_kb": 0.21249410360639762,
-      "median_doc_ms": 0.0518580200150609,
-      "p95_doc_ms": 0.08860000525601208,
+      "latency_ms_per_kb": 0.2164907844651136,
+      "median_doc_ms": 0.05282499478198588,
+      "p95_doc_ms": 0.09096099529415369,
       "peak_memory_mb": 0.0,
       "doc_errors": 0
     }

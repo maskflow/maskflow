@@ -489,6 +489,20 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Changed
 
+- **Benchmark reports: a genuine `0.0` F1 now renders as `0.0%`, not `—`**
+  (#92 item F). `PRFResult.f1` collapsed a measured zero (the detector
+  fired on a type but matched no gold span -- e.g. `INDIAN_ADDRESS` strict,
+  where no adapter's multi-token span boundaries ever line up exactly) to
+  `None`, making it indistinguishable from "not scored" in the tables. It
+  now returns `0.0` when precision and recall both have a denominator;
+  `None` is reserved for "F1 is undefined" (no predictions for the type at
+  all, or no gold). `bench/reports/{indiapii,intl-pii,scan-log}-v1.0/`
+  regenerated -- `INDIAN_ADDRESS` / `ADDRESS` strict cells that read `—` now
+  read `0.0%`, and the India report picks up `mask-privacy` 4.3.0 (Indian
+  address partial F1 57.9% -> 50.5%, person name 37.7% -> 30.4%); README
+  benchmark table updated to match. #92 item E (JS<->Py cross-language
+  parity) was dropped.
+
 - Dependency bounds widened for the released `maskflow-sdk` `0.9.0` (no code
   change, not yet published): `maskflow-litellm` / `maskflow-langchain` /
   `maskflow-llamaindex` / `maskflow-mcp` now allow `maskflow-sdk <0.10`.
