@@ -1,4 +1,4 @@
-.PHONY: rebaseline-bench rebaseline-bench-intl quality-bench quality-bench-smoke
+.PHONY: rebaseline-bench rebaseline-bench-intl rebaseline-bench-scan quality-bench quality-bench-smoke
 
 rebaseline-bench:
 	uv run python -m bench.indiapii.harness rebaseline \
@@ -9,6 +9,11 @@ rebaseline-bench-intl:
 	uv run python -m bench.intlpii.harness rebaseline \
 	    --corpus bench/intlpii/data/intl-pii-v1.0.jsonl --subset 300 \
 	    --out bench/baselines-intl.json
+
+rebaseline-bench-scan:
+	uv run python -m bench.scanbench.harness rebaseline \
+	    --corpus bench/scanbench/data/scan-log-v1.0.jsonl --subset 400 \
+	    --out bench/baselines-scan.json
 
 # LLM-utility benchmark: does masking degrade the model's answer? Needs
 # ANTHROPIC_API_KEY. ~1200 cached calls (~$1.50 with haiku task / sonnet

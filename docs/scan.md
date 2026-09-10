@@ -155,6 +155,41 @@ and the report says so; pattern-based detection is unaffected.
 `--format csv` flattens the severity table for spreadsheets. `--out -`
 writes to stdout.
 
+## Measured accuracy on log-shaped input
+
+Detection is benchmarked on prose ([`indiapii-v1.0`](../bench/indiapii/data/),
+[`intl-pii-v1.0`](../bench/intlpii/data/)); `scan` runs it over a different shape —
+access-log lines, JSON app logs, stack traces, request dumps — dense with PII-lookalike
+noise. [`scan-log-v1.0`](../bench/scanbench/data/) is 2 000 synthetic log records
+scoring exactly that, with the false-positive rate front and centre because for an
+exposure audit a false alarm is the expensive failure. Partial-overlap F1, `--deep`:
+
+| Entity | F1 | | Entity | F1 |
+|---|---|---|---|---|
+| Aadhaar / PAN / GSTIN / IFSC / UPI VPA | 100% | | Email | 100% |
+| Indian mobile | 100% | | JWT / AWS key | 100% |
+| Credit card | 97.8% | | API key | 99.7% |
+| Person name (`--deep` NER) | 87.9% | | IP address | 66.7%¹ |
+
+**Audit cost — false positives per 1 000 log records:** `--deep` **428** (precision
+88%), patterns-only pass **298** (precision 92%), stock Presidio 544 (73%), a naive
+regex 433 (79%). The checksum-validated identifiers essentially never false-positive on
+log noise — a naive regex flags 337 fake Aadhaars from bare digit runs; MaskFlow flags
+0. The residual false positives split between the internal IPs (below) and
+`PERSON_NAME`, where the **`--deep` NER pass produces ~2.5× the false names** on log
+text (438 vs 178 on the same 2 000 records) — so patterns-only is not just faster but
+*more precise* for a scan.
+
+¹ Every internal `10./172.16./192.168.` IP is currently reported as `IP_ADDRESS` — for
+an exposure audit a private-range IP is not personal data, and MaskFlow has no
+private-IP suppression yet. Known limitation; on the roadmap.
+
+A **plumbing check** in the same benchmark runs the real `run_pipeline(--deep)` over
+every record and asserts its aggregated per-entity counts equal what `detect()` finds
+directly — so the streaming field-extraction and bounded aggregation are verified not
+to drop or double-count a finding. Full table + reproduce command:
+[`bench/reports/scan-log-v1.0/results.md`](../bench/reports/scan-log-v1.0/results.md).
+
 ## Configuration
 
 `maskflow scan` honours a discovered `.maskflowrc` (or `--config` /

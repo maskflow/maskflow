@@ -12,6 +12,37 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`bench/scanbench` — `scan-log-v1.0` benchmark for `maskflow scan`** (#92
+  item C). Detection is benchmarked on prose (`indiapii-v1.0`,
+  `intl-pii-v1.0`); `scan` runs it over log-shaped input — nginx access
+  lines, JSON app logs, multi-line stack traces, LLM request dumps, worker
+  logs — which nothing measured. This is that shape.
+  - **Corpus** (`bench/scanbench/data/scan-log-v1.0.jsonl`): 2000 synthetic
+    records, 5 shapes, CC-BY-4.0. PII checksum-valid where a checksum
+    exists (self-checked against the packs' validators); hard negatives are
+    the PII-lookalike noise real logs carry — request/trace ids, UUIDs, git
+    SHAs, epoch-millis, internal `10./172.16./192.168.` IPs in log
+    position, `sk_test_`/base64 blobs, `File.java:142` frames.
+  - **Harness** (`bench/scanbench/harness/`): reuses the shared scoring
+    core; two MaskFlow columns (`detect()` = `--deep`,
+    `detect_patterns_only()` = the default fast pass), Presidio + a naive
+    log regex as baselines. Headline metric is the **false-positive rate**
+    (per 1000 records) — for an exposure audit a false alarm is the
+    expensive failure.
+  - **Plumbing check**: runs the real
+    `maskflow_cli.scan.pipeline.run_pipeline(--deep)` over every record and
+    asserts its aggregated per-entity counts equal `detect()`'s — so the
+    scan's streaming field-extraction and bounded aggregation are verified
+    lossless. Gated in CI (`-m benchmark`).
+  - **Findings** (`bench/reports/scan-log-v1.0/results.md`, `docs/scan.md`):
+    checksum-validated identifiers are ~100% F1 with near-zero false
+    positives on log noise (a naive regex flags 337 fake Aadhaars;
+    MaskFlow 0); the `--deep` NER pass produces ~2.5× the false
+    `PERSON_NAME` hits the patterns pass does; every internal-range IP is
+    reported as `IP_ADDRESS` (no private-IP suppression yet — known gap).
+  - **CI**: `bench/baselines-scan.json` + a 2.0-pt F1-regression gate in
+    the `benchmark` job; `make rebaseline-bench-scan`.
+
 - **`bench/indiapii/quality` — instrumented for a publishable run** (#92 item
   B). The 200-task LLM-utility benchmark (does masking degrade the model's
   answer?) was built but never run; this makes running it a one-command job

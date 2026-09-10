@@ -1,0 +1,907 @@
+{
+  "corpus": "scan-log-v1.0",
+  "generated_at": "2026-09-10T09:45:01.225724+00:00",
+  "num_docs": 2000,
+  "canonical_labels": [
+    "AADHAAR",
+    "API_KEY",
+    "AWS_KEY",
+    "CREDIT_CARD",
+    "EMAIL",
+    "GSTIN",
+    "IFSC",
+    "INDIAN_MOBILE",
+    "IP_ADDRESS",
+    "JWT",
+    "PAN",
+    "PERSON_NAME",
+    "UPI_VPA"
+  ],
+  "adapters": {
+    "maskflow_deep": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 348,
+          "fp": 0,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": 0.9828571428571429,
+          "recall": 0.9772727272727273,
+          "f1": 0.98005698005698,
+          "tp": 172,
+          "fp": 3,
+          "fn": 4
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9569377990430622,
+          "recall": 1.0,
+          "f1": 0.9779951100244498,
+          "tp": 400,
+          "fp": 18,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 651,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 0.9925925925925926,
+          "recall": 0.9925925925925926,
+          "f1": 0.9925925925925926,
+          "tp": 134,
+          "fp": 1,
+          "fn": 1
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.7849779086892489,
+          "recall": 0.999375,
+          "f1": 0.8792961231784437,
+          "tp": 1599,
+          "fp": 438,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 348,
+          "fp": 0,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": 1.0,
+          "recall": 0.9943181818181818,
+          "f1": 0.9971509971509972,
+          "tp": 175,
+          "fp": 0,
+          "fn": 1
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9569377990430622,
+          "recall": 1.0,
+          "f1": 0.9779951100244498,
+          "tp": 400,
+          "fp": 18,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 651,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 135,
+          "fp": 0,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.7849779086892489,
+          "recall": 0.999375,
+          "f1": 0.8792961231784437,
+          "tp": 1599,
+          "fp": 438,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 52.37407871362137,
+      "median_doc_ms": 13.317565026227385,
+      "p95_doc_ms": 27.132696006447077,
+      "peak_memory_mb": 7.7109375,
+      "doc_errors": 0
+    },
+    "maskflow_patterns": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 348,
+          "fp": 0,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": 0.9828571428571429,
+          "recall": 0.9772727272727273,
+          "f1": 0.98005698005698,
+          "tp": 172,
+          "fp": 3,
+          "fn": 4
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9569377990430622,
+          "recall": 1.0,
+          "f1": 0.9779951100244498,
+          "tp": 400,
+          "fp": 18,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 651,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 0.9925925925925926,
+          "recall": 0.9925925925925926,
+          "f1": 0.9925925925925926,
+          "tp": 134,
+          "fp": 1,
+          "fn": 1
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.8998311761395611,
+          "recall": 0.999375,
+          "f1": 0.9469943737044715,
+          "tp": 1599,
+          "fp": 178,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 348,
+          "fp": 0,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": 1.0,
+          "recall": 0.9943181818181818,
+          "f1": 0.9971509971509972,
+          "tp": 175,
+          "fp": 0,
+          "fn": 1
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.9569377990430622,
+          "recall": 1.0,
+          "f1": 0.9779951100244498,
+          "tp": 400,
+          "fp": 18,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 651,
+          "fp": 0,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 135,
+          "fp": 0,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.8998311761395611,
+          "recall": 0.999375,
+          "f1": 0.9469943737044715,
+          "tp": 1599,
+          "fp": 178,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 571,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 1.8415401852922824,
+      "median_doc_ms": 0.46487999497912824,
+      "p95_doc_ms": 0.7620239921379834,
+      "peak_memory_mb": 0.0,
+      "doc_errors": 0
+    },
+    "presidio_oob": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 348
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 176
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 130
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 0.6530612244897959,
+          "f1": 0.7901234567901235,
+          "tp": 608,
+          "fp": 0,
+          "fn": 323
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.7397727272727272,
+          "recall": 1.0,
+          "f1": 0.8504245591116917,
+          "tp": 651,
+          "fp": 229,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 135
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "PERSON_NAME": {
+          "precision": 0.5367931835786213,
+          "recall": 0.433125,
+          "f1": 0.4794188861985472,
+          "tp": 693,
+          "fp": 598,
+          "fn": 907
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 348
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 176
+        },
+        "AWS_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 130
+        },
+        "CREDIT_CARD": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 0.6530612244897959,
+          "f1": 0.7901234567901235,
+          "tp": 608,
+          "fp": 0,
+          "fn": 323
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.7397727272727272,
+          "recall": 1.0,
+          "f1": 0.8504245591116917,
+          "tp": 651,
+          "fp": 229,
+          "fn": 0
+        },
+        "IP_ADDRESS": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6666666666666666,
+          "tp": 400,
+          "fp": 400,
+          "fn": 0
+        },
+        "JWT": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 135
+        },
+        "PAN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "PERSON_NAME": {
+          "precision": 0.6444616576297444,
+          "recall": 0.52,
+          "f1": 0.5755793842960913,
+          "tp": 832,
+          "fp": 459,
+          "fn": 768
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        }
+      },
+      "latency_ms_per_kb": 45.469713120999074,
+      "median_doc_ms": 11.107412981800735,
+      "p95_doc_ms": 20.034971996210515,
+      "peak_memory_mb": 1.234375,
+      "doc_errors": 0
+    },
+    "naive_regex": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 0.5080291970802919,
+          "recall": 1.0,
+          "f1": 0.6737657308809293,
+          "tp": 348,
+          "fp": 337,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 176
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.7575757575757576,
+          "recall": 1.0,
+          "f1": 0.8620689655172413,
+          "tp": 400,
+          "fp": 128,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9983079526226735,
+          "recall": 0.9062980030721967,
+          "f1": 0.9500805152979067,
+          "tp": 590,
+          "fp": 1,
+          "fn": 61
+        },
+        "IP_ADDRESS": {
+          "precision": 0.4594594594594595,
+          "recall": 0.85,
+          "f1": 0.5964912280701754,
+          "tp": 340,
+          "fp": 400,
+          "fn": 60
+        },
+        "JWT": {
+          "precision": 0.9925925925925926,
+          "recall": 0.9925925925925926,
+          "f1": 0.9925925925925926,
+          "tp": 134,
+          "fp": 1,
+          "fn": 1
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1600
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 0.5080291970802919,
+          "recall": 1.0,
+          "f1": 0.6737657308809293,
+          "tp": 348,
+          "fp": 337,
+          "fn": 0
+        },
+        "API_KEY": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 176
+        },
+        "AWS_KEY": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 130,
+          "fp": 0,
+          "fn": 0
+        },
+        "CREDIT_CARD": {
+          "precision": 0.7575757575757576,
+          "recall": 1.0,
+          "f1": 0.8620689655172413,
+          "tp": 400,
+          "fp": 128,
+          "fn": 0
+        },
+        "EMAIL": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 931,
+          "fp": 0,
+          "fn": 0
+        },
+        "GSTIN": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "IFSC": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 400
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9983079526226735,
+          "recall": 0.9062980030721967,
+          "f1": 0.9500805152979067,
+          "tp": 590,
+          "fp": 1,
+          "fn": 61
+        },
+        "IP_ADDRESS": {
+          "precision": 0.4594594594594595,
+          "recall": 0.85,
+          "f1": 0.5964912280701754,
+          "tp": 340,
+          "fp": 400,
+          "fn": 60
+        },
+        "JWT": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 135,
+          "fp": 0,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 400,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 1600
+        },
+        "UPI_VPA": {
+          "precision": null,
+          "recall": 0.0,
+          "f1": null,
+          "tp": 0,
+          "fp": 0,
+          "fn": 571
+        }
+      },
+      "latency_ms_per_kb": 0.21249410360639762,
+      "median_doc_ms": 0.0518580200150609,
+      "p95_doc_ms": 0.08860000525601208,
+      "peak_memory_mb": 0.0,
+      "doc_errors": 0
+    }
+  },
+  "plumbing_check": "PASS \u2014 `run_pipeline(--deep)` over all 2000 records reproduced `detect()`'s per-entity counts exactly (7396 findings across 13 entity types); field extraction + streaming aggregation lose nothing."
+}

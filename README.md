@@ -402,6 +402,30 @@ answer). Method and scoring are built and unit-tested; a **published run is pend
 `ANTHROPIC_API_KEY` (`make quality-bench` — ~1200 disk-cached calls, ~$1.50). Once run,
 `bench/reports/indiapii-quality-v1.0/results.md`.
 
+### `maskflow scan` on log-shaped input
+
+The detection benches above are prose; [`maskflow scan`](docs/scan.md) runs over access-log lines,
+JSON app logs, stack traces, and request dumps. [`scan-log-v1.0`](bench/scanbench/data/) is 2000
+synthetic log records with the PII-lookalike noise real logs carry (trace ids, UUIDs, git SHAs,
+internal IPs, `File.java:142` frames), scoring detection and — the metric that matters for an audit
+— the **false-positive rate**. `--deep`, partial-overlap F1:
+
+| Entity | MaskFlow | Presidio (stock) | Naive regex |
+|---|---|---|---|
+| Aadhaar / PAN / GSTIN / IFSC / UPI | 100% | not supported | 67–100% |
+| Email / Indian mobile | 100% | 79–85% | 95–100% |
+| Credit card | 97.8% | 100% | 86.2% |
+| Person name | 87.9% | 57.6% | not supported |
+| IP address | 66.7%¹ | 66.7%¹ | 59.6%¹ |
+
+**False positives / 1000 log records:** MaskFlow `--deep` 428, its patterns-only pass 298, Presidio
+544, naive regex 433. Checksum-validated identifiers essentially never false-positive on log noise
+(naive regex flags 337 fake Aadhaars; MaskFlow flags 0); the `--deep` NER pass produces ~2.5× the
+false `PERSON_NAME` hits that the patterns pass does. ¹ every internal `10./172.16./192.168.` IP is
+reported as `IP_ADDRESS` — a known gap (no private-IP suppression). A plumbing check verifies the
+real scan pipeline surfaces exactly what `detect()` finds. Full report:
+[`bench/reports/scan-log-v1.0/results.md`](bench/reports/scan-log-v1.0/results.md).
+
 ## Roadmap
 
 Openly not done yet, so you know what you're signing up for:
