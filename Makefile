@@ -1,4 +1,4 @@
-.PHONY: rebaseline-bench rebaseline-bench-intl rebaseline-bench-scan quality-bench quality-bench-smoke
+.PHONY: rebaseline-bench rebaseline-bench-intl rebaseline-bench-scan quality-bench quality-bench-smoke integration-parity
 
 rebaseline-bench:
 	uv run python -m bench.indiapii.harness rebaseline \
@@ -28,3 +28,8 @@ quality-bench-smoke:
 	uv run python -m bench.indiapii.quality run --sample-per-type 2 \
 	    --task-model claude-haiku-4-5 --judge-model claude-haiku-4-5 \
 	    --out bench/reports/indiapii-quality-v1.0-smoke
+
+# Every integration masks exactly what the core engine does + round-trips.
+# Needs: uv sync --all-extras --group litellm --group llama-index --group mcp
+integration-parity:
+	uv run python -m bench.integrations run --out bench/reports/integration-parity-v1

@@ -23,6 +23,7 @@ jobs:
       cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
       bench: ${{ steps.filter.outputs.bench }}
+      integration_parity: ${{ steps.filter.outputs.integration_parity }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -107,6 +108,17 @@ jobs:
               - 'packages/maskflow-js/**'
             bench:
               - 'bench/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
+            integration_parity:
+              - 'bench/integrations/**'
+              - 'packages/maskflow-litellm/**'
+              - 'packages/maskflow-langchain/**'
+              - 'packages/maskflow-llamaindex/**'
+              - 'packages/maskflow-mcp/**'
+              - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
@@ -530,6 +542,26 @@ jobs:
       # judge.py's Judge.score()) is exercised by a manual `run` invocation,
       # same as llm_adapter.py's own network call is never run in CI.
       - run: uv run pytest bench/indiapii/quality/tests -q
+
+  integration-parity:
+    # bench/integrations: routes an indiapii-v1.0 subset through each of the
+    # four framework integrations' masking layers and asserts the masked
+    # (entity_type, value) set + round-trip + streaming reassembly are
+    # identical to the core engine's. Needs all four integration groups (the
+    # `benchmark` job deliberately stays lean), so it is its own job.
+    needs: changes
+    if: needs.changes.outputs.integration_parity == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --group litellm --group llama-index --group mcp
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check bench/integrations
+      - run: uv run ruff format --check bench/integrations
+      - run: uv run pytest bench/integrations/tests -q
 
   detection-js:
     needs: changes
