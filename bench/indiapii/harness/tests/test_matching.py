@@ -24,6 +24,10 @@ def test_strict_offset_mismatch_is_fn_and_fp() -> None:
     assert r["PAN"].tp == 0
     assert r["PAN"].fn == 1
     assert r["PAN"].fp == 1
+    # fired + had gold + matched nothing -> a *measured* 0.0, not None.
+    assert r["PAN"].precision == 0.0
+    assert r["PAN"].recall == 0.0
+    assert r["PAN"].f1 == 0.0
 
 
 def test_partial_overlap_counts_as_tp() -> None:
@@ -74,6 +78,21 @@ def test_precision_recall_f1_none_when_no_denominator() -> None:
     assert r["PAN"].precision is None
     assert r["PAN"].recall is None
     assert r["PAN"].f1 is None
+
+
+def test_f1_is_zero_not_none_when_gold_exists_but_nothing_matched() -> None:
+    # Gold present, no predictions at all: recall has a denominator (0.0),
+    # precision does not -> still "nothing to score" on the precision side.
+    docs = [_doc(gold=((0, 5, "PAN"),))]
+    r = evaluate(docs, [[]], {"PAN": "PAN"}, ("PAN",), MatchMode.STRICT)
+    assert r["PAN"].recall == 0.0
+    assert r["PAN"].precision is None
+    assert r["PAN"].f1 is None  # can't compute F1 with no precision
+
+    # But once the detector fires (fp>0) it has both sides -> measured 0.0.
+    docs2 = [_doc(gold=((0, 5, "PAN"),))]
+    r2 = evaluate(docs2, [[(50, 60, "PAN")]], {"PAN": "PAN"}, ("PAN",), MatchMode.STRICT)
+    assert r2["PAN"].f1 == 0.0
 
 
 def test_multiple_gold_spans_claim_distinct_predictions() -> None:

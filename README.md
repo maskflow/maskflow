@@ -352,9 +352,9 @@ addresses — see the full report for both).
 | GSTIN / IFSC / UPI VPA | 100% | not supported | not supported | not supported |
 | AADHAAR | 98.4% | not supported | 96.6% | not supported |
 | PAN | 100% | not supported | 100% | not supported |
-| Indian mobile number | 99.0% | 94.9% | 94.9% | 41.9% |
-| Person name | 47.3% | 30.4% | 30.4% | 37.7% |
-| Indian address | 43.3% | 48.2% | 48.2% | **57.9%** |
+| Indian mobile number | 99.0% | 94.9% | 94.9% | 42.2% |
+| Person name | 47.3% | 30.4% | 30.4% | 30.4% |
+| Indian address | 43.3% | 48.2% | 48.2% | **50.5%** |
 
 Indian address is the one row above where a competitor is ahead — our gazetteer still has room to
 grow, and we're not hiding that. Full per-entity breakdown (all 17 types), strict-vs-partial

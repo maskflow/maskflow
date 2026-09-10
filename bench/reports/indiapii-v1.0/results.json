@@ -1,6 +1,6 @@
 {
   "corpus": "indiapii-v1.0",
-  "generated_at": "2026-08-29T08:53:03.900303+00:00",
+  "generated_at": "2026-09-10T14:37:02.504325+00:00",
   "num_docs": 2000,
   "canonical_labels": [
     "AADHAAR",
@@ -93,7 +93,7 @@
         "INDIAN_ADDRESS": {
           "precision": 0.0,
           "recall": 0.0,
-          "f1": null,
+          "f1": 0.0,
           "tp": 0,
           "fp": 4454,
           "fn": 1230
@@ -301,10 +301,10 @@
           "fn": 0
         }
       },
-      "latency_ms_per_kb": 70.07318426660807,
-      "median_doc_ms": 20.194311000523157,
-      "p95_doc_ms": 28.205725997395348,
-      "peak_memory_mb": 1.609375,
+      "latency_ms_per_kb": 64.43613372341454,
+      "median_doc_ms": 18.674447026569396,
+      "p95_doc_ms": 25.112897012149915,
+      "peak_memory_mb": 1.60546875,
       "doc_errors": 0
     },
     "presidio_oob": {
@@ -378,7 +378,7 @@
         "INDIAN_ADDRESS": {
           "precision": 0.0,
           "recall": 0.0,
-          "f1": null,
+          "f1": 0.0,
           "tp": 0,
           "fp": 1798,
           "fn": 1230
@@ -586,10 +586,10 @@
           "fn": 119
         }
       },
-      "latency_ms_per_kb": 54.25321360427903,
-      "median_doc_ms": 15.067910004290752,
-      "p95_doc_ms": 24.66000700223958,
-      "peak_memory_mb": 2.07421875,
+      "latency_ms_per_kb": 49.407199838692854,
+      "median_doc_ms": 13.85805700556375,
+      "p95_doc_ms": 21.592679986497387,
+      "peak_memory_mb": 1.03515625,
       "doc_errors": 0
     },
     "presidio_custom": {
@@ -663,7 +663,7 @@
         "INDIAN_ADDRESS": {
           "precision": 0.0,
           "recall": 0.0,
-          "f1": null,
+          "f1": 0.0,
           "tp": 0,
           "fp": 1798,
           "fn": 1230
@@ -871,10 +871,10 @@
           "fn": 119
         }
       },
-      "latency_ms_per_kb": 56.26524839333499,
-      "median_doc_ms": 15.767477001645602,
-      "p95_doc_ms": 24.658006004756317,
-      "peak_memory_mb": 0.55078125,
+      "latency_ms_per_kb": 49.78844487426079,
+      "median_doc_ms": 13.971974985906854,
+      "p95_doc_ms": 21.561853995081037,
+      "peak_memory_mb": 1.015625,
       "doc_errors": 0
     },
     "mask_privacy": {
@@ -914,12 +914,12 @@
           "fn": 286
         },
         "BANK_ACCOUNT_IN": {
-          "precision": 0.3860294117647059,
-          "recall": 0.36777583187390545,
-          "f1": 0.37668161434977576,
-          "tp": 420,
-          "fp": 668,
-          "fn": 722
+          "precision": 0.39347234814143245,
+          "recall": 0.38003502626970226,
+          "f1": 0.38663697104677064,
+          "tp": 434,
+          "fp": 669,
+          "fn": 708
         },
         "DRIVING_LICENCE": {
           "precision": null,
@@ -948,18 +948,18 @@
         "INDIAN_ADDRESS": {
           "precision": 0.0,
           "recall": 0.0,
-          "f1": null,
+          "f1": 0.0,
           "tp": 0,
-          "fp": 2864,
+          "fp": 1665,
           "fn": 1230
         },
         "INDIAN_MOBILE": {
-          "precision": 0.2828381548084441,
-          "recall": 0.8083798882681564,
-          "f1": 0.41905589342600635,
-          "tp": 1447,
-          "fp": 3669,
-          "fn": 343
+          "precision": 0.284294621979735,
+          "recall": 0.8150837988826816,
+          "f1": 0.4215544640277376,
+          "tp": 1459,
+          "fp": 3673,
+          "fn": 331
         },
         "INDIAN_PASSPORT": {
           "precision": null,
@@ -978,12 +978,12 @@
           "fn": 857
         },
         "PERSON_NAME": {
-          "precision": 0.23487712665406427,
-          "recall": 0.496751624187906,
-          "f1": 0.31894753730145997,
-          "tp": 994,
-          "fp": 3238,
-          "fn": 1007
+          "precision": 0.13724121888811353,
+          "recall": 0.29485257371314344,
+          "f1": 0.1873015873015873,
+          "tp": 590,
+          "fp": 3709,
+          "fn": 1411
         },
         "PIN_CODE": {
           "precision": null,
@@ -1052,12 +1052,12 @@
           "fn": 286
         },
         "BANK_ACCOUNT_IN": {
-          "precision": 0.3860294117647059,
-          "recall": 0.36777583187390545,
-          "f1": 0.37668161434977576,
-          "tp": 420,
-          "fp": 668,
-          "fn": 722
+          "precision": 0.39347234814143245,
+          "recall": 0.38003502626970226,
+          "f1": 0.38663697104677064,
+          "tp": 434,
+          "fp": 669,
+          "fn": 708
         },
         "DRIVING_LICENCE": {
           "precision": null,
@@ -1084,20 +1084,20 @@
           "fn": 1142
         },
         "INDIAN_ADDRESS": {
-          "precision": 0.4137569832402235,
-          "recall": 0.9634146341463414,
-          "f1": 0.5788959452857841,
-          "tp": 1185,
-          "fp": 1679,
-          "fn": 45
+          "precision": 0.439039039039039,
+          "recall": 0.5943089430894309,
+          "f1": 0.5050086355785838,
+          "tp": 731,
+          "fp": 934,
+          "fn": 499
         },
         "INDIAN_MOBILE": {
-          "precision": 0.2828381548084441,
-          "recall": 0.8083798882681564,
-          "f1": 0.41905589342600635,
-          "tp": 1447,
-          "fp": 3669,
-          "fn": 343
+          "precision": 0.284294621979735,
+          "recall": 0.8150837988826816,
+          "f1": 0.4215544640277376,
+          "tp": 1459,
+          "fp": 3673,
+          "fn": 331
         },
         "INDIAN_PASSPORT": {
           "precision": null,
@@ -1116,12 +1116,12 @@
           "fn": 857
         },
         "PERSON_NAME": {
-          "precision": 0.2774102079395085,
-          "recall": 0.5867066466766616,
-          "f1": 0.3767046366115835,
-          "tp": 1174,
-          "fp": 3058,
-          "fn": 827
+          "precision": 0.22284252151663178,
+          "recall": 0.47876061969015493,
+          "f1": 0.30412698412698413,
+          "tp": 958,
+          "fp": 3341,
+          "fn": 1043
         },
         "PIN_CODE": {
           "precision": null,
@@ -1156,11 +1156,11 @@
           "fn": 119
         }
       },
-      "latency_ms_per_kb": 80.84078324918269,
-      "median_doc_ms": 21.70959900104208,
-      "p95_doc_ms": 39.393473001837265,
-      "peak_memory_mb": 0.69921875,
-      "doc_errors": 20
+      "latency_ms_per_kb": 52.58775868863945,
+      "median_doc_ms": 15.024039981653914,
+      "p95_doc_ms": 21.426571998745203,
+      "peak_memory_mb": 8.73828125,
+      "doc_errors": 0
     },
     "naive_regex": {
       "available": true,
@@ -1441,10 +1441,10 @@
           "fn": 119
         }
       },
-      "latency_ms_per_kb": 0.1381329785638111,
-      "median_doc_ms": 0.03559899778338149,
-      "p95_doc_ms": 0.07312399975489825,
-      "peak_memory_mb": 0.0,
+      "latency_ms_per_kb": 0.09714038874819277,
+      "median_doc_ms": 0.026555004296824336,
+      "p95_doc_ms": 0.0443569733761251,
+      "peak_memory_mb": 0.28515625,
       "doc_errors": 0
     },
     "llm_detector": {
