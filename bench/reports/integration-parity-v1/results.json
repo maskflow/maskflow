@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-09-10T13:36:57.118602+00:00",
+  "corpus": "indiapii-v1.0",
+  "num_docs": 300,
+  "adapters": {
+    "litellm": {
+      "docs": 300,
+      "detection_parity": 1.0,
+      "roundtrip_exact": 1.0,
+      "streaming_exact": 1.0,
+      "extra_types": {},
+      "missed_types": {},
+      "roundtrip_fail_docs": [],
+      "streaming_fail_docs": []
+    },
+    "langchain": {
+      "docs": 300,
+      "detection_parity": 1.0,
+      "roundtrip_exact": 1.0,
+      "streaming_exact": 1.0,
+      "extra_types": {},
+      "missed_types": {},
+      "roundtrip_fail_docs": [],
+      "streaming_fail_docs": []
+    },
+    "llamaindex": {
+      "docs": 300,
+      "detection_parity": 1.0,
+      "roundtrip_exact": 1.0,
+      "streaming_exact": 1.0,
+      "extra_types": {},
+      "missed_types": {},
+      "roundtrip_fail_docs": [],
+      "streaming_fail_docs": []
+    },
+    "mcp": {
+      "docs": 300,
+      "detection_parity": 1.0,
+      "roundtrip_exact": 1.0,
+      "streaming_exact": 1.0,
+      "extra_types": {},
+      "missed_types": {},
+      "roundtrip_fail_docs": [],
+      "streaming_fail_docs": []
+    }
+  },
+  "skipped": {}
+}

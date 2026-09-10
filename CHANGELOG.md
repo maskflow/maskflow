@@ -12,6 +12,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`bench/integrations` — integration-parity gate** (#92 item D). The
+  LiteLLM / LangChain / LlamaIndex / MCP wrappers each adapt the masking
+  engine to a framework's data shapes; each had unit tests but nothing
+  checked, over a realistic PII-dense corpus, that routing text through the
+  wrapper masks *exactly* what the core engine does and round-trips
+  byte-exact.
+  - Routes 300 `indiapii-v1.0` documents through every wrapper's
+    framework-free masking layer (LangChain uses the real
+    `MaskflowReversibleAnonymizer`) and asserts, per document: the masked
+    `(entity_type, value)` set == `maskflow.mask()`'s, the wrapper's own
+    unmask restores the document byte-exact, and the masked text fed back
+    through the shared `StreamingUnmasker` at 1-byte and random chunk
+    splits reassembles exactly. **100% across all four.**
+  - These are equality assertions against `core`, not drifting metrics — a
+    divergence is a wrapper bug. New `integration-parity` CI job (needs all
+    four integration groups; the `benchmark` job deliberately stays lean).
+    `make integration-parity`; report
+    `bench/reports/integration-parity-v1/results.md`; README "Benchmark"
+    section.
+
 - **`bench/scanbench` — `scan-log-v1.0` benchmark for `maskflow scan`** (#92
   item C). Detection is benchmarked on prose (`indiapii-v1.0`,
   `intl-pii-v1.0`); `scan` runs it over log-shaped input — nginx access

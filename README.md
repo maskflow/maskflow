@@ -426,6 +426,16 @@ reported as `IP_ADDRESS` — a known gap (no private-IP suppression). A plumbing
 real scan pipeline surfaces exactly what `detect()` finds. Full report:
 [`bench/reports/scan-log-v1.0/results.md`](bench/reports/scan-log-v1.0/results.md).
 
+### Framework integrations match the core engine
+
+The LiteLLM / LangChain / LlamaIndex / MCP wrappers each adapt the masking engine to a
+framework's data shapes. [`bench/integrations`](bench/integrations) routes 300 `indiapii-v1.0`
+documents through every wrapper's masking layer and asserts the masked `(entity_type, value)` set,
+the byte-exact round-trip, and streamed-response reassembly (chunks split at every byte) are
+**identical to `maskflow.mask()` / `maskflow.unmask()`** — 100% across all four
+([`bench/reports/integration-parity-v1/results.md`](bench/reports/integration-parity-v1/results.md)).
+A divergence would be a wrapper bug; it's a CI gate.
+
 ## Roadmap
 
 Openly not done yet, so you know what you're signing up for:
