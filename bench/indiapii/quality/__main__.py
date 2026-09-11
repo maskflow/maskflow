@@ -15,7 +15,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import load_corpus
+from maskflow_bench.corpus import load_corpus
 
 from .cache import DiskCache
 from .judge import Judge

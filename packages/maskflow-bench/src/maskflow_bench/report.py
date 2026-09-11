@@ -1,6 +1,6 @@
 """Writes results.json (full structured data) and results.md (generated
 tables) from a run_all() result. Module path is
-`bench.indiapii.harness.report`, distinct from the unrelated, pre-existing
+`maskflow_bench.report`, distinct from the unrelated, pre-existing
 `bench.indiapii.report` (the pack-india L1-L3 dev accuracy report) -- see
 harness/__init__.py's docstring.
 """
@@ -8,7 +8,11 @@ harness/__init__.py's docstring.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+
+# datetime.UTC is 3.11+ only; this package's floor is requires-python
+# >=3.10 (it's now reachable from maskflow-cli, unlike when this lived in
+# the dev-only bench/indiapii/harness/ and never ran on 3.10 in CI).
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .matching import PRFResult
@@ -47,7 +51,7 @@ def to_json_dict(
         adapters[name] = entry
     return {
         "corpus": corpus_name,
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "num_docs": num_docs,
         "canonical_labels": list(canonical_labels),
         "adapters": adapters,
@@ -115,7 +119,7 @@ def to_markdown(
         "",
         f"{num_docs} documents, {len(canonical_labels)} canonical entity types. "
         'F1 shown per entity per adapter. "0.0%" is a *measured* zero -- the adapter '
-        "made predictions for this type but none matched a gold span. \"—\" means F1 "
+        'made predictions for this type but none matched a gold span. "—" means F1 '
         "is undefined: the adapter made no prediction for this type at all (its "
         "recognizer / label map doesn't cover it), or the corpus has no gold spans "
         "for it. \"skipped\" means the adapter's dependency/API key wasn't available "

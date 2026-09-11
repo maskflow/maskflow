@@ -24,7 +24,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from bench.indiapii.harness.offsets import locate_span
+from maskflow_bench.offsets import locate_span
 
 os.environ.setdefault("MASK_DEV_MODE", "true")
 

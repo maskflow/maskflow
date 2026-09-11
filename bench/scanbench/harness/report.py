@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.indiapii.harness.report import to_json_dict, write_json
-from bench.indiapii.harness.report import to_markdown as _shared_markdown
-from bench.indiapii.harness.runner import AdapterRunResult
+from maskflow_bench.report import to_json_dict, write_json
+from maskflow_bench.report import to_markdown as _shared_markdown
+from maskflow_bench.runner import AdapterRunResult
 
 
 def _fp_per_1000(r: AdapterRunResult, num_docs: int) -> tuple[float, int, float | None]:

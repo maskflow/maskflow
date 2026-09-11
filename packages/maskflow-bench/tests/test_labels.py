@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from bench.indiapii.harness.corpus import Document
-from bench.indiapii.harness.labels import canonical_labels, identity_map
+from maskflow_bench.corpus import Document
+from maskflow_bench.labels import canonical_labels, identity_map
 
 
 def test_canonical_labels_derived_from_gold_only() -> None:

@@ -11,7 +11,7 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import Document
+from maskflow_bench.corpus import Document
 
 from .adapters import MaskflowDeepAdapter
 from .labels import canonical_labels

@@ -25,3 +25,7 @@ class Adapter(Protocol):
         label vocabulary -- translated to the corpus's canonical labels by
         labels.py, not here."""
         ...
+
+
+# adapter instance, label_map -- the pair runner.py needs for each entry.
+AdapterEntry = tuple[Adapter, dict[str, str]]

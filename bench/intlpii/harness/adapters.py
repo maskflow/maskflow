@@ -10,9 +10,10 @@ that is what available() (checked lazily by runner.py) is for.
 
 from __future__ import annotations
 
-from bench.indiapii.harness.adapters.base import Adapter
+from maskflow_bench.adapters import Adapter
+from maskflow_bench.adapters.maskflow_adapter import MaskflowAdapter
+
 from bench.indiapii.harness.adapters.llm_adapter import LlmAdapter
-from bench.indiapii.harness.adapters.maskflow_adapter import MaskflowAdapter
 from bench.indiapii.harness.adapters.presidio_adapter import PresidioAdapter
 
 from .labels import (

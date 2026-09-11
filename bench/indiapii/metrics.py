@@ -49,7 +49,7 @@ class PRFResult:
     def f1(self) -> float | None:
         # None only when one side has no denominator; a measured 0 (fired but
         # matched nothing / had gold but found nothing) is 0.0, not None --
-        # mirrors bench.indiapii.harness.matching.PRFResult.f1.
+        # mirrors maskflow_bench.matching.PRFResult.f1.
         p, r = self.precision, self.recall
         if p is None or r is None:
             return None

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import Document
+from maskflow_bench.corpus import Document
+
 from bench.indiapii.quality.tasks import (
     EXTRACT_FIELD_SCHEMAS,
     TASK_TYPE_COUNTS,

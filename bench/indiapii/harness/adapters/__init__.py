@@ -7,25 +7,29 @@ third-party packages each adapter wraps.
 
 from __future__ import annotations
 
-from ..labels import (
+from maskflow_bench.adapters import Adapter, AdapterEntry
+from maskflow_bench.adapters.maskflow_adapter import MaskflowAdapter
+from maskflow_bench.labels import (
     MASK_PRIVACY_LABEL_MAP,
     NAIVE_REGEX_LABEL_MAP,
     PRESIDIO_CUSTOM_LABEL_MAP,
     PRESIDIO_LABEL_MAP,
     identity_map,
 )
-from .base import Adapter
+
 from .llm_adapter import LlmAdapter
 from .mask_privacy_adapter import MaskPrivacyAdapter
-from .maskflow_adapter import MaskflowAdapter
 from .naive_regex_adapter import NaiveRegexAdapter
 from .presidio_adapter import PresidioAdapter
 from .presidio_custom_adapter import PresidioCustomAdapter
 
 # adapter instance, label_map -- the pair runner.py needs for each entry.
 # maskflow's label_map is identity_map(canonical_labels), built once
-# canonical_labels is known (see build_adapters()).
-AdapterEntry = tuple[Adapter, dict[str, str]]
+# canonical_labels is known (see build_adapters()). Adapter/AdapterEntry
+# and MaskflowAdapter itself now live in maskflow-bench (issue #36) --
+# they're re-exported here unchanged so nothing downstream of this module
+# (__main__.py, the other two harnesses, test_ci_regression.py) had to
+# change its own imports.
 
 
 def build_adapters(canonical_labels: tuple[str, ...]) -> list[AdapterEntry]:

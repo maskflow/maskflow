@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import load_corpus
-from bench.indiapii.harness.matching import MatchMode, evaluate
+from maskflow_bench.corpus import load_corpus
+from maskflow_bench.matching import MatchMode, evaluate
+
 from bench.scanbench.harness.adapters import build_adapters
 from bench.scanbench.harness.labels import (
     LABEL_DESCRIPTIONS,
@@ -91,8 +92,8 @@ def test_patterns_pass_is_much_faster_and_no_worse_on_validated_types() -> None:
 
 
 def test_fp_per_1000_matches_hand_count() -> None:
-    from bench.indiapii.harness.matching import PRFResult
-    from bench.indiapii.harness.runner import AdapterRunResult
+    from maskflow_bench.matching import PRFResult
+    from maskflow_bench.runner import AdapterRunResult
 
     r = AdapterRunResult(name="x", available=True)
     r.partial = {"EMAIL": PRFResult(entity_type="EMAIL", tp=10, fp=5, fn=0)}

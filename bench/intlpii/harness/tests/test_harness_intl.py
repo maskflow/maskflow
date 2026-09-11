@@ -6,8 +6,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import load_corpus
-from bench.indiapii.harness.matching import MatchMode, evaluate
+from maskflow_bench.corpus import load_corpus
+from maskflow_bench.matching import MatchMode, evaluate
+
 from bench.intlpii.harness.adapters import build_adapters
 from bench.intlpii.harness.labels import (
     LABEL_DESCRIPTIONS,
