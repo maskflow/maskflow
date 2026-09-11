@@ -1,0 +1,18 @@
+{
+  "RBI": {
+    "bank_codes": ["SBI", "HDFC", "ICIC", "PNB", "BOB"],
+    "ifsc_pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
+  },
+  "NPCI": {
+    "upi_handles": ["@okaxis", "@okhdfcbank", "@okicici", "@oksbi", "@paytm", "@ybl", "@ibl"]
+  },
+  "gazetteers": {
+    "states": ["Maharashtra", "Delhi", "Karnataka", "Tamil Nadu", "Gujarat"],
+    "cities": ["Mumbai", "New Delhi", "Bengaluru", "Chennai", "Ahmedabad"]
+  },
+  "context_terms": {
+    "aadhaar": ["UIDAI", "Aadhaar number", "UID"],
+    "pan": ["Permanent Account Number", "PAN card", "Income Tax Department"],
+    "driving_license": ["DL", "RTO", "Driving License"]
+  }
+}
