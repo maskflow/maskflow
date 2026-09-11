@@ -9,7 +9,7 @@ nothing extra to trust.
 
 Task specs reference their source document by id rather than embedding its
 text, so quality-v1.0.jsonl stays a thin index over indiapii-v1.0.jsonl
-(loaded once per run via bench.indiapii.harness.corpus.load_corpus) instead
+(loaded once per run via maskflow_bench.corpus.load_corpus) instead
 of duplicating a second copy of the corpus.
 """
 
@@ -20,7 +20,7 @@ import random
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import Document
+from maskflow_bench.corpus import Document
 
 VERSION = "indiapii-quality-v1.0"
 

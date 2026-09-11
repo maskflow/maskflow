@@ -14,6 +14,12 @@ dependencies = [
     "maskflow-litellm[redis]",
     "maskflow-langchain[yaml]",
     "maskflow-evidence[webhook]",
+    # maskflow-cli treats this as its own optional [bench] extra (so a
+    # bare `pip install maskflow-cli` doesn't require it) -- listed here
+    # directly, same as maskflow-evidence above, so the shared dev/CI venv
+    # has it installed for maskflow-bench's own test suite and
+    # test_cli_bench.py regardless of that extra gating.
+    "maskflow-bench",
 ]
 
 [tool.uv.sources]
@@ -28,6 +34,7 @@ maskflow-langchain = { workspace = true }
 maskflow-llamaindex = { workspace = true }
 maskflow-mcp = { workspace = true }
 maskflow-evidence = { workspace = true }
+maskflow-bench = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]

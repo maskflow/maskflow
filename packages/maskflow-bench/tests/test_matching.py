@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from bench.indiapii.harness.corpus import Document
-from bench.indiapii.harness.matching import MatchMode, evaluate
+from maskflow_bench.corpus import Document
+from maskflow_bench.matching import MatchMode, evaluate
 
 
 def _doc(gold: tuple, decoys: tuple = ()) -> Document:

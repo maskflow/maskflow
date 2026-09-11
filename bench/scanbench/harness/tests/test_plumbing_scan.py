@@ -8,8 +8,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from maskflow_bench.corpus import load_corpus
 
-from bench.indiapii.harness.corpus import load_corpus
 from bench.scanbench.harness.plumbing import run_plumbing_check
 
 _CORPUS = Path(__file__).resolve().parents[2] / "data" / "scan-log-v1.0.jsonl"

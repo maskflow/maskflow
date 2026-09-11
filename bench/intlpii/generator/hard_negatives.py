@@ -2,7 +2,7 @@
 category. Each returns a string; templates.py records it under a
 shape-descriptive label (never a real registered PIIType), so a detector
 that fires a real label on one of these spans is scored as a false
-positive (see generate.py / bench.indiapii.harness.matching).
+positive (see generate.py / maskflow_bench.matching).
 
 Every generator here is engineered to fail the corresponding real
 validator in maskflow_pack_intl.patterns -- see each function's comment

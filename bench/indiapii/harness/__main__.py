@@ -7,12 +7,13 @@ import json
 import sys
 from pathlib import Path
 
+from maskflow_bench.corpus import load_corpus
+from maskflow_bench.labels import canonical_labels as compute_canonical_labels
+from maskflow_bench.matching import MatchMode, evaluate
+from maskflow_bench.report import write_report
+from maskflow_bench.runner import run_all
+
 from .adapters import build_adapters
-from .corpus import load_corpus
-from .labels import canonical_labels as compute_canonical_labels
-from .matching import MatchMode, evaluate
-from .report import write_report
-from .runner import run_all
 
 _DEFAULT_CORPUS = Path(__file__).resolve().parents[1] / "data" / "indiapii-v1.0.jsonl"
 

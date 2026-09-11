@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bench.indiapii.harness.corpus import Document
+from maskflow_bench.corpus import Document
 
 from . import prompts
 from .judge import Judge

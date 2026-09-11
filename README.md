@@ -392,6 +392,13 @@ are mapped generously to `ADDRESS` / `DATE_OF_BIRTH` so those engines score non-
 strict + partial, latency/memory): [`bench/reports/intl-pii-v1.0/results.md`](bench/reports/intl-pii-v1.0/results.md).
 Reproduce with `uv sync --group bench && uv run python -m bench.intlpii.harness run`.
 
+### Is it accurate on *your* documents?
+
+The numbers above are measured on a synthetic corpus, necessarily — but it's still someone else's
+documents. `maskflow bench --my-data <path>` runs the same scoring against your own labelled JSONL
+file and prints per-entity precision/recall/F1, so "is it accurate on my documents?" is a command,
+not an argument. See [`docs/bench.md`](docs/bench.md) for the file format.
+
 ### Does masking hurt the LLM's answer?
 
 [`bench/indiapii/quality`](bench/indiapii/quality) is a 200-task, LLM-judged benchmark that runs each
@@ -455,7 +462,8 @@ Openly not done yet, so you know what you're signing up for:
   [`docs/langchain.md`](docs/langchain.md),
   [`docs/llamaindex.md`](docs/llamaindex.md),
   [`docs/mcp.md`](docs/mcp.md),
-  [`docs/data-refresh.md`](docs/data-refresh.md)
+  [`docs/data-refresh.md`](docs/data-refresh.md),
+  [`docs/bench.md`](docs/bench.md)
 - [Changelog](CHANGELOG.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)

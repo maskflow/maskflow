@@ -13,7 +13,8 @@ Presidio (`presidio_oob`) and a naive log regex are the baselines.
 
 from __future__ import annotations
 
-from bench.indiapii.harness.adapters.base import Adapter
+from maskflow_bench.adapters import Adapter
+
 from bench.indiapii.harness.adapters.presidio_adapter import PresidioAdapter
 
 from .labels import NAIVE_REGEX_LABEL_MAP, PRESIDIO_LABEL_MAP, identity_map

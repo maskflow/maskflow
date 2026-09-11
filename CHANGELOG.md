@@ -12,6 +12,29 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-bench` (new package) / `maskflow bench --my-data`** (#36).
+  "Is it accurate on my documents?" had no answer but an argument; now it's
+  a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
+  against a user's own labelled JSONL file and prints per-entity
+  precision/recall/F1 under strict-span and partial-overlap matching.
+  - New `maskflow-bench` package: the corpus-agnostic scoring core (JSONL
+    loading, label canonicalization, strict/partial-overlap
+    precision/recall/F1, JSON/Markdown report writers) extracted from
+    `bench/indiapii/harness/`, which wasn't a workspace member and so
+    wasn't shipped to `pip install`-ed users. Depends only on
+    `maskflow-core` — the five competitor adapters (Presidio,
+    mask-privacy, naive-regex, an LLM judge) that made the old location a
+    heavy dev-only dependency stay in `bench/`, now reusing this package's
+    core instead of duplicating it (also fixes `bench/intlpii/harness/`
+    and `bench/scanbench/harness/`, which were already reaching into
+    `bench.indiapii.harness`'s internals for the same code).
+  - `maskflow_bench.loader`: a lenient schema for a user's own file
+    (`text` + `entities[start,end,label]` required; `id`/`domain`/`lang`/
+    `value_class` default sensibly) distinct from the bundled corpora's
+    stricter format — see [`docs/bench.md`](docs/bench.md).
+  - `maskflow bench --my-data PATH [--out DIR] [--limit N]`, registered in
+    `maskflow-cli` alongside `doctor`/`explain`/`scan`.
+
 - **`bench/integrations` — integration-parity gate** (#92 item D). The
   LiteLLM / LangChain / LlamaIndex / MCP wrappers each adapt the masking
   engine to a framework's data shapes; each had unit tests but nothing

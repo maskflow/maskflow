@@ -18,11 +18,11 @@ import json
 from pathlib import Path
 
 import pytest
+from maskflow_bench.corpus import load_corpus
+from maskflow_bench.labels import canonical_labels
+from maskflow_bench.matching import MatchMode, evaluate
 
 from bench.indiapii.harness.adapters import build_adapters
-from bench.indiapii.harness.corpus import load_corpus
-from bench.indiapii.harness.labels import canonical_labels
-from bench.indiapii.harness.matching import MatchMode, evaluate
 
 _CORPUS = Path(__file__).resolve().parents[2] / "data" / "indiapii-v1.0.jsonl"
 _BASELINES = Path(__file__).resolve().parents[3] / "baselines.json"

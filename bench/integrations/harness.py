@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from bench.indiapii.harness.corpus import load_corpus
+from maskflow_bench.corpus import load_corpus
 
 from .adapters import ALL_ADAPTERS, CoreAdapter
 from .scoring import ParityTally, compare

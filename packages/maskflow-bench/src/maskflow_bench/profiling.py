@@ -7,16 +7,29 @@ monotonically-nondecreasing high-water mark, so peak_memory_mb here is an
 *attributable delta* across one adapter's calls, not a hard ceiling that
 adapter alone ever touched. Good enough for a first cut / relative
 comparison, not a substitute for real per-process isolation.
+
+A second limitation, specifically because `maskflow bench --my-data`
+(packages/maskflow-cli) makes this module reachable on Windows, unlike the
+dev-only multi-adapter harness that only ever ran on Linux/macOS CI:
+`resource` is POSIX-only. On a platform without it, peak_memory_mb is
+always reported as 0.0 rather than crashing -- timing (latency_ms_per_kb,
+median/p95 doc ms) is unaffected either way.
 """
 
 from __future__ import annotations
 
-import resource
 import sys
 from dataclasses import dataclass, field
 
+try:
+    import resource
+except ImportError:  # Windows
+    resource = None  # type: ignore[assignment]
+
 
 def _current_maxrss_mb() -> float:
+    if resource is None:
+        return 0.0
     raw = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     # macOS reports ru_maxrss in bytes; Linux reports it in KB.
     return raw / (1024 * 1024) if sys.platform == "darwin" else raw / 1024

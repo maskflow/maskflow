@@ -71,12 +71,24 @@ s3 = [
 postgres = [
     "psycopg[binary]>=3.1",
 ]
+# `maskflow bench --my-data` (issue #36): the corpus-agnostic scoring core
+# (JSONL loading, label canonicalization, strict/partial-overlap matching,
+# report writers). Same policy as [evidence] above -- opt-in so a bare CLI
+# install (and the standalone PyInstaller binary) doesn't require it;
+# bench_cmd.py imports it lazily and every other command runs without it.
+# maskflow-bench itself depends only on maskflow-core, not on the heavy
+# competitor-comparison adapters (presidio/mask-privacy/anthropic) -- those
+# stay dev-only in bench/, never installed here either way.
+bench = [
+    "maskflow-bench>=0.1.0,<0.2",
+]
 
 [tool.uv.sources]
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
 maskflow-pack-india = { workspace = true }
 maskflow-evidence = { workspace = true }
+maskflow-bench = { workspace = true }
 
 [tool.uv]
 package = true

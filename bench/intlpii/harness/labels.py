@@ -3,15 +3,15 @@ each adapter's raw-label -> canonical-label map.
 
 The taxonomy is never invented here -- it is whatever `value_class:
 "positive"` labels appear in the loaded corpus (see
-bench.indiapii.harness.labels.canonical_labels, reused directly).
+maskflow_bench.labels.canonical_labels, reused directly).
 
 Every map below is intentionally partial: a raw label an adapter emits
 with no entry here is dropped before scoring, never counted as a false
 positive against an unrelated canonical type (see
-bench.indiapii.harness.matching).
+maskflow_bench.matching).
 
 Two mappings are deliberately *generous* and cost the mapped adapter some
-precision on this corpus, exactly as bench.indiapii.harness.labels already
+precision on this corpus, exactly as maskflow_bench.labels already
 does for `PHONE_NUMBER -> INDIAN_MOBILE`:
 
 - `DATE_TIME -> DATE_OF_BIRTH`: Presidio/mask-privacy tag every date, not
@@ -30,7 +30,7 @@ from collections.abc import Iterable
 
 # Re-exported so callers can `from bench.intlpii.harness.labels import
 # canonical_labels` without caring that the implementation is shared.
-from bench.indiapii.harness.labels import canonical_labels, identity_map
+from maskflow_bench.labels import canonical_labels, identity_map
 
 __all__ = [
     "LABEL_DESCRIPTIONS",

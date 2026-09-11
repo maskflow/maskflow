@@ -9,7 +9,7 @@ false positive against an unrelated type.
 
 from __future__ import annotations
 
-from bench.indiapii.harness.labels import canonical_labels, identity_map
+from maskflow_bench.labels import canonical_labels, identity_map
 
 __all__ = [
     "LABEL_DESCRIPTIONS",
