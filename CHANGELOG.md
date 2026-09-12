@@ -531,8 +531,16 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   parity) was dropped.
 
 - Dependency bounds widened for the released `maskflow-sdk` `0.9.0` (no code
-  change, not yet published): `maskflow-litellm` / `maskflow-langchain` /
-  `maskflow-llamaindex` / `maskflow-mcp` now allow `maskflow-sdk <0.10`.
+  change): `maskflow-litellm` / `maskflow-langchain` / `maskflow-llamaindex`
+  now allow `maskflow-sdk <0.10`. Published as patch bumps -- `0.1.0` ->
+  `0.1.1` for all three -- since the fix sat in `pyproject.toml` unreleased
+  for days (found by auditing every package's post-tag commits, not by
+  design): a bare `pip install maskflow-litellm` (or `-langchain` /
+  `-llamaindex`) was pinning `maskflow-sdk==0.8.0` despite `0.9.1` being
+  current, and combining any of the three with `maskflow-gateway` `0.2.0`
+  (`maskflow-sdk>=0.9.0,<0.10`) in one environment was
+  `ResolutionImpossible`. `maskflow-mcp` `0.1.1` -> `0.1.2` for the same fix
+  (it independently picked up the same stale `<0.9` bound).
 
 - `maskflow-sdk` `0.2.0` -> `0.3.0`: now depends on `maskflow-pack-india`
   (`>=0.1.0,<0.2`) in addition to `maskflow-pack-intl`, registered the same

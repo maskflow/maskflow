@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-litellm"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow guardrail for LiteLLM: mask PII (Indian IDs included) before a request reaches the provider, restore it in the response -- streaming and tool calls included."
 readme = "README.md"
 requires-python = ">=3.10"

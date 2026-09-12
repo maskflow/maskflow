@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-llamaindex"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow for LlamaIndex: a PII node postprocessor (drop-in for PIINodePostprocessor), an ingestion transform that keeps PII out of the vector store, and a reversible query engine wrapper. Indian identifiers included."
 readme = "README.md"
 requires-python = ">=3.10"
