@@ -12,7 +12,7 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-bench` (new package) / `maskflow bench --my-data`** (#36).
+- **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
   against a user's own labelled JSONL file and prints per-entity
