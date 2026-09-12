@@ -3371,7 +3371,7 @@ provides-extras = ["redis", "dev", "loadtest"]
 
 [[package]]
 name = "maskflow-langchain"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/maskflow-langchain" }
 dependencies = [
     { name = "langchain-core" },
@@ -3403,7 +3403,7 @@ provides-extras = ["yaml", "dev"]
 
 [[package]]
 name = "maskflow-litellm"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/maskflow-litellm" }
 dependencies = [
     { name = "maskflow-sdk" },
@@ -3437,7 +3437,7 @@ provides-extras = ["redis", "dev"]
 
 [[package]]
 name = "maskflow-llamaindex"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/maskflow-llamaindex" }
 dependencies = [
     { name = "llama-index-core" },
@@ -3463,7 +3463,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-mcp"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "packages/maskflow-mcp" }
 dependencies = [
     { name = "fastmcp" },

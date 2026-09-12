@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-langchain"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow for LangChain: a reversible PII anonymizer/deanonymizer pair (drop-in for langchain-experimental's Presidio anonymizer) plus a leak-guard callback. Indian identifiers included."
 readme = "README.md"
 requires-python = ">=3.10"
