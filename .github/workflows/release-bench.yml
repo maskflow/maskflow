@@ -1,0 +1,28 @@
+name: Release Bench
+
+on:
+  push:
+    tags:
+      - "bench-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      # maskflow-bench's runtime code depends only on maskflow-core (no
+      # NLP); its dev-only maskflow-pack-india dependency is deterministic
+      # pattern/checksum recognizers, not spaCy NER, so unlike the other
+      # release workflows this one needs no en_core_web_sm download.
+      - run: uv run pytest packages/maskflow-bench/tests -q
+      - run: uv build --package maskflow-bench
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true
