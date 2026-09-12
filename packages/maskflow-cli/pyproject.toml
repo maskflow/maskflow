@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.7.1"
+version = "0.8.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
