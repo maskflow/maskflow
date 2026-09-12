@@ -33,7 +33,11 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
     `value_class` default sensibly) distinct from the bundled corpora's
     stricter format — see [`docs/bench.md`](docs/bench.md).
   - `maskflow bench --my-data PATH [--out DIR] [--limit N]`, registered in
-    `maskflow-cli` alongside `doctor`/`explain`/`scan`.
+    `maskflow-cli` alongside `doctor`/`explain`/`scan`. **`maskflow-cli`
+    `0.7.1` -> `0.8.0`**: new optional `[bench]` extra
+    (`maskflow-bench>=0.1.0,<0.2`), lazy-imported by `bench_cmd.py` so a
+    bare `pip install maskflow-cli` (and the standalone binary) is
+    unaffected.
 
 - **`bench/integrations` — integration-parity gate** (#92 item D). The
   LiteLLM / LangChain / LlamaIndex / MCP wrappers each adapt the masking
