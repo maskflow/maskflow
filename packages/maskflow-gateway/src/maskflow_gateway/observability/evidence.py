@@ -64,6 +64,7 @@ def _resolve_config() -> EvidenceConfig:
             "syslog_port",
             "service",
             "environment",
+            "api_key",
         )
     }
     return EvidenceConfig(**merged)

@@ -1,9 +1,11 @@
-"""Emitters: one interface, several self-hosted backends, off by default.
+"""Emitters: one interface, several backends, off by default.
 
-Every backend is a :class:`Emitter`. Nothing here phones home -- ``stdout``,
-``file`` and ``syslog`` are stdlib; ``webhook`` POSTs to a URL you configure;
-``otlp`` ships to an OpenTelemetry collector you run. The default everywhere
-is :class:`NullEmitter`.
+Every backend is a :class:`Emitter`. ``stdout``, ``file`` and ``syslog`` are
+stdlib and self-hosted; ``webhook`` POSTs to a URL you configure; ``otlp``
+ships to an OpenTelemetry collector you run -- none of those four phone
+home. ``hosted`` is the one exception: it batches events to MaskFlow's paid
+collector (Evidence Cloud), and only when an explicit ``api_key`` opts in --
+see ``emitters/hosted.py``. The default everywhere is :class:`NullEmitter`.
 
 An emit failure is never fatal: :class:`SafeEmitter` wraps every real
 backend so a broken sink drops the event (and bumps a counter) rather than
@@ -91,6 +93,12 @@ def build_emitter(config: EvidenceConfig) -> Emitter:
         from .otlp import OTLPEmitter
 
         return SafeEmitter(OTLPEmitter(config.url))
+    if sink == "hosted":
+        from .hosted import DEFAULT_URL, HostedEmitter
+
+        return SafeEmitter(
+            HostedEmitter(config.api_key, url=config.url or DEFAULT_URL, timeout=config.timeout)
+        )
 
     raise ValueError(f"unknown evidence sink {sink!r}")
 

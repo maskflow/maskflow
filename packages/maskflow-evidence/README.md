@@ -29,7 +29,7 @@ Nothing is emitted unless you turn it on. In `.maskflowrc`:
 ```toml
 [evidence]
 enabled     = true
-sink        = "file"          # stdout | file | syslog | webhook | otlp
+sink        = "file"          # stdout | file | syslog | webhook | otlp | hosted
 path        = "evidence.log"
 service     = "support-bot"
 environment = "prod"
@@ -47,6 +47,7 @@ the same names.
 | `syslog` | `SysLogHandler` | — |
 | `webhook` | `POST` JSON per event | `maskflow-evidence[webhook]` |
 | `otlp` | OpenTelemetry log records | `maskflow-evidence[otlp]` |
+| `hosted` | batched `POST` to MaskFlow's paid collector, opt-in via `api_key` | `maskflow-evidence[hosted]` |
 
 ## What is deliberately **not** collected
 

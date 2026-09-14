@@ -12,6 +12,25 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (Evidence
+  Cloud Phase 0, #107). Same shape as the existing `webhook` sink — synchronous,
+  tight-timeout, wrapped by `SafeEmitter` — plus client-side batching
+  (`batch_size`, default 20) and bounded retry-with-backoff on a transient
+  (5xx / network) failure before a batch is dropped; a 4xx (bad `api_key`,
+  malformed payload) is never retried. Opt-in via the new `hosted` extra
+  (`maskflow-evidence[hosted]`, `httpx`) and an explicit `api_key` — the
+  sink refuses to construct without one, same as `webhook` requiring a
+  `url`. This is a transport, not a gate: the event schema, the sink's
+  code, and its server-side schema re-validation all ship MIT in this
+  repo; only where the bytes go changes. See `docs/evidence.md`.
+  - `.maskflowrc` `[evidence]` gains `api_key` (`maskflow-core`'s
+    `EvidenceSection`, validated the same way `webhook`'s `url` already
+    is — `hosted` without a non-empty `api_key` is a config error).
+  - `maskflow-gateway`'s `MASKFLOW_GATEWAY_EVIDENCE_*` env overlay now
+    passes `API_KEY` through (`maskflow-gateway` dependency bumped to
+    `maskflow-evidence>=0.2.0,<0.3`).
+  - `maskflow-cli[evidence]` dependency bumped the same way.
+
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector

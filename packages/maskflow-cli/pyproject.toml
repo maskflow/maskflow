@@ -57,9 +57,10 @@ dev = [
 # events (issue #41). Opt-in so a bare CLI install (and the standalone
 # PyInstaller binary) doesn't require it; `maskflow_cli.evidence` imports it
 # lazily and every other command runs without it. Base pull is the
-# stdlib-only sinks; [webhook]/[otlp] stay opt-in on maskflow-evidence.
+# stdlib-only sinks; [webhook]/[otlp]/[hosted] stay opt-in on
+# maskflow-evidence. 0.2.0 adds the hosted sink (Evidence Cloud).
 evidence = [
-    "maskflow-evidence>=0.1.0,<0.2",
+    "maskflow-evidence>=0.2.0,<0.3",
 ]
 # `maskflow scan s3://...` -- only pulled by an explicit
 # `pip install 'maskflow-cli[s3]'`, so boto3 (large) never taxes the common

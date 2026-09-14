@@ -143,6 +143,20 @@ def test_evidence_webhook_requires_url() -> None:
     assert any(i.path == ("evidence", "url") and "url" in i.message for i in issues)
 
 
+def test_evidence_hosted_requires_api_key() -> None:
+    _config, issues = validate_root_config({"evidence": {"sink": "hosted"}})
+    assert any(i.path == ("evidence", "api_key") and "api_key" in i.message for i in issues)
+
+
+def test_evidence_hosted_with_api_key_is_valid() -> None:
+    config, issues = validate_root_config(
+        {"evidence": {"sink": "hosted", "api_key": "mfk_live_abc123"}}
+    )
+    assert issues == []
+    assert config.evidence.sink == "hosted"
+    assert config.evidence.api_key == "mfk_live_abc123"
+
+
 def test_evidence_wrong_types_rejected() -> None:
     _config, issues = validate_root_config(
         {"evidence": {"enabled": "yes", "max_bytes": "big", "timeout": -1}}

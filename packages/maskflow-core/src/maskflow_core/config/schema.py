@@ -41,8 +41,9 @@ _EVIDENCE_KEYS = {
     "syslog_port",
     "service",
     "environment",
+    "api_key",
 }
-_EVIDENCE_SINKS = ("stdout", "file", "syslog", "webhook", "otlp")
+_EVIDENCE_SINKS = ("stdout", "file", "syslog", "webhook", "otlp", "hosted")
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,9 @@ class EvidenceSection:
     syslog_port: int = 514
     service: str = "maskflow"
     environment: str = "production"
+    # hosted sink only -- MaskFlow's paid collector. Blank means "not set";
+    # maskflow-evidence's HostedEmitter refuses to construct without one.
+    api_key: str = ""
 
 
 @dataclass(frozen=True)
@@ -395,6 +399,9 @@ def _validate_evidence(data: Any, path: tuple[str, ...], issues: list[RawIssue])
     if (sink in ("webhook", "otlp")) and not _str("url", base.url):
         issues.append(RawIssue(path + ("url",), f"sink '{sink}' requires a non-empty url"))
 
+    if sink == "hosted" and not _str("api_key", base.api_key):
+        issues.append(RawIssue(path + ("api_key",), "sink 'hosted' requires a non-empty api_key"))
+
     return EvidenceSection(
         enabled=enabled,
         sink=sink,
@@ -407,6 +414,7 @@ def _validate_evidence(data: Any, path: tuple[str, ...], issues: list[RawIssue])
         syslog_port=_int("syslog_port", base.syslog_port),
         service=_str("service", base.service),
         environment=_str("environment", base.environment),
+        api_key=_str("api_key", base.api_key),
     )
 
 
