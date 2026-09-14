@@ -12,8 +12,38 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (Evidence
-  Cloud Phase 0, #107). Same shape as the existing `webhook` sink — synchronous,
+- **`maskflow-attest` `0.1.0`** (new package) — reproducible, signed
+  accuracy attestations for a pinned MaskFlow pack version (closes #43,
+  #109). Given a pack version, `maskflow-attest run` runs the full public
+  benchmark harness against it (reuses
+  `maskflow-bench`'s corpus loader, canonical labels, and `MaskflowAdapter`
+  unmodified — no separate/duplicated scoring code) and produces a dated
+  document: per-entity strict/partial precision/recall/F1, methodology,
+  the exact reproduction command, and a validity window. Ed25519
+  sign/verify (`cryptography`, same dependency/floor already used by
+  `maskflow-core`'s `EncryptedFileMappingStore`, `maskflow-gateway`, and
+  `maskflow-litellm`) makes it a citable, independently checkable claim.
+  - `verify()` never trusts a public key embedded in the payload under
+    test — the caller always supplies the trusted key from an
+    out-of-band source, same principle as any signature scheme where the
+    payload can't vouch for its own signer.
+  - `AttestationRegistry`: an append-only, revocable, local JSON-lines
+    record of every attestation issued. Revocation flips a flag; the
+    original record and signature are never deleted.
+  - New standalone console script `maskflow-attest` (`keygen`, `run`,
+    `verify`, `registry add/revoke/show`) — its own binary, no dependency
+    on `maskflow-cli`, meant to run in a clean container (the
+    reproduction environment an attestation's own
+    `reproduction_command` points at).
+  - Minting a real production signing key is a separate, offline,
+    operational step — not part of this change. See
+    [`docs/attestations.md`](docs/attestations.md).
+  - `packages/maskflow-bench` gains a `py.typed` marker (was missing;
+    caused every downstream `mypy --strict` consumer, including this new
+    package, to see it as untyped).
+
+- **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (#107).
+  Same shape as the existing `webhook` sink — synchronous,
   tight-timeout, wrapped by `SafeEmitter` — plus client-side batching
   (`batch_size`, default 20) and bounded retry-with-backoff on a transient
   (5xx / network) failure before a batch is dropped; a 4xx (bad `api_key`,

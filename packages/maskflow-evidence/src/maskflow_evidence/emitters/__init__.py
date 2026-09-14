@@ -3,9 +3,9 @@
 Every backend is a :class:`Emitter`. ``stdout``, ``file`` and ``syslog`` are
 stdlib and self-hosted; ``webhook`` POSTs to a URL you configure; ``otlp``
 ships to an OpenTelemetry collector you run -- none of those four phone
-home. ``hosted`` is the one exception: it batches events to MaskFlow's paid
-collector (Evidence Cloud), and only when an explicit ``api_key`` opts in --
-see ``emitters/hosted.py``. The default everywhere is :class:`NullEmitter`.
+home. ``hosted`` is the one exception: it batches events to a hosted
+collector, and only when an explicit ``api_key`` opts in -- see
+``emitters/hosted.py``. The default everywhere is :class:`NullEmitter`.
 
 An emit failure is never fatal: :class:`SafeEmitter` wraps every real
 backend so a broken sink drops the event (and bumps a counter) rather than

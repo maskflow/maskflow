@@ -230,9 +230,10 @@ path    = "evidence.log"
 ```
 
 That no event field can carry free text is enforced in CI. Full reference in
-[`docs/evidence.md`](docs/evidence.md). Compliance-control mapping and signed accuracy
-attestations (R5 items 2–3) are still being validated with practitioners and are not yet part of
-this layer.
+[`docs/evidence.md`](docs/evidence.md). `maskflow-attest` produces a reproducible, Ed25519-signed
+accuracy attestation for a pinned pack version — see [`docs/attestations.md`](docs/attestations.md).
+Compliance-control mapping to DPDP / ISO 27001 and the recommended retention period are still being
+validated with practitioners and are not yet part of this layer.
 
 ## Configuration
 

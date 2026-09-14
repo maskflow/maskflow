@@ -20,6 +20,10 @@ dependencies = [
     # has it installed for maskflow-bench's own test suite and
     # test_cli_bench.py regardless of that extra gating.
     "maskflow-bench",
+    # Standalone console script (its own `maskflow-attest` binary, not a
+    # maskflow-cli subcommand) -- listed here, same as maskflow-bench above,
+    # purely so a plain `uv sync` installs it into the shared dev venv.
+    "maskflow-attest",
 ]
 
 [tool.uv.sources]
@@ -35,6 +39,7 @@ maskflow-llamaindex = { workspace = true }
 maskflow-mcp = { workspace = true }
 maskflow-evidence = { workspace = true }
 maskflow-bench = { workspace = true }
+maskflow-attest = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]

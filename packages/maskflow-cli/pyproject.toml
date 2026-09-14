@@ -58,7 +58,7 @@ dev = [
 # PyInstaller binary) doesn't require it; `maskflow_cli.evidence` imports it
 # lazily and every other command runs without it. Base pull is the
 # stdlib-only sinks; [webhook]/[otlp]/[hosted] stay opt-in on
-# maskflow-evidence. 0.2.0 adds the hosted sink (Evidence Cloud).
+# maskflow-evidence. 0.2.0 adds the hosted sink.
 evidence = [
     "maskflow-evidence>=0.2.0,<0.3",
 ]

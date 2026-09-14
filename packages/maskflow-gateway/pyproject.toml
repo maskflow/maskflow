@@ -17,7 +17,7 @@ dependencies = [
     # only emits when a discoverable .maskflowrc [evidence] section (or
     # MASKFLOW_GATEWAY_EVIDENCE_* env vars) enables a sink. Base install is
     # stdlib-only sinks; [webhook]/[otlp]/[hosted] stay opt-in on
-    # maskflow-evidence. 0.2.0 adds the hosted sink (Evidence Cloud).
+    # maskflow-evidence. 0.2.0 adds the hosted sink.
     "maskflow-evidence>=0.2.0,<0.3",
     "fastapi>=0.111",
     "uvicorn[standard]>=0.30",

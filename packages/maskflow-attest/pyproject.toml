@@ -1,0 +1,49 @@
+[project]
+name = "maskflow-attest"
+version = "0.1.0"
+description = "Reproducible, signed accuracy attestations for a pinned MaskFlow recognizer pack version -- Ed25519 sign/verify, a document format, and an append-only revocable registry."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # Corpus loading, label canonicalization, MaskFlow's own adapter, and
+    # strict/partial-overlap scoring -- exactly the "full public benchmark
+    # harness" issue #43 requires, reused rather than re-derived. Only
+    # `run.py` imports it; document/signing/registry do not, so `verify`
+    # and registry management work without it installed.
+    "maskflow-bench>=0.1.0,<0.2",
+    # Ed25519 sign/verify. Same dependency and floor already used by
+    # maskflow-core's EncryptedFileMappingStore, maskflow-gateway, and
+    # maskflow-litellm.
+    "cryptography>=42",
+    "typer>=0.12",
+]
+
+[project.scripts]
+maskflow-attest = "maskflow_attest.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    # run_attestation() needs an actual pack installed to detect anything --
+    # MaskflowAdapter imports both bundled packs unconditionally (see
+    # maskflow_bench.adapters.maskflow_adapter), so both are needed here
+    # even though this test suite only exercises india-labelled fixtures.
+    "maskflow-pack-india>=0.5.1,<0.6",
+    "maskflow-pack-intl>=0.3.0,<0.4",
+]
+
+[tool.uv.sources]
+maskflow-bench = { workspace = true }
+maskflow-pack-india = { workspace = true }
+maskflow-pack-intl = { workspace = true }
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maskflow_attest"]
