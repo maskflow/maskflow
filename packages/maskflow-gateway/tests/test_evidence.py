@@ -83,6 +83,17 @@ def test_session_slug_is_opaque_and_bounded() -> None:
     assert 8 <= len(_session_slug("x")) <= 128
 
 
+def test_resolve_config_env_overlay_includes_api_key(monkeypatch) -> None:
+    from maskflow_gateway.observability.evidence import _resolve_config
+
+    monkeypatch.setenv("MASKFLOW_GATEWAY_EVIDENCE_ENABLED", "true")
+    monkeypatch.setenv("MASKFLOW_GATEWAY_EVIDENCE_SINK", "hosted")
+    monkeypatch.setenv("MASKFLOW_GATEWAY_EVIDENCE_API_KEY", "mfk_live_test")
+    cfg = _resolve_config()
+    assert cfg.sink == "hosted"
+    assert cfg.api_key == "mfk_live_test"
+
+
 @respx.mock
 def test_end_to_end_proxy_emits_when_enabled(tmp_path, monkeypatch) -> None:
     """The full proxy flow writes one evidence event per detected type."""

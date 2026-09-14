@@ -1,7 +1,7 @@
 [project]
 name = "maskflow-evidence"
-version = "0.1.1"
-description = "MaskFlow evidence layer: a metadata-only, verifiable record of what was masked -- never the values. Self-hosted emitters (stdout, file, syslog, webhook, OTLP), off by default."
+version = "0.2.0"
+description = "MaskFlow evidence layer: a metadata-only, verifiable record of what was masked -- never the values. Self-hosted emitters (stdout, file, syslog, webhook, OTLP) plus an opt-in hosted sink for MaskFlow's paid collector, off by default."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -18,6 +18,12 @@ dependencies = [
 # of the base install so `import maskflow_evidence` stays dependency-light
 # for the stdout/file/syslog sinks (all stdlib).
 webhook = [
+    "httpx>=0.27",
+]
+# The hosted emitter batches events to MaskFlow's paid collector (Evidence
+# Cloud). Same httpx dependency as webhook, its own extra so a webhook user
+# isn't implied to also want this, and vice versa.
+hosted = [
     "httpx>=0.27",
 ]
 # The OTLP emitter ships events as OpenTelemetry log records. The OTel SDK

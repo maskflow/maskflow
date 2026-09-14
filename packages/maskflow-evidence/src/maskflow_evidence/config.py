@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-_SINKS = ("stdout", "file", "syslog", "webhook", "otlp")
+_SINKS = ("stdout", "file", "syslog", "webhook", "otlp", "hosted")
 
 
 def _as_bool(value: Any, default: bool) -> bool:
@@ -59,6 +59,9 @@ class EvidenceConfig:
     # context stamped onto every event
     service: str = "maskflow"
     environment: str = "production"
+    # hosted sink only -- MaskFlow's paid collector. HostedEmitter refuses
+    # to construct without one.
+    api_key: str = ""
 
     def __post_init__(self) -> None:
         if self.sink not in _SINKS:
@@ -84,6 +87,7 @@ class EvidenceConfig:
             syslog_port=_as_int(data.get("syslog_port"), base.syslog_port),
             service=str(data.get("service", base.service)),
             environment=str(data.get("environment", base.environment)),
+            api_key=str(data.get("api_key", base.api_key)),
         )
 
     @classmethod
@@ -109,6 +113,7 @@ class EvidenceConfig:
             "syslog_port",
             "service",
             "environment",
+            "api_key",
         )
         return cls.from_dict({k: getattr(section, k) for k in keys if hasattr(section, k)})
 

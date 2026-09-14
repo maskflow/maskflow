@@ -3282,7 +3282,7 @@ provides-extras = ["nlp", "store", "yaml"]
 
 [[package]]
 name = "maskflow-evidence"
-version = "0.1.1"
+version = "0.2.0"
 source = { editable = "packages/maskflow-evidence" }
 dependencies = [
     { name = "maskflow-core" },
@@ -3293,6 +3293,9 @@ dev = [
     { name = "httpx" },
     { name = "hypothesis" },
     { name = "pytest" },
+]
+hosted = [
+    { name = "httpx" },
 ]
 otlp = [
     { name = "opentelemetry-exporter-otlp-proto-http" },
@@ -3305,6 +3308,7 @@ webhook = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
+    { name = "httpx", marker = "extra == 'hosted'", specifier = ">=0.27" },
     { name = "httpx", marker = "extra == 'webhook'", specifier = ">=0.27" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.100" },
     { name = "maskflow-core", editable = "packages/maskflow-core" },
@@ -3312,7 +3316,7 @@ requires-dist = [
     { name = "opentelemetry-sdk", marker = "extra == 'otlp'", specifier = ">=1.25" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
-provides-extras = ["webhook", "otlp", "dev"]
+provides-extras = ["webhook", "hosted", "otlp", "dev"]
 
 [[package]]
 name = "maskflow-gateway"
