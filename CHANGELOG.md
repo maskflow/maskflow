@@ -41,6 +41,9 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   - `packages/maskflow-bench` gains a `py.typed` marker (was missing;
     caused every downstream `mypy --strict` consumer, including this new
     package, to see it as untyped).
+  - `packages/maskflow-attest` itself was also missing this marker --
+    same fix, same reasoning, caught downstream while bootstrapping a
+    consumer of this package.
 
 - **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (#107).
   Same shape as the existing `webhook` sink — synchronous,
