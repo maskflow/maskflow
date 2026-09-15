@@ -13,15 +13,17 @@ their environment.
 > [#41](https://github.com/maskflow/maskflow/issues/41)), including the
 > `hosted` sink (issue
 > [#107](https://github.com/maskflow/maskflow/issues/107)), are shipped.
-> The mapping from these events to specific DPDP / ISO 27001 controls, the
-> recommended retention period, and signed accuracy attestations (issues
-> [#42](https://github.com/maskflow/maskflow/issues/42),
-> [#43](https://github.com/maskflow/maskflow/issues/43)) are still being
-> validated with compliance practitioners and are **not** part of this
-> release. See "Compliance mapping" below. The `hosted` sink is a
-> transport only — turning it on sends events to MaskFlow's paid
-> collector, it does not itself constitute a compliance mapping or a
-> retention guarantee.
+> The signed accuracy attestation mechanism (issues
+> [#43](https://github.com/maskflow/maskflow/issues/43) /
+> [#109](https://github.com/maskflow/maskflow/issues/109), see
+> [`docs/attestations.md`](attestations.md)) is also shipped, though no
+> real key has been minted yet. The mapping from these events to specific
+> DPDP / ISO 27001 controls and the recommended retention period are
+> still being validated with compliance practitioners and are **not**
+> part of this release — see "Compliance mapping" below. The `hosted`
+> sink is a transport only — turning it on sends events to whatever
+> collector its `url` points at, it does not itself constitute a
+> compliance mapping or a retention guarantee.
 
 ## The event schema
 
@@ -106,7 +108,7 @@ detected type. The client's `X-Maskflow-Session` header, if any, is
 | `syslog` | `SysLogHandler` (local socket or `host:port`) | — |
 | `webhook` | `POST` one JSON object per event | `maskflow-evidence[webhook]` |
 | `otlp` | OpenTelemetry log records | `maskflow-evidence[otlp]` |
-| `hosted` | batched `POST` to MaskFlow's paid collector | `maskflow-evidence[hosted]` |
+| `hosted` | batched `POST` to a hosted collector | `maskflow-evidence[hosted]` |
 
 An emit failure is logged and the event dropped — evidence never breaks a
 masking call.
@@ -116,13 +118,13 @@ masking call.
 Every sink above is self-hosted; `hosted` is the one exception, and it is
 opt-in twice over: the extra isn't installed unless asked for, and the sink
 does nothing without an explicit `api_key`. It batches events (never one
-HTTP request per event) and POSTs them to MaskFlow's hosted collector —
-Evidence Cloud, the paid retention/export/attestation service built on top
-of this schema. The schema, the sink's code, and the server-side validation
-of that schema are all in this repository, MIT, same as every other sink —
-`hosted` only changes *where the bytes go*, never *what counts as
-evidence*. Retention, signed exports, and accuracy attestations on a
-schedule are what's actually sold; see `cloud.maskflow.in` (coming soon).
+HTTP request per event) and POSTs them to a hosted collector implementing
+this schema's ingest contract. The schema, the sink's code, and the
+server-side validation of that schema are all in this repository, MIT,
+same as every other sink — `hosted` only changes *where the bytes go*,
+never *what counts as evidence*. The attestation mechanism — see
+[`docs/attestations.md`](attestations.md) — is free and self-hostable
+regardless of whether the `hosted` sink is ever used.
 
 ## Grafana
 

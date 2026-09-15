@@ -1,13 +1,13 @@
-"""Batch events and POST them to MaskFlow's hosted collector (Evidence Cloud).
+"""Batch events and POST them to a hosted collector.
 
 Requires the ``hosted`` extra (``pip install maskflow-evidence[hosted]``)
 for ``httpx``. Same shape as :class:`~maskflow_evidence.emitters.webhook.WebhookEmitter`
 -- synchronous, tight-timeout, wrapped by :class:`~maskflow_evidence.emitters.SafeEmitter`
 so a collector outage never blocks the masking path -- with two differences
-the paid multi-tenant collector needs: events are batched client-side
-(never one HTTP request per event) before being sent, and a transient
-failure is retried a bounded number of times with backoff before the batch
-is dropped.
+a multi-tenant collector needs: events are batched client-side (never one
+HTTP request per event) before being sent, and a transient failure is
+retried a bounded number of times with backoff before the batch is
+dropped.
 
 This is a transport, not a gate: sending events here is exactly as optional
 as every other sink, requires an explicit opt-in ``api_key``, and carries
@@ -32,8 +32,8 @@ import time
 from ..schema import EvidenceEvent
 
 # The default collector endpoint. Overridable via [evidence] url for a
-# staging collector or (self-hosters who want the *shape* of this sink
-# without the paid service) a compatible endpoint of their own.
+# staging collector, or a self-hosted/third-party endpoint implementing
+# the same ingest contract.
 DEFAULT_URL = "https://collect.maskflow.in/v1/ingest"
 
 

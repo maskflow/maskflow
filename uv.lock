@@ -11,6 +11,7 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "maskflow-attest",
     "maskflow-bench",
     "maskflow-cli",
     "maskflow-core",
@@ -3181,6 +3182,34 @@ wheels = [
 ]
 
 [[package]]
+name = "maskflow-attest"
+version = "0.1.0"
+source = { editable = "packages/maskflow-attest" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "maskflow-bench" },
+    { name = "typer" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "maskflow-pack-india" },
+    { name = "maskflow-pack-intl" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
+    { name = "maskflow-bench", editable = "packages/maskflow-bench" },
+    { name = "maskflow-pack-india", marker = "extra == 'dev'", editable = "packs/maskflow-pack-india" },
+    { name = "maskflow-pack-intl", marker = "extra == 'dev'", editable = "packs/maskflow-pack-intl" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "typer", specifier = ">=0.12" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "maskflow-bench"
 version = "0.1.0"
 source = { editable = "packages/maskflow-bench" }
@@ -3550,6 +3579,7 @@ name = "maskflow-workspace"
 version = "0.0.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "maskflow-attest" },
     { name = "maskflow-bench" },
     { name = "maskflow-cli" },
     { name = "maskflow-evidence", extra = ["webhook"] },
@@ -3591,6 +3621,7 @@ mcp = [
 
 [package.metadata]
 requires-dist = [
+    { name = "maskflow-attest", editable = "packages/maskflow-attest" },
     { name = "maskflow-bench", editable = "packages/maskflow-bench" },
     { name = "maskflow-cli", editable = "packages/maskflow-cli" },
     { name = "maskflow-evidence", extras = ["webhook"], editable = "packages/maskflow-evidence" },
