@@ -3,8 +3,8 @@
 Every backend is a :class:`Emitter`. ``stdout``, ``file`` and ``syslog`` are
 stdlib and self-hosted; ``webhook`` POSTs to a URL you configure; ``otlp``
 ships to an OpenTelemetry collector you run -- none of those four phone
-home. ``hosted`` is the one exception: it batches events to a hosted
-collector, and only when an explicit ``api_key`` opts in -- see
+home. ``hosted`` batches events to the collector at the ``url`` you configure,
+and only when an explicit ``api_key`` opts in -- see
 ``emitters/hosted.py``. The default everywhere is :class:`NullEmitter`.
 
 An emit failure is never fatal: :class:`SafeEmitter` wraps every real
@@ -94,11 +94,9 @@ def build_emitter(config: EvidenceConfig) -> Emitter:
 
         return SafeEmitter(OTLPEmitter(config.url))
     if sink == "hosted":
-        from .hosted import DEFAULT_URL, HostedEmitter
+        from .hosted import HostedEmitter
 
-        return SafeEmitter(
-            HostedEmitter(config.api_key, url=config.url or DEFAULT_URL, timeout=config.timeout)
-        )
+        return SafeEmitter(HostedEmitter(config.api_key, url=config.url, timeout=config.timeout))
 
     raise ValueError(f"unknown evidence sink {sink!r}")
 

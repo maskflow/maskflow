@@ -90,6 +90,8 @@ def test_unknown_sink_rejected() -> None:
 
 # --- hosted emitter ------------------------------------------------------
 
+_URL = "https://collector.example/v1/ingest"
+
 
 def _stub_post(calls: list[object], *, status_code: int = 200):
     def post(url: str, json: object) -> httpx.Response:
@@ -101,11 +103,16 @@ def _stub_post(calls: list[object], *, status_code: int = 200):
 
 def test_hosted_emitter_requires_api_key() -> None:
     with pytest.raises(ValueError, match="api_key"):
-        HostedEmitter("")
+        HostedEmitter("", url=_URL)
+
+
+def test_hosted_emitter_requires_url() -> None:
+    with pytest.raises(ValueError, match="url"):
+        HostedEmitter("k", url="")
 
 
 def test_hosted_emitter_batches_before_flushing() -> None:
-    emitter = HostedEmitter("k", batch_size=3)
+    emitter = HostedEmitter("k", url=_URL, batch_size=3)
     calls: list[object] = []
     emitter._client.post = _stub_post(calls)  # type: ignore[method-assign]
 
@@ -119,7 +126,7 @@ def test_hosted_emitter_batches_before_flushing() -> None:
 
 
 def test_hosted_emitter_close_flushes_remainder() -> None:
-    emitter = HostedEmitter("k", batch_size=5)
+    emitter = HostedEmitter("k", url=_URL, batch_size=5)
     calls: list[object] = []
     emitter._client.post = _stub_post(calls)  # type: ignore[method-assign]
 
@@ -132,7 +139,7 @@ def test_hosted_emitter_close_flushes_remainder() -> None:
 
 def test_hosted_emitter_retries_on_5xx_then_succeeds(monkeypatch) -> None:
     monkeypatch.setattr(time, "sleep", lambda seconds: None)
-    emitter = HostedEmitter("k", batch_size=1, max_retries=2)
+    emitter = HostedEmitter("k", url=_URL, batch_size=1, max_retries=2)
     codes = iter([500, 200])
     calls: list[object] = []
 
@@ -147,7 +154,7 @@ def test_hosted_emitter_retries_on_5xx_then_succeeds(monkeypatch) -> None:
 
 def test_hosted_emitter_gives_up_after_max_retries(monkeypatch) -> None:
     monkeypatch.setattr(time, "sleep", lambda seconds: None)
-    emitter = HostedEmitter("k", batch_size=1, max_retries=1)
+    emitter = HostedEmitter("k", url=_URL, batch_size=1, max_retries=1)
     calls: list[object] = []
     emitter._client.post = _stub_post(calls, status_code=500)  # type: ignore[method-assign]
 
@@ -159,7 +166,7 @@ def test_hosted_emitter_gives_up_after_max_retries(monkeypatch) -> None:
 
 def test_hosted_emitter_does_not_retry_on_4xx(monkeypatch) -> None:
     monkeypatch.setattr(time, "sleep", lambda seconds: None)
-    emitter = HostedEmitter("k", batch_size=1, max_retries=3)
+    emitter = HostedEmitter("k", url=_URL, batch_size=1, max_retries=3)
     calls: list[object] = []
     emitter._client.post = _stub_post(calls, status_code=401)  # type: ignore[method-assign]
 
@@ -170,7 +177,7 @@ def test_hosted_emitter_does_not_retry_on_4xx(monkeypatch) -> None:
 
 def test_hosted_emitter_wrapped_by_safe_emitter_never_raises(monkeypatch) -> None:
     monkeypatch.setattr(time, "sleep", lambda seconds: None)
-    inner = HostedEmitter("k", batch_size=1, max_retries=0)
+    inner = HostedEmitter("k", url=_URL, batch_size=1, max_retries=0)
     inner._client.post = _stub_post([], status_code=500)  # type: ignore[method-assign]
 
     safe = SafeEmitter(inner)
@@ -179,7 +186,7 @@ def test_hosted_emitter_wrapped_by_safe_emitter_never_raises(monkeypatch) -> Non
 
 
 def test_build_emitter_hosted_sink() -> None:
-    cfg = EvidenceConfig(enabled=True, sink="hosted", api_key="k")
+    cfg = EvidenceConfig(enabled=True, sink="hosted", api_key="k", url=_URL)
     emitter = build_emitter(cfg)
     assert isinstance(emitter, SafeEmitter)
     assert isinstance(emitter._inner, HostedEmitter)
@@ -188,7 +195,7 @@ def test_build_emitter_hosted_sink() -> None:
 def test_hosted_emitter_batched_payload_is_metadata_only() -> None:
     from maskflow_evidence.guard import assert_no_pii
 
-    emitter = HostedEmitter("k", batch_size=1)
+    emitter = HostedEmitter("k", url=_URL, batch_size=1)
     calls: list[object] = []
     emitter._client.post = _stub_post(calls)  # type: ignore[method-assign]
     emitter.emit(_event(entity_type="EMAIL", recognizer="pattern:EMAIL"))

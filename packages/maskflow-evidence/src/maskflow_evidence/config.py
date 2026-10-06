@@ -59,7 +59,7 @@ class EvidenceConfig:
     # context stamped onto every event
     service: str = "maskflow"
     environment: str = "production"
-    # hosted sink only -- MaskFlow's paid collector. HostedEmitter refuses
+    # hosted sink only -- bearer token sent to the collector. HostedEmitter refuses
     # to construct without one.
     api_key: str = ""
 

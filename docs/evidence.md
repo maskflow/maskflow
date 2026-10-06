@@ -76,7 +76,7 @@ max_bytes   = 10_000_000
 backups     = 5
 service     = "support-bot"
 environment = "prod"
-# url       = "https://collector.internal/evidence"   # webhook / otlp
+# url       = "https://collector.internal/evidence"   # webhook / otlp / hosted
 # api_key   = "${MASKFLOW_EVIDENCE_KEY}"               # hosted only
 ```
 

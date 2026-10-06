@@ -47,7 +47,7 @@ the same names.
 | `syslog` | `SysLogHandler` | — |
 | `webhook` | `POST` JSON per event | `maskflow-evidence[webhook]` |
 | `otlp` | OpenTelemetry log records | `maskflow-evidence[otlp]` |
-| `hosted` | batched `POST` to MaskFlow's paid collector, opt-in via `api_key` | `maskflow-evidence[hosted]` |
+| `hosted` | batched `POST` to the collector at `url`, opt-in via `api_key` | `maskflow-evidence[hosted]` |
 
 ## What is deliberately **not** collected
 

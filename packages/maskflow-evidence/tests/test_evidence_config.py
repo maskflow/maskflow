@@ -69,18 +69,25 @@ def test_core_schema_hosted_requires_api_key() -> None:
 
 def test_from_rootconfig_reads_api_key() -> None:
     root, issues = validate_root_config(
-        {"evidence": {"sink": "hosted", "api_key": "mfk_live_abc123", "service": "app"}}
+        {
+            "evidence": {
+                "sink": "hosted",
+                "api_key": "test-key-abc123",
+                "url": "https://collector.example/v1/ingest",
+                "service": "app",
+            }
+        }
     )
     assert not issues
     cfg = EvidenceConfig.from_rootconfig(root)
     assert cfg.sink == "hosted"
-    assert cfg.api_key == "mfk_live_abc123"
+    assert cfg.api_key == "test-key-abc123"
 
 
 def test_from_env_reads_api_key() -> None:
-    env = {"MASKFLOW_GATEWAY_EVIDENCE_API_KEY": "mfk_live_xyz"}
+    env = {"MASKFLOW_GATEWAY_EVIDENCE_API_KEY": "test-key-xyz"}
     cfg = EvidenceConfig.from_env("MASKFLOW_GATEWAY_EVIDENCE_", env)
-    assert cfg.api_key == "mfk_live_xyz"
+    assert cfg.api_key == "test-key-xyz"
 
 
 def test_evidence_section_default_matches_config_default() -> None:

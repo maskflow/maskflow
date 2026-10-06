@@ -94,7 +94,7 @@ class EvidenceSection:
     syslog_port: int = 514
     service: str = "maskflow"
     environment: str = "production"
-    # hosted sink only -- MaskFlow's paid collector. Blank means "not set";
+    # hosted sink only -- bearer token sent to the collector. Blank means "not set";
     # maskflow-evidence's HostedEmitter refuses to construct without one.
     api_key: str = ""
 
@@ -396,7 +396,7 @@ def _validate_evidence(data: Any, path: tuple[str, ...], issues: list[RawIssue])
         else:
             timeout = float(data["timeout"])
 
-    if (sink in ("webhook", "otlp")) and not _str("url", base.url):
+    if (sink in ("webhook", "otlp", "hosted")) and not _str("url", base.url):
         issues.append(RawIssue(path + ("url",), f"sink '{sink}' requires a non-empty url"))
 
     if sink == "hosted" and not _str("api_key", base.api_key):

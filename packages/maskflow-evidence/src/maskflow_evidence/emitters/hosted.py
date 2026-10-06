@@ -4,7 +4,7 @@ Requires the ``hosted`` extra (``pip install maskflow-evidence[hosted]``)
 for ``httpx``. Same shape as :class:`~maskflow_evidence.emitters.webhook.WebhookEmitter`
 -- synchronous, tight-timeout, wrapped by :class:`~maskflow_evidence.emitters.SafeEmitter`
 so a collector outage never blocks the masking path -- with two differences
-a multi-tenant collector needs: events are batched client-side (never one
+a remote collector needs: events are batched client-side (never one
 HTTP request per event) before being sent, and a transient failure is
 retried a bounded number of times with backoff before the batch is
 dropped.
@@ -31,18 +31,13 @@ import time
 
 from ..schema import EvidenceEvent
 
-# The default collector endpoint. Overridable via [evidence] url for a
-# staging collector, or a self-hosted/third-party endpoint implementing
-# the same ingest contract.
-DEFAULT_URL = "https://collect.maskflow.in/v1/ingest"
-
 
 class HostedEmitter:
     def __init__(
         self,
         api_key: str,
         *,
-        url: str = DEFAULT_URL,
+        url: str,
         batch_size: int = 20,
         timeout: float = 2.0,
         max_retries: int = 2,
