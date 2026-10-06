@@ -10,7 +10,7 @@ dependencies = [
     # metadata-only leak assertion reuses core's detect_patterns_only(). No
     # SDK dependency -- the evidence layer never masks, it only records what
     # a mask() call already decided.
-    "maskflow-core>=0.7.0,<0.9",
+    "maskflow-core>=0.8.1,<0.9",
 ]
 
 [project.optional-dependencies]

@@ -12,60 +12,6 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-attest` `0.1.0`** (new package) — reproducible, signed
-  accuracy attestations for a pinned MaskFlow pack version (closes #43,
-  #109). Given a pack version, `maskflow-attest run` runs the full public
-  benchmark harness against it (reuses
-  `maskflow-bench`'s corpus loader, canonical labels, and `MaskflowAdapter`
-  unmodified — no separate/duplicated scoring code) and produces a dated
-  document: per-entity strict/partial precision/recall/F1, methodology,
-  the exact reproduction command, and a validity window. Ed25519
-  sign/verify (`cryptography`, same dependency/floor already used by
-  `maskflow-core`'s `EncryptedFileMappingStore`, `maskflow-gateway`, and
-  `maskflow-litellm`) makes it a citable, independently checkable claim.
-  - `verify()` never trusts a public key embedded in the payload under
-    test — the caller always supplies the trusted key from an
-    out-of-band source, same principle as any signature scheme where the
-    payload can't vouch for its own signer.
-  - `AttestationRegistry`: an append-only, revocable, local JSON-lines
-    record of every attestation issued. Revocation flips a flag; the
-    original record and signature are never deleted.
-  - New standalone console script `maskflow-attest` (`keygen`, `run`,
-    `verify`, `registry add/revoke/show`) — its own binary, no dependency
-    on `maskflow-cli`, meant to run in a clean container (the
-    reproduction environment an attestation's own
-    `reproduction_command` points at).
-  - Minting a real production signing key is a separate, offline,
-    operational step — not part of this change. See
-    [`docs/attestations.md`](docs/attestations.md).
-  - `packages/maskflow-bench` gains a `py.typed` marker (was missing;
-    caused every downstream `mypy --strict` consumer, including this new
-    package, to see it as untyped).
-  - `packages/maskflow-attest` itself was also missing this marker --
-    same fix, same reasoning, caught downstream while bootstrapping a
-    consumer of this package.
-
-- **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (#107).
-  Same shape as the existing `webhook` sink — synchronous,
-  tight-timeout, wrapped by `SafeEmitter` — plus client-side batching
-  (`batch_size`, default 20) and bounded retry-with-backoff on a transient
-  (5xx / network) failure before a batch is dropped; a 4xx (bad `api_key`,
-  malformed payload) is never retried. Opt-in via the new `hosted` extra
-  (`maskflow-evidence[hosted]`, `httpx`) and an explicit `api_key` — the
-  sink refuses to construct without one, and without an explicit `url`
-  (there is no built-in default endpoint), same as `webhook`. This is a
-  transport, not a gate: the event schema, the sink's code, and its
-  server-side schema re-validation all ship MIT in this repo; only where
-  the bytes go changes. See `docs/evidence.md`.
-  - `.maskflowrc` `[evidence]` gains `api_key` (`maskflow-core`'s
-    `EvidenceSection`, validated the same way `webhook`'s `url` already
-    is — `hosted` without a non-empty `api_key` or `url` is a config
-    error).
-  - `maskflow-gateway`'s `MASKFLOW_GATEWAY_EVIDENCE_*` env overlay now
-    passes `API_KEY` through (`maskflow-gateway` dependency bumped to
-    `maskflow-evidence>=0.2.0,<0.3`).
-  - `maskflow-cli[evidence]` dependency bumped the same way.
-
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
@@ -808,6 +754,77 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
+## [core 0.8.1, evidence 0.2.0, attest 0.1.0, gateway 0.2.1, cli 0.8.1] - 2026-10-06
+
+### Added
+
+- **`maskflow-attest` `0.1.0`** (new package) — reproducible, signed
+  accuracy attestations for a pinned MaskFlow pack version (closes #43,
+  #109). Given a pack version, `maskflow-attest run` runs the full public
+  benchmark harness against it (reuses
+  `maskflow-bench`'s corpus loader, canonical labels, and `MaskflowAdapter`
+  unmodified — no separate/duplicated scoring code) and produces a dated
+  document: per-entity strict/partial precision/recall/F1, methodology,
+  the exact reproduction command, and a validity window. Ed25519
+  sign/verify (`cryptography`, same dependency/floor already used by
+  `maskflow-core`'s `EncryptedFileMappingStore`, `maskflow-gateway`, and
+  `maskflow-litellm`) makes it a citable, independently checkable claim.
+  - `verify()` never trusts a public key embedded in the payload under
+    test — the caller always supplies the trusted key from an
+    out-of-band source, same principle as any signature scheme where the
+    payload can't vouch for its own signer.
+  - `AttestationRegistry`: an append-only, revocable, local JSON-lines
+    record of every attestation issued. Revocation flips a flag; the
+    original record and signature are never deleted.
+  - New standalone console script `maskflow-attest` (`keygen`, `run`,
+    `verify`, `registry add/revoke/show`) — its own binary, no dependency
+    on `maskflow-cli`, meant to run in a clean container (the
+    reproduction environment an attestation's own
+    `reproduction_command` points at).
+  - Minting a real production signing key is a separate, offline,
+    operational step — not part of this change. See
+    [`docs/attestations.md`](docs/attestations.md).
+  - `packages/maskflow-bench` gains a `py.typed` marker (was missing;
+    caused every downstream `mypy --strict` consumer, including this new
+    package, to see it as untyped).
+  - `packages/maskflow-attest` itself was also missing this marker --
+    same fix, same reasoning, caught downstream while bootstrapping a
+    consumer of this package.
+
+- **`maskflow-evidence` `0.1.1` -> `0.2.0`**: new `hosted` sink (#107).
+  Same shape as the existing `webhook` sink — synchronous,
+  tight-timeout, wrapped by `SafeEmitter` — plus client-side batching
+  (`batch_size`, default 20) and bounded retry-with-backoff on a transient
+  (5xx / network) failure before a batch is dropped; a 4xx (bad `api_key`,
+  malformed payload) is never retried. Opt-in via the new `hosted` extra
+  (`maskflow-evidence[hosted]`, `httpx`) and an explicit `api_key` — the
+  sink refuses to construct without one, and without an explicit `url`
+  (there is no built-in default endpoint), same as `webhook`. This is a
+  transport, not a gate: the event schema, the sink's code, and its
+  server-side schema re-validation all ship MIT in this repo; only where
+  the bytes go changes. See `docs/evidence.md`.
+  - `.maskflowrc` `[evidence]` gains `api_key` (`maskflow-core`'s
+    `EvidenceSection`, validated the same way `webhook`'s `url` already
+    is — `hosted` without a non-empty `api_key` or `url` is a config
+    error).
+  - `maskflow-gateway`'s `MASKFLOW_GATEWAY_EVIDENCE_*` env overlay now
+    passes `API_KEY` through (`maskflow-gateway` dependency bumped to
+    `maskflow-evidence>=0.2.0,<0.3`).
+  - `maskflow-cli[evidence]` dependency bumped the same way.
+
+### Changed
+
+- **`maskflow-core` `0.8.0` -> `0.8.1`**: `.maskflowrc` `[evidence]`
+  accepts `sink = "hosted"` with its required `api_key` and `url` (see
+  the `maskflow-evidence` `0.2.0` entry above). Published `0.8.0` rejects
+  that sink as an unknown value.
+- **`maskflow-evidence` `0.2.0`** requires `maskflow-core>=0.8.1`, so an
+  install that can use the `hosted` sink always has a config validator
+  that accepts it.
+- **`maskflow-gateway` `0.2.0` -> `0.2.1`** and **`maskflow-cli` `0.8.0` ->
+  `0.8.1`**: pick up `maskflow-evidence` `0.2.0` (published `0.2.0` /
+  `0.8.0` pin `maskflow-evidence<0.2`). No other changes.
+
 ## [core 0.8.0, pack-india 0.5.1, pack-intl 0.3.2, sdk 0.9.1, cli 0.7.1, evidence 0.1.1] - 2026-09-09
 
 ### Added

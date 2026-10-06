@@ -3233,7 +3233,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-cli"
-version = "0.8.0"
+version = "0.8.1"
 source = { editable = "packages/maskflow-cli" }
 dependencies = [
     { name = "httpx" },
@@ -3281,7 +3281,7 @@ provides-extras = ["dev", "evidence", "s3", "postgres", "bench"]
 
 [[package]]
 name = "maskflow-core"
-version = "0.8.0"
+version = "0.8.1"
 source = { editable = "packages/maskflow-core" }
 dependencies = [
     { name = "click" },
@@ -3349,7 +3349,7 @@ provides-extras = ["webhook", "hosted", "otlp", "dev"]
 
 [[package]]
 name = "maskflow-gateway"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "packages/maskflow-gateway" }
 dependencies = [
     { name = "fastapi" },
