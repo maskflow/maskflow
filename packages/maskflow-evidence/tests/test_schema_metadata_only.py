@@ -133,8 +133,12 @@ def test_masking_run_never_leaks_a_value_into_any_event() -> None:
     for fragment in SECRET_FRAGMENTS:
         assert fragment not in blob
     # No digit run long enough to be a card / long id anywhere in the output
-    # (the generated event_id is a dashed uuid precisely so it can't be one).
-    assert not re.search(r"\d{12,}", blob)
+    # except the generated event_id: a uuid4's last group is 12 random hex
+    # chars, all digits ~0.36% of the time, which made this flaky. It's
+    # random, never derived from the input, so it can't carry a value.
+    for event in events:
+        fields = {k: v for k, v in event.to_dict().items() if k != "event_id"}
+        assert not re.search(r"\d{12,}", json.dumps(fields))
     # And the descriptive fields carry nothing the detectors recognise.
     for event in events:
         assert_no_pii(_semantic_text(event))
