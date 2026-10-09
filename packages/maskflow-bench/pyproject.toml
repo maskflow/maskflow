@@ -19,7 +19,10 @@ dev = [
     # test_scorer.py's end-to-end test needs a real recognizer registered
     # to detect something -- this package's own runtime code never imports
     # a pack (see module docstring), only its test suite does.
-    "maskflow-pack-india>=0.6.0,<0.7",
+    # <0.7: admits 0.6.0 (Devanagari names, 5+5 mobiles, spaCy span_filter).
+    # Floor deliberately not raised -- the pack-intl-then-pack-india import
+    # order works with every version, and 0.6.0 only adds on top.
+    "maskflow-pack-india>=0.5.1,<0.7",
 ]
 
 [tool.uv.sources]

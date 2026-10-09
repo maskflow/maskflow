@@ -58,6 +58,8 @@ plus the registration-order bug behind the last one. Versions:
   filter). The import order is swapped, with an `isort: split` guard and a
   comment so the formatter can't undo it. New SDK and CLI tests check the
   registered state.
+  Their `maskflow-pack-india` upper bound is widened to `<0.7`, and the lower
+  bound is unchanged: the import-order fix works with any pack-india version.
 
 IndiaPII-v1.0 (2,000 docs, `maskflow` adapter), before -> after this change.
 Only `PERSON_NAME` moves; every other entity is identical:

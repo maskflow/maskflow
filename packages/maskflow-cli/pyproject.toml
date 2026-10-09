@@ -34,10 +34,10 @@ dependencies = [
     # Recognizer objects the same way pack-intl 0.3.0 did, same import-time
     # side effect. All additive only -- no API change, so the existing
     # lower bound still holds.
-    # 0.6.0: this package now imports pack-india AFTER pack-intl and relies on
-    # pack-india 0.6.0's spaCy span_filter + Devanagari/5+5-mobile fixes --
-    # floor raised to match.
-    "maskflow-pack-india>=0.6.0,<0.7",
+    # <0.7: admits 0.6.0 (Devanagari names, 5+5 mobiles, spaCy span_filter).
+    # Floor deliberately not raised -- the pack-intl-then-pack-india import
+    # order works with every version, and 0.6.0 only adds on top.
+    "maskflow-pack-india>=0.1.0,<0.7",
     "typer>=0.12",
     # CLI-only: pretty-prints `maskflow config show`'s plain TOML dump.
     "tomli-w>=1.0",
