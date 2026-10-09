@@ -51,8 +51,13 @@ _STATE: _WorkerState | None = None
 def init_worker(root_config: RootConfig, deep: bool, run_key: bytes) -> None:
     """ProcessPoolExecutor initializer: register the recognizer packs in
     this child process and compile the config once."""
-    import maskflow_pack_india  # noqa: F401  -- side-effect: register India recognizers
     import maskflow_pack_intl  # noqa: F401  -- side-effect: register intl recognizers
+
+    # isort: split
+    # pack-india AFTER pack-intl: both register PERSON_NAME, and the last
+    # registration wins for its context keywords and spaCy mapping (pack-india
+    # extends pack-intl's; the reverse order silently dropped pack-india's).
+    import maskflow_pack_india  # noqa: F401  -- side-effect: register India recognizers
 
     global _STATE
     compiled = compile_config(root_config)
@@ -119,8 +124,13 @@ def ner_available() -> tuple[bool, str]:
     its own clearer one-line note and shouldn't print both."""
     import warnings
 
-    import maskflow_pack_india  # noqa: F401
     import maskflow_pack_intl  # noqa: F401
+
+    # isort: split
+    # pack-india AFTER pack-intl: both register PERSON_NAME, and the last
+    # registration wins for its context keywords and spaCy mapping (pack-india
+    # extends pack-intl's; the reverse order silently dropped pack-india's).
+    import maskflow_pack_india  # noqa: F401
 
     try:
         from maskflow_core.ner import _get_nlp

@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-sdk"
-version = "0.9.1"
+version = "0.9.2"
 description = "Mask PII before it reaches an LLM, unmask the response. Works with any provider."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,7 +35,10 @@ dependencies = [
     # registration to declarative Recognizer objects the same way pack-intl
     # 0.3.0 did, same import-time side effect. All additive only -- no API
     # change, so the existing lower bound still holds.
-    "maskflow-pack-india>=0.1.0,<0.6",
+    # 0.6.0: this package now imports pack-india AFTER pack-intl and relies on
+    # pack-india 0.6.0's spaCy span_filter + Devanagari/5+5-mobile fixes --
+    # floor raised to match.
+    "maskflow-pack-india>=0.6.0,<0.7",
 ]
 
 [project.optional-dependencies]

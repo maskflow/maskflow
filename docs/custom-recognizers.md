@@ -171,3 +171,24 @@ computes lazily and memoises per instance -- however many `NlpRecognizer`s
 share one `AnalysisContext` in a single run, the underlying parse happens
 exactly once. Parsing text yourself inside `analyze()` (instead of going
 through `ctx.nlp_doc`) means your recognizer runs its own, separate parse.
+
+### Rejecting entity shapes spaCy gets wrong
+
+spaCy's general-purpose models mislabel some domain text: `en_core_web_sm`
+tags ID labels like "GSTIN" or Hinglish phrases like "Mera Aadhaar" as
+`PERSON`. Pass `span_filter` (maskflow-core 0.8.2+) to drop those before any
+scoring. It receives the entity's text, and returning `False` discards the
+entity:
+
+```python
+def not_just_a_label(entity_text: str) -> bool:
+    return entity_text.upper() not in {"GSTIN", "ABHA", "PAN"}
+
+
+NlpRecognizer("PERSON", "PERSON_NAME", base_confidence=0.75, span_filter=not_just_a_label)
+```
+
+`register_ner_recognizer()` takes the same `span_filter` argument. Only one
+mapping is kept per spaCy label, so the last pack to register `PERSON` decides
+which filter applies. That's why `maskflow-sdk` and `maskflow-cli` import
+`maskflow-pack-india` after `maskflow-pack-intl`.

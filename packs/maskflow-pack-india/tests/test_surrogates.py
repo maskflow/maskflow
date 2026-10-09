@@ -82,6 +82,18 @@ class TestGeneratorOutputIsValid:
         assert patterns.validate_indian_mobile(bare) is not None
         assert bare[0] in "6789"
 
+    def test_indian_mobile_keeps_a_five_five_split(self) -> None:
+        rng = random.Random(7)
+        for original, sep_index in (
+            ("98765 43210", 5),
+            ("+91 98765-43210", 9),
+            ("098765 43210", 6),
+        ):
+            out = surrogates.surrogate_indian_mobile(original, rng)
+            assert patterns.INDIAN_MOBILE_RE.fullmatch(out)
+            assert out[sep_index] == original[sep_index]
+            assert out != original
+
     def test_pin_code_shape(self) -> None:
         out = surrogates.surrogate_pin_code("232307", random.Random(8))
         assert patterns.PIN_CODE_RE.fullmatch(out)

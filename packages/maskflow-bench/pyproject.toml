@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-bench"
-version = "0.1.0"
+version = "0.1.1"
 description = "MaskFlow benchmark scoring core: load labelled PII data, score detections under strict/partial-overlap precision-recall-F1, write JSON/Markdown reports. Powers `maskflow bench --my-data`."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ dev = [
     # test_scorer.py's end-to-end test needs a real recognizer registered
     # to detect something -- this package's own runtime code never imports
     # a pack (see module docstring), only its test suite does.
-    "maskflow-pack-india>=0.5.1,<0.6",
+    "maskflow-pack-india>=0.6.0,<0.7",
 ]
 
 [tool.uv.sources]

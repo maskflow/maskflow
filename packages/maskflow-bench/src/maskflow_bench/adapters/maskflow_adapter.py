@@ -11,8 +11,13 @@ is needed here; labels.py's identity_map() is used by the caller.
 
 from __future__ import annotations
 
-import maskflow_pack_india  # noqa: F401  (import-time registration side effect)
 import maskflow_pack_intl  # noqa: F401  (import-time registration side effect)
+
+# isort: split
+# pack-india AFTER pack-intl: both register PERSON_NAME, and the last
+# registration wins for its context keywords and spaCy mapping (pack-india
+# extends pack-intl's; the reverse order silently dropped pack-india's).
+import maskflow_pack_india  # noqa: F401  (import-time registration side effect)
 from maskflow_core.detection import detect
 
 

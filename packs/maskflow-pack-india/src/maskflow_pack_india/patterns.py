@@ -155,9 +155,16 @@ def validate_upi_vpa(value: str) -> float | None:
 # returns a high confidence for the former and a below-threshold one for
 # the latter -- CLAUDE.md's "require prefix OR a context keyword for full
 # score" expressed as one rule.
+#
+# The 10 digits may carry ONE optional space/hyphen after the 5th digit
+# ("98765 43210", "+91 98765-43210") -- the 5+5 split is how Indian mobile
+# numbers are most commonly written by hand, and missing it leaked them
+# unmasked. Exactly one fixed position, single char: still linear-time
+# (CLAUDE.md rule 3), and a 5+5 grouping can never line up with Aadhaar's
+# 4+4+4 or a VID's 4x4 grouping, so the two can't claim each other's text.
 # ---------------------------------------------------------------------------
 
-INDIAN_MOBILE_RE = re.compile(r"(?<!\d)((?:\+91[-\s]?|0)?[6-9]\d{9})(?!\d)")
+INDIAN_MOBILE_RE = re.compile(r"(?<!\d)((?:\+91[-\s]?|0)?[6-9]\d{4}[-\s]?\d{5})(?!\d)")
 
 
 def validate_indian_mobile(value: str) -> float | None:
@@ -370,6 +377,51 @@ PERSON_NAME_INITIALS_SUFFIX_RE = re.compile(r"([A-Z][a-zA-Z]{2,}\s+[A-Z])(?![a-z
 # PERSON_NAME context keyword, same reasoning as the honorific pattern.
 PERSON_NAME_FORM_FIELD_RE = re.compile(
     rf"(?:Name|Applicant|Customer Name)\s*[:\-]?\s+({_NAME_RUN})"
+)
+
+# PERSON_NAME (Indian, Devanagari) -- the same L2 structural idea for names
+# written in Devanagari script. The L1 gazetteer is romanized-only and its
+# capitalisation gate can never pass for Devanagari (the script has no
+# case), so before this a name like "प्रिया शर्मा" was never detected at all.
+# Only cues that reliably introduce a name are used:
+#   - a name label: "नाम: प्रिया शर्मा", "मेरा नाम प्रिया शर्मा है"
+#   - an honorific: "श्री रमेश कुमार", "श्रीमती सुनीता देवी", "डॉ. अनिल गुप्ता"
+# Relational markers (पुत्र/पत्नी/पति) were tried and left out: in running
+# Hindi prose they are followed by ordinary words ("उनकी पत्नी बहुत ...") far
+# more often than by names, and form-style "पुत्र श्री X" is already caught
+# by the honorific pattern.
+#
+# A name word is one run of Devanagari letters/marks (digits and the danda
+# punctuation excluded), plus ZWJ/ZWNJ which occur inside real words. Each
+# word is guarded by a negative lookahead so the match neither starts on nor
+# extends into a function word -- "मेरा नाम प्रिया शर्मा है" yields
+# "प्रिया शर्मा", not "प्रिया शर्मा है". All bounded (1-3 words, fixed
+# alternations, no nested quantifiers) -- CLAUDE.md rule 3.
+#
+# KNOWN LIMITATIONS (documented, see india_l2_samples.py's Devanagari
+# hard negatives): a bare name with no cue ("प्रिया शर्मा ने कॉल किया") is not
+# detected; a verb right after a name label ("मेरा नाम बदलना है") is
+# mistaken for a name. "जय श्री राम" (a greeting) is explicitly excluded.
+_DEV_LETTERS = "\u0900-\u0963\u0971-\u097f\u200c\u200d"
+# Hindi function words (copulas, postpositions, pronouns, particles) that
+# can never be a name -- also reused by __init__.py's spaCy span_filter.
+DEVANAGARI_STOPWORDS: tuple[str, ...] = (
+    "है", "हैं", "हूँ", "हूं", "था", "थी", "थे", "का", "की", "के", "और", "को",
+    "से", "ने", "में", "पर", "भी", "तो", "जी", "ही", "यह", "वह", "ये", "वो",
+    "मेरा", "मेरी", "मेरे", "आप", "आपका", "हम", "नहीं", "क्या",
+)  # fmt: skip
+_DEV_STOPWORDS = "|".join(DEVANAGARI_STOPWORDS)
+_DEV_WORD = rf"(?!(?:{_DEV_STOPWORDS})(?![{_DEV_LETTERS}]))[{_DEV_LETTERS}]+"
+_DEV_NAME_RUN = rf"{_DEV_WORD}(?:\s{_DEV_WORD}){{0,2}}"
+
+PERSON_NAME_DEVANAGARI_LABEL_RE = re.compile(
+    rf"(?:(?:मेरा|मेरी|उनका|इनका|आपका|पूरा)\s+नाम(?:\s+है)?\s+|नाम\s*[:\-–]\s*)({_DEV_NAME_RUN})"
+)
+# श्रीमती before श्री so the longer honorific wins; the lookbehind skips the
+# "जय श्री राम" greeting. The trailing (?![...]) stops "श्री" matching the
+# start of a longer word.
+PERSON_NAME_DEVANAGARI_HONORIFIC_RE = re.compile(
+    rf"(?<!जय\s)(?:श्रीमती|सुश्री|कुमारी|श्री|डॉक्टर|डॉ\.?|स्व\.)(?![{_DEV_LETTERS}])\s*({_DEV_NAME_RUN})"
 )
 
 # ---------------------------------------------------------------------------

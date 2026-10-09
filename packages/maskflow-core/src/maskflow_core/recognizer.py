@@ -37,6 +37,7 @@ from .context import apply_context_boost, apply_negative_context
 from .entities import ExplanationStep, PIIType, Span
 from .registry import (
     CustomMatchFn,
+    NerSpanFilter,
     Validator,
     register_custom_recognizer,
     register_ner_recognizer,
@@ -321,6 +322,7 @@ class NlpRecognizer(Recognizer):
         context_keywords: tuple[str, ...] | None = None,
         agreement_boost: float = 0.0,
         negative_context_keywords: tuple[str, ...] | None = None,
+        span_filter: NerSpanFilter | None = None,
     ) -> None:
         self.spacy_label = spacy_label
         self.entity_type = pii_type
@@ -329,6 +331,7 @@ class NlpRecognizer(Recognizer):
         self.context_keywords = context_keywords
         self.agreement_boost = agreement_boost
         self.negative_context_keywords = negative_context_keywords
+        self.span_filter = span_filter
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         doc = ctx.nlp_doc
@@ -341,6 +344,8 @@ class NlpRecognizer(Recognizer):
             if ent.label_ != self.spacy_label:
                 continue
             if registered_type in ctx.disabled_types:
+                continue
+            if self.span_filter is not None and not self.span_filter(ent.text):
                 continue
 
             explanation: list[ExplanationStep] = [
@@ -401,6 +406,7 @@ class NlpRecognizer(Recognizer):
             self.context_keywords,
             self.agreement_boost,
             self.negative_context_keywords,
+            self.span_filter,
         )
 
 

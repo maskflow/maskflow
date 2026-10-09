@@ -64,12 +64,18 @@ PERSON_NAME_POSITIVE_SAMPLES: list[Sample] = [
         "Customer Name Vikram Singh, account verified.",
         [(PIIType.PERSON_NAME, "Vikram Singh")],
     ),
+    # Devanagari script (patterns.py's PERSON_NAME_DEVANAGARI_*).
+    Sample("नमस्ते, मेरा नाम प्रिया शर्मा है।", [(PIIType.PERSON_NAME, "प्रिया शर्मा")]),
+    Sample("नाम: रमेश चंद्र वर्मा", [(PIIType.PERSON_NAME, "रमेश चंद्र वर्मा")]),
+    Sample("श्रीमती सुनीता देवी जी से बात हुई।", [(PIIType.PERSON_NAME, "सुनीता देवी")]),
+    Sample("डॉ. अनिल गुप्ता ने रिपोर्ट भेजी।", [(PIIType.PERSON_NAME, "अनिल गुप्ता")]),
 ]
 
 PERSON_NAME_NEGATIVE_SAMPLES: list[str] = [
     "Please submit the report by Friday.",
     "The Sun rises in the east every morning.",
     "Contact HR for further assistance.",
+    "कृपया अपना रिफंड स्टेटस बताइए।",
 ]
 
 PERSON_NAME_HARD_NEGATIVE_SAMPLES: list[str] = [
@@ -80,6 +86,13 @@ PERSON_NAME_HARD_NEGATIVE_SAMPLES: list[str] = [
     # without any nearby name context.
     "Team A finished the project ahead of schedule.",
     "Please review Section B before submission.",
+    # Devanagari: a greeting, a place name starting with an honorific, and a
+    # relational word followed by an ordinary word.
+    "जय श्री राम",
+    "श्रीनगर जाना है",
+    "उनकी पत्नी बहुत अच्छी हैं",
+    # Documented limitation (patterns.py): a verb after a name label.
+    "मेरा नाम बदलना है",
 ]
 
 # ---------------------------------------------------------------------------

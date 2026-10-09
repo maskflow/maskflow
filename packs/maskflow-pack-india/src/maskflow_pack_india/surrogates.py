@@ -114,6 +114,11 @@ def surrogate_upi_vpa(original: str, rng: random.Random) -> str:
 
 def surrogate_indian_mobile(original: str, rng: random.Random) -> str:
     number = rng.choice("6789") + "".join(rng.choice(string.digits) for _ in range(9))
+    # Keep a 5+5 split ("98765 43210") if the original had one, so the
+    # surrogate reads like the value it replaced.
+    subscriber = original[3:].lstrip(" -") if original.startswith("+91") else original.lstrip("0")
+    if len(subscriber) == 11 and subscriber[5] in " -":
+        number = f"{number[:5]}{subscriber[5]}{number[5:]}"
     if original.startswith("+91"):
         sep = original[3] if len(original) > 3 and original[3] in " -" else ""
         return f"+91{sep}{number}"

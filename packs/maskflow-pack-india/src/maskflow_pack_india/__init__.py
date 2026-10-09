@@ -25,6 +25,8 @@ RecognizerRegistry-based discovery for this pack registers each pattern
 once, not twice.
 """
 
+import re
+
 from maskflow_core.context import CONTEXT_KEYWORDS, NEGATIVE_CONTEXT_KEYWORDS
 from maskflow_core.entities import PIIType
 from maskflow_core.recognizer import (
@@ -36,6 +38,7 @@ from maskflow_core.recognizer import (
 from maskflow_core.registry import register_surrogate_generator
 
 from . import gazetteer, patterns, surrogates
+from .data.indian_names import EXCLUDED_NAMES
 from .data.indian_places import INDIAN_STATE_UT_NAMES
 
 _RECOGNIZERS: list[Recognizer] = []
@@ -484,6 +487,10 @@ _add(PatternRecognizer("PERSON_NAME", patterns.PERSON_NAME_INITIALS_PREFIX_RE, 0
 # sentence-initial acronyms) -- context-gated like AADHAAR_MASKED/PIN_CODE.
 _add(PatternRecognizer("PERSON_NAME", patterns.PERSON_NAME_INITIALS_SUFFIX_RE, 0.4))
 _add(PatternRecognizer("PERSON_NAME", patterns.PERSON_NAME_FORM_FIELD_RE, 0.85))
+# Devanagari-script names (see patterns.py) -- same confidence as their
+# Latin-script counterparts above, for the same structural reason.
+_add(PatternRecognizer("PERSON_NAME", patterns.PERSON_NAME_DEVANAGARI_LABEL_RE, 0.85))
+_add(PatternRecognizer("PERSON_NAME", patterns.PERSON_NAME_DEVANAGARI_HONORIFIC_RE, 0.85))
 
 # ---------------------------------------------------------------------------
 # INDIAN_ADDRESS -- L2 Structural. Same no-context_keywords reasoning as
@@ -534,7 +541,38 @@ _add(PatternRecognizer("INDIAN_ADDRESS", patterns.INDIAN_ADDRESS_LOCALITY_RE, 0.
 # common-word/name collisions ("Rose", "Lily", "Devi" as PERSON_NAME with
 # no context) -- confirmed PRE-EXISTING in pack-intl alone, not introduced
 # this session; see the L3 report.
-_add(NlpRecognizer("PERSON", "PERSON_NAME", 0.75, agreement_boost=0.2))
+#
+# span_filter (maskflow-core >= 0.8.2): spaCy's English model regularly tags
+# this pack's own ID labels and romanized Hindi function words as PERSON --
+# "GSTIN", "ABHA", "Mera Aadhaar" in Hinglish tickets -- and, given Devanagari
+# text, runs of Hindi function words ("और मेरा"). An entity made up ONLY of
+# such tokens is dropped before scoring; one that also contains any other
+# word ("Mera naam Priya") is left to the normal pipeline.
+_NOT_A_NAME_TOKENS: frozenset[str] = EXCLUDED_NAMES | frozenset(
+    {
+        "aadhaar", "aadhar", "pan", "gstin", "gst", "abha", "upi", "vpa", "ifsc",
+        "vid", "epic", "uan", "kyc", "otp", "pin", "pincode", "dl", "mobile",
+        "phone", "email", "naam", "mujhe", "maine", "apna", "apni", "kripya",
+        "namaste", "namaskar", "ji",
+        "आधार", "पैन", "नंबर", "मोबाइल", "नाम", "पता", "नमस्ते", "नमस्कार",
+        *patterns.DEVANAGARI_STOPWORDS,
+    }
+)  # fmt: skip
+# Split on whitespace/punctuation rather than \w: Devanagari vowel signs are
+# combining marks, which \w does not match, so "मेरा" would split into "म", "र".
+_TOKEN_RE = re.compile(r"[^\s\d.,:;!?()\[\]{}\"'\u0964\u0965-]+")
+
+
+def _plausible_person_entity(entity_text: str) -> bool:
+    tokens = _TOKEN_RE.findall(entity_text.lower())
+    return not tokens or not all(token in _NOT_A_NAME_TOKENS for token in tokens)
+
+
+_add(
+    NlpRecognizer(
+        "PERSON", "PERSON_NAME", 0.75, agreement_boost=0.2, span_filter=_plausible_person_entity
+    )
+)
 
 
 # ---------------------------------------------------------------------------

@@ -59,6 +59,31 @@ def test_ner_threshold_drops_low_confidence_matches(monkeypatch: pytest.MonkeyPa
     assert spans == []
 
 
+def test_ner_span_filter_drops_rejected_entities(monkeypatch: pytest.MonkeyPatch) -> None:
+    register_ner_recognizer(
+        "TEST_FILTER_LABEL", "TEST_FILTERED", 0.9, span_filter=lambda text: text != "Labelword"
+    )
+    fake_doc = _FakeDoc(
+        [
+            _FakeEnt("TEST_FILTER_LABEL", "Labelword", 0, 9),
+            _FakeEnt("TEST_FILTER_LABEL", "Testville", 13, 22),
+        ]
+    )
+    monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
+
+    spans = ner_module.detect_ner("Labelword in Testville.")
+
+    assert [s.text for s in spans] == ["Testville"]
+
+
+def test_ner_without_span_filter_keeps_every_entity(monkeypatch: pytest.MonkeyPatch) -> None:
+    register_ner_recognizer("TEST_NOFILTER_LABEL", "TEST_NOFILTER", 0.9)
+    fake_doc = _FakeDoc([_FakeEnt("TEST_NOFILTER_LABEL", "Labelword", 0, 9)])
+    monkeypatch.setattr(ner_module, "_get_nlp", lambda: lambda text: fake_doc)
+
+    assert [s.text for s in ner_module.detect_ner("Labelword here.")] == ["Labelword"]
+
+
 def test_ner_negative_context_suppresses_below_threshold(monkeypatch: pytest.MonkeyPatch) -> None:
     register_ner_recognizer(
         "TEST_NEG_LABEL",

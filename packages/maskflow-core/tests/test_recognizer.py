@@ -27,7 +27,7 @@ from maskflow_core.recognizer import (
     Recognizer,
     RecognizerRegistry,
 )
-from maskflow_core.registry import CUSTOM_RECOGNIZERS, PATTERNS
+from maskflow_core.registry import CUSTOM_RECOGNIZERS, NER_RECOGNIZERS, PATTERNS
 
 
 class _FakeEnt:
@@ -170,6 +170,33 @@ def test_nlp_recognizer_analyze_drops_below_threshold() -> None:
     ctx = AnalysisContext(text="Something happened.", nlp_loader=lambda: lambda t: fake_doc)
 
     assert list(recognizer.analyze("Something happened.", ctx)) == []
+
+
+def test_nlp_recognizer_span_filter_drops_rejected_entities() -> None:
+    fake_doc = _FakeDoc(
+        [
+            _FakeEnt("TEST_FILTER_LABEL", "Labelword", 0, 9),
+            _FakeEnt("TEST_FILTER_LABEL", "Testville", 13, 22),
+        ]
+    )
+    recognizer = NlpRecognizer(
+        "TEST_FILTER_LABEL", "TEST_RECOG_FILTERED", 0.9, span_filter=lambda t: t != "Labelword"
+    )
+    text = "Labelword in Testville."
+    ctx = AnalysisContext(text=text, nlp_loader=lambda: lambda t: fake_doc)
+
+    assert [s.text for s in recognizer.analyze(text, ctx)] == ["Testville"]
+
+
+def test_nlp_recognizer_register_passes_span_filter_to_the_live_ner_pass() -> None:
+    def keep_nothing(text: str) -> bool:
+        return False
+
+    NlpRecognizer(
+        "TEST_FILTER_REG_LABEL", "TEST_FILTER_REG", 0.9, span_filter=keep_nothing
+    ).register()
+
+    assert NER_RECOGNIZERS["TEST_FILTER_REG_LABEL"].span_filter is keep_nothing
 
 
 def test_nlp_recognizer_negative_context_suppresses_below_threshold() -> None:
