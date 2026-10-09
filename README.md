@@ -13,6 +13,9 @@ on your own infrastructure.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 
+⭐ **Star us on GitHub** — if MaskFlow is useful to you, a [star](https://github.com/maskflow/maskflow)
+helps other teams facing the DPDP deadline find it.
+
 <p align="center">
   <img src=".github/assets/demo.svg" alt="Terminal demo: pip install maskflow-sdk, then mask() replaces an Aadhaar number and email with &lt;AADHAAR_1&gt; and &lt;EMAIL_1&gt; before an LLM call, and unmask() restores the originals in the response" width="720">
 </p>
@@ -235,6 +238,27 @@ accuracy attestation for a pinned pack version — see [`docs/attestations.md`](
 Compliance-control mapping to DPDP / ISO 27001 and the recommended retention period are still being
 validated with practitioners and are not yet part of this layer.
 
+## Evidence Cloud (hosted, private preview)
+
+Optional and paid; everything in this repo stays MIT and free. **Evidence Cloud** keeps a retained,
+tamper-evident record that masking happened and turns it into signed DPDP evidence reports that
+your auditor can verify offline on their own computer, without an account and without trusting us.
+
+<p align="center">
+  <img src=".github/assets/evidence-cloud-demo.gif" alt="A walkthrough of the Evidence Cloud page on maskflow.in: the overview, how it fits, exactly what it receives, the DPDP Rule 6 mapping, then the sample signed report being verified offline in three commands" width="720">
+</p>
+
+- **Metadata only, opt-in.** Detection stays on your infrastructure. It receives which type of data
+  was masked, how many, and when. It never receives a value.
+- **Signed evidence reports** mapped to DPDP Rule 6 safeguards, including where a safeguard is
+  honestly out of scope. Useful for a DPIA or a 72-hour breach notice.
+- **Signed accuracy attestations**, team access, and an append-only audit log.
+- **Free 14-day trial.** Billed annually after that.
+
+[How Evidence Cloud works](https://maskflow.in/evidence-cloud.html) ·
+[Verify a sample signed report, no sign-up](https://maskflow.in/sample-evidence-report.html) ·
+[Start your free trial](https://maskflow.in/evidence-cloud.html#request-access)
+
 ## Configuration
 
 Drop a `.maskflowrc` (TOML/YAML/JSON) in your project to adjust entity thresholds, disable an
@@ -454,6 +478,7 @@ Openly not done yet, so you know what you're signing up for:
 ## Links
 
 - Site: [maskflow.in](https://maskflow.in)
+- Evidence Cloud (hosted, paid): [maskflow.in/evidence-cloud.html](https://maskflow.in/evidence-cloud.html)
 - Docs: [`docs/configuration.md`](docs/configuration.md),
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
   [`docs/scan.md`](docs/scan.md), [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
