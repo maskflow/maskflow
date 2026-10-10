@@ -18,7 +18,7 @@
 | INDIAN_MOBILE | 99.0% | 94.9% | 94.9% | 42.2% | 65.1% | skipped |
 | INDIAN_PASSPORT | 100.0% | — | — | — | — | skipped |
 | PAN | 100.0% | — | 100.0% | — | 94.1% | skipped |
-| PERSON_NAME | 27.0% | 18.6% | 18.6% | 18.7% | — | skipped |
+| PERSON_NAME | 29.9% | 18.6% | 18.6% | 18.7% | — | skipped |
 | PIN_CODE | 100.0% | — | — | — | 100.0% | skipped |
 | UPI_VPA | 100.0% | — | — | — | — | skipped |
 | VEHICLE_REG | 100.0% | — | — | — | — | skipped |
@@ -36,11 +36,11 @@
 | DRIVING_LICENCE | 100.0% | — | — | — | — | skipped |
 | GSTIN | 100.0% | — | — | — | — | skipped |
 | IFSC | 100.0% | — | — | — | — | skipped |
-| INDIAN_ADDRESS | 43.3% | 48.2% | 48.2% | 50.5% | — | skipped |
+| INDIAN_ADDRESS | 43.3% | 48.2% | 48.2% | 50.7% | — | skipped |
 | INDIAN_MOBILE | 99.0% | 94.9% | 94.9% | 42.2% | 83.7% | skipped |
 | INDIAN_PASSPORT | 100.0% | — | — | — | — | skipped |
 | PAN | 100.0% | — | 100.0% | — | 94.1% | skipped |
-| PERSON_NAME | 47.3% | 30.4% | 30.4% | 30.4% | — | skipped |
+| PERSON_NAME | 52.4% | 30.4% | 30.4% | 30.4% | — | skipped |
 | PIN_CODE | 100.0% | — | — | — | 100.0% | skipped |
 | UPI_VPA | 100.0% | — | — | — | — | skipped |
 | VEHICLE_REG | 100.0% | — | — | — | — | skipped |
@@ -50,9 +50,9 @@
 
 | adapter | ms/KB | median ms/doc | p95 ms/doc | peak memory (MB) | doc errors |
 |---|---|---|---|---|---|
-| maskflow | 64.436 | 18.674 | 25.113 | 1.6 | 0 |
-| presidio_oob | 49.407 | 13.858 | 21.593 | 1.0 | 0 |
-| presidio_custom | 49.788 | 13.972 | 21.562 | 1.0 | 0 |
-| mask_privacy | 52.588 | 15.024 | 21.427 | 8.7 | 0 |
-| naive_regex | 0.097 | 0.027 | 0.044 | 0.3 | 0 |
+| maskflow | 67.655 | 19.241 | 28.017 | 1.6 | 0 |
+| presidio_oob | 57.170 | 14.857 | 27.958 | 0.3 | 0 |
+| presidio_custom | 52.705 | 14.650 | 23.831 | 0.5 | 0 |
+| mask_privacy | 46.699 | 13.165 | 19.020 | 10.4 | 0 |
+| naive_regex | 0.089 | 0.024 | 0.041 | 0.1 | 0 |
 | llm_detector | skipped (ANTHROPIC_API_KEY not set) | | | | |
