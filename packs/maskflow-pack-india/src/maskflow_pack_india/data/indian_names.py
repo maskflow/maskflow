@@ -96,7 +96,58 @@ _COMMON_WORD_COLLISIONS: frozenset[str] = frozenset(
     }
 )  # fmt: skip
 
-_COMMON_OVERRIDES = _COMMON_INDIAN_SURNAMES | _COMMON_WORD_COLLISIONS
+# Very common English words that are also entries in the swami93 pool (see
+# this module's provenance caveat) -- "Follow", "Good", "Said", "One" each
+# fired as a standalone PERSON_NAME at the start of an ordinary sentence.
+# Downgraded to "common" (needs a nearby name cue) rather than excluded, so
+# a genuine name that happens to be one of these still matches in context.
+# Generated once at dev time, then reviewed by hand -- no runtime dependency:
+# pool entries with an English Zipf frequency >= 4.5 (wordfreq) that also
+# appear as a lowercase common word in /usr/share/dict/web2, minus common
+# given names/surnames that list caught ("Tom", "Mary", "Lee", "Smith", ...).
+_COMMON_ENGLISH_WORDS: frozenset[str] = frozenset(
+    {
+        "able", "additional", "amazing", "among", "apple", "arm", "army",
+        "art", "artist", "ask", "attack", "august", "awesome", "baby",
+        "bag", "band", "base", "bay", "bear", "beautiful", "beauty",
+        "believe", "bell", "bike", "billion", "blind", "blue", "bond",
+        "boss", "boston", "boy", "brain", "branch", "brand", "brazil",
+        "bridge", "bright", "cable", "camp", "captain", "car", "carbon",
+        "case", "cash", "cat", "chain", "champion", "chance", "chief",
+        "china", "choice", "chosen", "classic", "coast", "crash", "crew",
+        "cross", "danger", "data", "day", "deep", "desire", "district",
+        "dream", "east", "edge", "era", "even", "ever", "every", "fact",
+        "famous", "fan", "father", "favor", "field", "finish", "fly",
+        "follow", "foreign", "forest", "forever", "fox", "freedom", "full",
+        "future", "gave", "general", "german", "get", "gift", "girl",
+        "given", "goal", "gold", "golden", "good", "got", "grab", "great",
+        "guest", "gun", "guy", "hard", "heaven", "hero", "hill", "hit",
+        "holiday", "holy", "honest", "honor", "idea", "iron", "island",
+        "japan", "jersey", "job", "journey", "judge", "justice", "keep",
+        "key", "kick", "kingdom", "knowledge", "lady", "lake", "lane",
+        "law", "lay", "life", "light", "link", "links", "live", "long",
+        "lord", "love", "lovely", "luck", "lucky", "magic", "major", "male",
+        "man", "marine", "mass", "master", "mate", "maximum", "meet",
+        "member", "memory", "mental", "million", "miss", "mission", "moon",
+        "morning", "movie", "much", "nation", "nature", "navy", "non",
+        "nor", "ocean", "one", "page", "park", "path", "pay", "peace",
+        "per", "perfect", "piece", "pilot", "play", "pool", "pop", "power",
+        "president", "pretty", "price", "prime", "princess", "pro",
+        "promise", "purpose", "push", "quite", "race", "ran", "reason",
+        "red", "right", "rise", "river", "rock", "sad", "safe", "said",
+        "san", "sat", "saw", "say", "secret", "see", "sell", "series",
+        "seven", "show", "silver", "sing", "sir", "snow", "solar", "solo",
+        "son", "soul", "southern", "spirit", "spring", "stay", "stone",
+        "storm", "story", "success", "sugar", "supreme", "sure", "switch",
+        "tank", "target", "tea", "thank", "theory", "till", "tool", "trip",
+        "truly", "trust", "truth", "unique", "universe", "unknown", "urban",
+        "valley", "van", "via", "vision", "wake", "war", "well", "win",
+        "winner", "winter", "wise", "wish", "wonder", "worth", "york",
+        "young",
+    }
+)  # fmt: skip
+
+_COMMON_OVERRIDES = _COMMON_INDIAN_SURNAMES | _COMMON_WORD_COLLISIONS | _COMMON_ENGLISH_WORDS
 
 # English function words (articles, pronouns, auxiliary/modal verbs,
 # conjunctions, prepositions) that turned up in the swami93 corpus -- exactly

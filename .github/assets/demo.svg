@@ -42,7 +42,7 @@
       <text x="24" y="146" fill="#79c0ff" opacity="0">
         <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
           keyTimes="0;0.367;0.372;1" values="0;0;1;1"/>
-        &gt;&gt;&gt; mask("Aadhaar 2346 8907 6543, alice@example.com")
+        &gt;&gt;&gt; mask("Aadhaar 2346 8907 6549, alice@example.com")
       </text>
 
       <!-- Line 5: masked output -->
@@ -63,7 +63,7 @@
       <text x="24" y="242" opacity="0">
         <animate attributeName="opacity" dur="9s" repeatCount="indefinite"
           keyTimes="0;0.767;0.772;1" values="0;0;1;1"/>
-        <tspan fill="#c9d1d9">Aadhaar </tspan><tspan fill="#7ee787">2346 8907 6543</tspan><tspan fill="#c9d1d9">, </tspan><tspan fill="#7ee787">alice@example.com</tspan>
+        <tspan fill="#c9d1d9">Aadhaar </tspan><tspan fill="#7ee787">2346 8907 6549</tspan><tspan fill="#c9d1d9">, </tspan><tspan fill="#7ee787">alice@example.com</tspan>
       </text>
 
       <!-- Idle prompt + blinking cursor -->

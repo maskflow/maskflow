@@ -40,7 +40,8 @@ python -m spacy download en_core_web_sm
 ```python
 from maskflow import mask, unmask
 
-result = mask("My Aadhaar is 2346 8907 6543 and you can reach me at alice@example.com.")
+# Synthetic Aadhaar number: passes the Verhoeff checksum, belongs to no one.
+result = mask("My Aadhaar is 2346 8907 6549 and you can reach me at alice@example.com.")
 result.masked_text
 # "My Aadhaar is <AADHAAR_1> and you can reach me at <EMAIL_1>."
 unmask(result.masked_text, result.mapping)  # original text, restored
@@ -316,7 +317,7 @@ installing either gets you all 28 types below with no extra install step.
 | GSTIN | Regex + state-code range + embedded-PAN check + base-36 checksum |
 | IFSC | Regex + bank code against a bundled RBI code list |
 | UPI VPA | Regex + PSP handle against a bundled NPCI handle list |
-| Indian mobile number | Regex, full confidence with a `+91`/`0` prefix, needs context otherwise |
+| Indian mobile number | Regex (also the common 5+5 split, e.g. `98765 43210`), full confidence with a `+91`/`0` prefix, needs context otherwise |
 | PIN code | Regex, unvalidated, needs context (pin/pincode/state name/address) |
 | Voter ID (EPIC number) | Regex, structural only (no public checksum) |
 | Indian passport number | Regex, structural only (no public checksum) |
@@ -326,7 +327,7 @@ installing either gets you all 28 types below with no extra install step.
 | ABHA number (health ID) | Regex, unvalidated, needs context |
 | ABHA address | Regex + domain (abdm/sbx) check |
 | Bank account number (India) | Regex, unvalidated, needs context (account/a/c/acct) |
-| Person name (Indian) | Gazetteer (name corpus) + structural (honorifics, relational markers, initials, form fields) + spaCy NER agreement boost |
+| Person name (Indian) | Gazetteer (name corpus) + structural (honorifics, relational markers, initials, form fields; in Devanagari: name labels and honorifics such as `नाम:` / `श्री`) + spaCy NER agreement boost. A Devanagari name with no such cue is not detected yet |
 | Indian address | Gazetteer (554+ Indian cities/places) + structural (unit markers, landmark-relative phrasing, locality patterns) |
 
 (`PERSON_NAME` is one shared entity type produced by both packs' layers, so 12 + 17 − 1 shared = 28

@@ -73,6 +73,8 @@ def detect_ner(
             continue
         if mapping.pii_type in disabled_types:
             continue
+        if mapping.span_filter is not None and not mapping.span_filter(ent.text):
+            continue
 
         explanation: list[ExplanationStep] = [
             ExplanationStep(rule=f"ner:{ent.label_}", outcome="matched")

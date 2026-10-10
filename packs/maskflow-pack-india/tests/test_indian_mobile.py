@@ -60,3 +60,46 @@ class TestFormatVariants:
     def test_nine_digit_number_never_matches(self) -> None:
         found = _detected("My mobile number is 987654321, call anytime.")
         assert not any(t == PIIType.INDIAN_MOBILE for t, _ in found)
+
+
+class TestFiveFiveSplit:
+    """The 5+5 split ("98765 43210") is the most common hand-written form of an
+    Indian mobile number; it used to be missed entirely."""
+
+    def test_plus_91_with_spaces(self) -> None:
+        assert (PIIType.INDIAN_MOBILE, "+91 98765 43210") in _detected(
+            "Call me on +91 98765 43210 after 6pm."
+        )
+
+    def test_plus_91_with_hyphens(self) -> None:
+        assert (PIIType.INDIAN_MOBILE, "+91-98765-43210") in _detected(
+            "mobile +91-98765-43210 is on WhatsApp too"
+        )
+
+    def test_zero_trunk_prefix_with_space(self) -> None:
+        assert (PIIType.INDIAN_MOBILE, "098765 43210") in _detected(
+            "Alternate contact: 098765 43210."
+        )
+
+    def test_bare_split_number_with_context_keyword(self) -> None:
+        assert (PIIType.INDIAN_MOBILE, "98765 43210") in _detected(
+            "My mobile number is 98765 43210, call anytime."
+        )
+
+    def test_bare_split_number_without_context_is_dropped(self) -> None:
+        found = _detected("Reference 98765 43210 was logged in the ticket.")
+        assert not any(t == PIIType.INDIAN_MOBILE for t, _ in found)
+
+    def test_aadhaar_grouping_is_never_read_as_a_mobile(self) -> None:
+        # Synthetic, Verhoeff-valid Aadhaar number (4+4+4 grouping).
+        found = _detected("Mobile verification for Aadhaar 2346 8907 6549 is pending.")
+        assert (PIIType.AADHAAR, "2346 8907 6549") in found
+        assert not any(t == PIIType.INDIAN_MOBILE for t, _ in found)
+
+    def test_split_with_first_digit_outside_6_to_9_never_matches(self) -> None:
+        found = _detected("My mobile number is 58765 43210, call anytime.")
+        assert not any(t == PIIType.INDIAN_MOBILE for t, _ in found)
+
+    def test_two_separators_never_match(self) -> None:
+        found = _detected("My mobile number is 98765  43210, call anytime.")
+        assert not any(t == PIIType.INDIAN_MOBILE for t, _ in found)

@@ -24,6 +24,8 @@ from maskflow_pack_india.patterns import (
     INDIAN_PASSPORT_RE,
     PAN_EMBEDDED_IN_GSTIN_RE,
     PAN_RE,
+    PERSON_NAME_DEVANAGARI_HONORIFIC_RE,
+    PERSON_NAME_DEVANAGARI_LABEL_RE,
     PIN_CODE_RE,
     UPI_VPA_RE,
     VEHICLE_REG_RE,
@@ -147,3 +149,27 @@ def test_indian_passport_mrz_stays_linear_on_long_near_miss_multiline_input() ->
         f"INDIAN_PASSPORT_MRZ_RE took {elapsed:.2f}s on adversarial input, "
         f"expected < {TIME_BUDGET_SECONDS}s -- possible backtracking regression."
     )
+
+
+@pytest.mark.benchmark
+@pytest.mark.parametrize(
+    "adversarial",
+    [
+        "प्रिया" * 30_000,  # one enormous Devanagari "word"
+        "प्रिया " * 30_000,  # a long run of name-shaped words, no cue
+        "श्री " * 30_000,  # a long run of honorifics, nothing after them
+        "नाम: है " * 20_000,  # labels followed only by stop-words
+        "श्री प्रिया " * 20_000,  # many genuine matches back to back
+    ],
+    ids=["long-word", "word-run", "honorific-run", "label-stopword-run", "many-matches"],
+)
+def test_devanagari_person_name_patterns_stay_linear(adversarial: str) -> None:
+    for pattern in (PERSON_NAME_DEVANAGARI_LABEL_RE, PERSON_NAME_DEVANAGARI_HONORIFIC_RE):
+        start = time.monotonic()
+        pattern.findall(adversarial)
+        elapsed = time.monotonic() - start
+
+        assert elapsed < TIME_BUDGET_SECONDS, (
+            f"{pattern.pattern!r} took {elapsed:.2f}s, expected < {TIME_BUDGET_SECONDS}s "
+            "-- possible backtracking regression."
+        )

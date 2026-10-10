@@ -29,7 +29,7 @@ dev = [
     # MaskflowAdapter imports both bundled packs unconditionally (see
     # maskflow_bench.adapters.maskflow_adapter), so both are needed here
     # even though this test suite only exercises india-labelled fixtures.
-    "maskflow-pack-india>=0.5.1,<0.6",
+    "maskflow-pack-india>=0.5.1,<0.7",
     "maskflow-pack-intl>=0.3.0,<0.4",
 ]
 

@@ -10,6 +10,69 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ## [Unreleased]
 
+### Fixed
+
+Four detection gaps found while building a Hinglish support-ticket example,
+plus the registration-order bug behind the last one. Versions:
+**`maskflow-core` 0.8.1 -> 0.8.2**, **`maskflow-pack-india` 0.5.1 -> 0.6.0**,
+**`maskflow-sdk` 0.9.1 -> 0.9.2**, **`maskflow-cli` 0.8.1 -> 0.8.2**,
+**`maskflow-bench` 0.1.0 -> 0.1.1**.
+
+- **README Quickstart used an invalid Aadhaar number.** `2346 8907 6543` fails
+  the Verhoeff checksum, so `mask()` correctly left it alone while the README
+  promised `<AADHAAR_1>`. Replaced with the checksum-valid synthetic
+  `2346 8907 6549` (README and `.github/assets/demo.svg`). A new SDK test runs
+  the Quickstart example and checks the README still contains it verbatim.
+- **pack-india: Indian mobile numbers written 5+5 were missed.** `98765 43210`,
+  `+91 98765 43210` and `+91-98765-43210` now match `INDIAN_MOBILE` (one
+  optional space/hyphen after the 5th digit, still linear-time). Confidence
+  rules are unchanged: a `+91`/`0` prefix is enough on its own, and a bare
+  number still needs a nearby keyword. Surrogates keep the 5+5 shape.
+- **pack-india: names in Devanagari script were never detected.** The name
+  gazetteer is romanized-only, and its capitalisation gate can't pass for a
+  script with no case. New structural patterns catch a Devanagari name after
+  a name label (`नाम:`, `मेरा नाम ... है`) or an honorific (`श्री`, `श्रीमती`,
+  `सुश्री`, `कुमारी`, `डॉ.`, `स्व.`), without swallowing function words such as
+  है/जी/और. Known limits, documented in `patterns.py` and pinned by
+  `xfail(strict=True)` tests: a bare name with no cue is not detected, and a
+  verb right after a name label ("मेरा नाम बदलना है") is mistaken for a name.
+- **pack-india: ordinary words detected as names.** 264 very common English
+  words in the noisy name corpus (Follow, Good, One, Said, ...) fired as
+  standalone `PERSON_NAME` at the start of a sentence. They now need a nearby
+  name cue, like the existing word/name collisions. The list was generated
+  once (wordfreq Zipf >= 4.5 that is also a lowercase dictionary word) and
+  then reviewed by hand to keep common given names.
+- **core: `span_filter` for spaCy entities (additive).** `NerMapping`,
+  `register_ner_recognizer()` and `NlpRecognizer` take an optional
+  `span_filter(entity_text) -> bool`. Returning `False` drops the entity
+  before scoring. `None` (the default) keeps the previous behavior. See
+  `docs/custom-recognizers.md`.
+- **pack-india uses it** to drop spaCy `PERSON` entities made up only of ID
+  labels or Hindi/Hinglish function words: "GSTIN", "ABHA", "Mera Aadhaar",
+  "और मेरा".
+- **sdk / cli / bench: pack-india's `PERSON_NAME` setup was silently
+  overwritten.** These packages imported `maskflow-pack-india` before
+  `maskflow-pack-intl`, so pack-intl's later registration replaced
+  pack-india's Indian `PERSON_NAME` context keywords (`नाम`, `श्री`, ...: 12
+  keywords became 5) and its spaCy mapping (agreement boost, and now the span
+  filter). The import order is swapped, with an `isort: split` guard and a
+  comment so the formatter can't undo it. New SDK and CLI tests check the
+  registered state.
+  Their `maskflow-pack-india` upper bound is widened to `<0.7`, and the lower
+  bound is unchanged: the import-order fix works with any pack-india version.
+
+IndiaPII-v1.0 (2,000 docs, `maskflow` adapter), before -> after this change.
+Only `PERSON_NAME` moves; every other entity is identical:
+
+| `PERSON_NAME` | strict F1 | partial F1 | strict precision | false positives (strict) |
+|---|---|---|---|---|
+| before | 27.0% | 47.3% | 17.7% | 5,309 |
+| after | 29.9% | 52.4% | 20.3% | 4,493 |
+
+Recall is unchanged (strict 57.1%, partial 100%). The corpus contains no
+Devanagari names and no 5+5 mobile numbers, so those two fixes are covered by
+the new unit tests rather than by this table.
+
 ### Added
 
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).

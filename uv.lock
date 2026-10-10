@@ -3211,7 +3211,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-bench"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/maskflow-bench" }
 dependencies = [
     { name = "maskflow-core" },
@@ -3233,7 +3233,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-cli"
-version = "0.8.1"
+version = "0.8.2"
 source = { editable = "packages/maskflow-cli" }
 dependencies = [
     { name = "httpx" },
@@ -3281,7 +3281,7 @@ provides-extras = ["dev", "evidence", "s3", "postgres", "bench"]
 
 [[package]]
 name = "maskflow-core"
-version = "0.8.1"
+version = "0.8.2"
 source = { editable = "packages/maskflow-core" }
 dependencies = [
     { name = "click" },
@@ -3522,7 +3522,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "maskflow-pack-india"
-version = "0.5.1"
+version = "0.6.0"
 source = { editable = "packs/maskflow-pack-india" }
 dependencies = [
     { name = "maskflow-core", extra = ["nlp"] },
@@ -3548,7 +3548,7 @@ requires-dist = [{ name = "maskflow-core", extras = ["nlp"], editable = "package
 
 [[package]]
 name = "maskflow-sdk"
-version = "0.9.1"
+version = "0.9.2"
 source = { editable = "packages/maskflow-sdk" }
 dependencies = [
     { name = "maskflow-core" },

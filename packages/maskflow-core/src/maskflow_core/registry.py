@@ -31,6 +31,10 @@ from .entities import PIIType
 # needed typing.Optional on the old 3.9 floor).
 Validator = Callable[[str], float | None]
 
+# (matched entity text) -> False to drop that spaCy entity outright, before
+# any confidence math -- see NerMapping.span_filter.
+NerSpanFilter = Callable[[str], bool]
+
 # type -> [(regex, base_confidence, validator), ...], appended to by register_pattern()
 PATTERNS: dict[PIIType, list[tuple[re.Pattern[str], float, Validator | None]]] = {}
 
@@ -62,6 +66,13 @@ class NerMapping:
     # detect_ner(). A finding with no such agreement uses base_confidence
     # alone, unboosted.
     agreement_boost: float = 0.0
+    # Optional precision gate on spaCy's own output: called with the
+    # entity's text, a False return drops that entity before any confidence
+    # math (so it never reaches resolution). Lets a pack reject entity
+    # shapes it knows spaCy mislabels -- e.g. an ID-type label like "GSTIN"
+    # tagged PERSON -- without touching the model. None keeps every entity
+    # (the pre-0.8.2 behavior).
+    span_filter: NerSpanFilter | None = None
 
 
 # spaCy label (e.g. "PERSON") -> NerMapping, appended to by register_ner_recognizer()
@@ -126,14 +137,16 @@ def register_ner_recognizer(
     context_keywords: tuple[str, ...] | None = None,
     agreement_boost: float = 0.0,
     negative_context_keywords: tuple[str, ...] | None = None,
+    span_filter: NerSpanFilter | None = None,
 ) -> PIIType:
     """Map a spaCy entity label (e.g. "PERSON") onto `pii_type`, registering the
     PIIType itself first if it isn't already known. ner.py's generic NER pass
     reads NER_RECOGNIZERS to turn matching doc.ents into Spans. `agreement_boost`
-    is NerMapping's "NLP as recall only" up-weighting -- see its docstring."""
+    is NerMapping's "NLP as recall only" up-weighting and `span_filter` its
+    precision gate -- see NerMapping's field comments."""
     registered_type = PIIType.register(pii_type)
     NER_RECOGNIZERS[spacy_label] = NerMapping(
-        registered_type, base_confidence, threshold, agreement_boost
+        registered_type, base_confidence, threshold, agreement_boost, span_filter
     )
     if context_keywords:
         CONTEXT_KEYWORDS[registered_type] = context_keywords
