@@ -35,6 +35,10 @@ maskflow-agent install              # writes .claude/settings.json (commit it to
 maskflow-agent doctor               # proves it end to end with synthetic canaries
 ```
 
+`install` also loads the masking engine once, so your first session doesn't
+pay the cold start (about 30 s on a fresh install while Python compiles and
+spaCy loads; about 2 s after that). Skip it with `--no-warm-up`.
+
 `install --scope local` writes `.claude/settings.local.json` (just you);
 `--scope user` writes `~/.claude/settings.json` (every project).
 `maskflow-agent uninstall` removes exactly the guard's hooks and nothing else.

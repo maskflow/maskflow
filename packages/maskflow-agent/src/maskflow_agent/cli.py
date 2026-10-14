@@ -49,6 +49,12 @@ def main(argv: list[str] | None = None) -> int:
             help="project: .claude/settings.json (default, commit it to share with "
             "your team) | local: .claude/settings.local.json | user: ~/.claude/settings.json",
         )
+        if name == "install":
+            p.add_argument(
+                "--no-warm-up",
+                action="store_true",
+                help="skip loading the engine once now (the first session then starts cold)",
+            )
     sub.add_parser("doctor", help="verify the guard end to end with synthetic canaries")
     sub.add_parser("hook", help="(internal) run one Claude Code hook")
     sub.add_parser("exec", help="(internal) run a command with placeholders restored")
@@ -63,6 +69,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "install":
             install.install(path)
             print(f"maskflow-agent hooks installed in {path}")
+            if not args.no_warm_up:
+                print("Loading the masking engine once (the first load can take ~30 s) ...")
+                ok, seconds = install.warm_up()
+                print(
+                    f"  ready in {seconds:.0f} s"
+                    if ok
+                    else "  warm-up failed -- run `maskflow-agent doctor` to see why"
+                )
             print("Start a new Claude Code session, then run `maskflow-agent doctor`.")
         else:
             removed = install.uninstall(path)

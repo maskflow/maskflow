@@ -18,13 +18,36 @@ _MARKER = "maskflow_agent"
 
 # (event, matcher, hook name, timeout seconds, extra handler fields)
 _HOOKS: list[tuple[str, str | None, str, int, dict[str, Any]]] = [
-    ("SessionStart", None, "session-start", 60, {}),
+    # 180 s: room for a cold engine start (hooks.ensure_daemon waits 150 s).
+    ("SessionStart", None, "session-start", 180, {}),
     # onFailure "block": if this hook can't run, the tool doesn't either.
-    ("PreToolUse", "*", "pre-tool-use", 60, {"onFailure": "block"}),
+    ("PreToolUse", "*", "pre-tool-use", 180, {"onFailure": "block"}),
     ("PostToolUse", "*", "post-tool-use", 120, {}),
     ("UserPromptSubmit", None, "user-prompt-submit", 30, {}),
     ("SessionEnd", None, "session-end", 2, {}),
 ]
+
+
+def warm_up() -> tuple[bool, float]:
+    """Load the masking engine once in a child process so the first Claude
+    Code session doesn't pay the cold start (bytecode compile + spaCy load,
+    ~26 s on a fresh install, ~2 s afterwards)."""
+    import os
+    import subprocess
+    import time
+
+    # maskflow_core's config loader rejects unknown MASKFLOW_* variables --
+    # same reason the daemon strips ours before importing the engine.
+    env = {k: v for k, v in os.environ.items() if not k.startswith("MASKFLOW_AGENT_")}
+    started = time.monotonic()
+    proc = subprocess.run(
+        [sys.executable, "-c", "import maskflow; maskflow.Session().mask('warm-up')"],
+        capture_output=True,
+        timeout=600,
+        check=False,
+        env=env,
+    )
+    return proc.returncode == 0, time.monotonic() - started
 
 
 def settings_path(scope: str, cwd: Path) -> Path:
