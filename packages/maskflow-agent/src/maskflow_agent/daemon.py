@@ -281,6 +281,10 @@ def _handle(state: _State, request: dict[str, Any], stop: Callable[[], None]) ->
 
 class _Server(socketserver.ThreadingUnixStreamServer):
     daemon_threads = True
+    # Claude Code runs tool calls -- and so their hooks -- in parallel. The
+    # socketserver default backlog of 5 made Linux refuse the 6th concurrent
+    # connect outright (EAGAIN), and that hook withheld its tool's output.
+    request_queue_size = 128
     state: _State
     stop_event: threading.Event
 

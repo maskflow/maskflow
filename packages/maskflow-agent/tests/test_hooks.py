@@ -81,10 +81,12 @@ def test_known_value_inside_longer_number_untouched(session_id: str) -> None:
 
 
 def test_parallel_hooks_get_one_consistent_mapping(session_id: str) -> None:
+    # Claude Code runs tool calls in parallel: more concurrent hooks than the
+    # old socketserver backlog (5) made Linux refuse connects -> withheld.
     value = synthetic_aadhaar()
-    with ThreadPoolExecutor(8) as pool:
+    with ThreadPoolExecutor(24) as pool:
         outs = list(
-            pool.map(lambda _: _post(session_id, "Bash", {"stdout": f"uid {value}"}), range(8))
+            pool.map(lambda _: _post(session_id, "Bash", {"stdout": f"uid {value}"}), range(24))
         )
     tokens = {json.dumps(_masked(o)) for o in outs}
     assert len(tokens) == 1
@@ -340,3 +342,31 @@ def test_session_end_summary_and_log_hold_counts_only(fresh_session: str) -> Non
     log = paths.log_path(fresh_session)
     assert not log.exists() or value not in log.read_text()
     assert not protocol.ping(fresh_session)
+
+
+def test_connect_retries_while_daemon_busy_then_gives_up(
+    agent_home: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import errno
+    import socket as socket_mod
+
+    attempts = []
+
+    class Busy(socket_mod.socket):
+        def connect(self, address: object) -> None:  # type: ignore[override]
+            attempts.append(address)
+            raise OSError(errno.EAGAIN, "busy")
+
+    monkeypatch.setattr(protocol.socket, "socket", Busy)
+    monkeypatch.setattr(protocol, "_CONNECT_RETRY_SECONDS", 0.3)
+    with pytest.raises(protocol.DaemonUnavailable):
+        protocol.request("busy-session", "ping", timeout=5)
+    assert len(attempts) > 1  # retried, not failed on the first EAGAIN
+
+
+def test_missing_socket_fails_fast(agent_home: Path) -> None:
+    import time
+
+    started = time.monotonic()
+    assert not protocol.ping(f"absent-{uuid.uuid4().hex[:8]}")
+    assert time.monotonic() - started < 0.5
