@@ -44,7 +44,11 @@ maskflow-agent doctor               # proves it end to end with synthetic canari
 ```
 
 From a shell, `claude plugin marketplace add maskflow/maskflow --sparse
-.claude-plugin plugins` checks out only the plugin, not the whole repository.
+.claude-plugin plugins` checks out only the plugin, not the whole repository. (`--sparse` needs git 2.25 or newer).
+If the `maskflow/maskflow` shorthand fails with "Could not read from remote
+repository", Claude Code is cloning over SSH and your machine isn't set up
+for GitHub SSH. Use the HTTPS URL instead:
+`/plugin marketplace add https://github.com/maskflow/maskflow.git`.
 If [uv](https://docs.astral.sh/uv/) is installed, the plugin's first session
 builds its own environment (the pinned `maskflow-agent` plus the spaCy model).
 That took about a minute, once, in testing; later sessions start in seconds.

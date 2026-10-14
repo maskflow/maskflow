@@ -755,6 +755,21 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.1.3] - 2026-10-15
+
+### Fixed
+
+- **Plugin: the first-session setup failed straight after a release.** The
+  launcher's `uv pip install maskflow-agent==<pinned>` used uv's cached
+  copy of the PyPI index. A cache warmed before the release reported the
+  just-published version as missing, so the plugin fell back to denying
+  every tool call. Found by installing the 0.1.2 plugin from GitHub minutes
+  after publishing. The install now passes `--refresh-package
+  maskflow-agent`.
+- Docs: the `maskflow/maskflow` marketplace shorthand clones over SSH. Use
+  the HTTPS URL if GitHub SSH isn't set up. `--sparse` needs git 2.25 or
+  newer.
+
 ## [agent 0.1.2] - 2026-10-15
 
 ### Added
