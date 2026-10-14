@@ -27,7 +27,12 @@ once, not twice.
 
 import re
 
-from maskflow_core.context import CONTEXT_KEYWORDS, NEGATIVE_CONTEXT_KEYWORDS
+from maskflow_core.context import (
+    CONTEXT_KEYWORDS,
+    HEADER_KEYWORDS,
+    HEADER_NEGATIVE_KEYWORDS,
+    NEGATIVE_CONTEXT_KEYWORDS,
+)
 from maskflow_core.entities import PIIType
 from maskflow_core.recognizer import (
     GazetteerRecognizer,
@@ -216,11 +221,19 @@ _add(
             "contact number",
             "whatsapp",
             "call me at",
+            "call me on",
+            "reach me on",
+            "contact no",
             "मोबाइल",
             "मोबाइल नंबर",
             "फ़ोन नंबर",
             "संपर्क नंबर",
         ),
+        # Column-header-only (matched whole-word against a table header, see
+        # maskflow_core.context): unambiguous as a column label, too short
+        # to trust as a free-text substring ("ph" in "graph").
+        header_keywords=("mob", "mob no", "ph", "ph no", "msisdn", "contact", "tel", "telephone"),
+        header_negative_keywords=("app", "version", "build", "model", "imei", "os"),
     )
 )
 
@@ -258,6 +271,7 @@ _add(
             "marg",
         )
         + INDIAN_STATE_UT_NAMES,
+        header_keywords=("zipcode", "postal", "postcode"),
     )
 )
 
@@ -403,6 +417,10 @@ _add(
             "खाता नंबर",
             "बैंक खाता",
         ),
+        header_keywords=("acc", "acc no", "ac no", "accno", "beneficiary account"),
+        # "account" alone boosts a header; "account_id" / "account_type" in
+        # SaaS exports are internal identifiers, not bank account numbers.
+        header_negative_keywords=("id", "type", "status", "code", "ref", "manager"),
     )
 )
 
@@ -443,6 +461,48 @@ CONTEXT_KEYWORDS[_person_name_type] = tuple(
         )
     )
 )
+
+# A table column labelled "name" / "customer" holds names in every row, but
+# bare "name" can't be a free-text keyword (see above) -- header-only it's
+# exact. Labels like `product_name` / `file_name` / `branch_name` also
+# contain "name", so their qualifier is a header negative: it vetoes the
+# header boost and applies the usual penalty, so those columns never score
+# above an unlabelled one.
+HEADER_KEYWORDS[_person_name_type] = tuple(
+    dict.fromkeys(
+        (
+            *HEADER_KEYWORDS.get(_person_name_type, ()),
+            "name",
+            "full name",
+            "first name",
+            "last name",
+            "surname",
+            "customer",
+            "applicant",
+            "patient",
+            "holder",
+            "beneficiary",
+            "nominee",
+            "father",
+            "mother",
+            "spouse",
+            "guardian",
+        )
+    )
+)
+HEADER_NEGATIVE_KEYWORDS[_person_name_type] = tuple(
+    dict.fromkeys(
+        (
+            *HEADER_NEGATIVE_KEYWORDS.get(_person_name_type, ()),
+            "product", "file", "company", "bank", "branch", "host", "brand",
+            "item", "sku", "app", "project", "table", "column", "field",
+            "model", "city", "state", "place", "street", "village", "district",
+            "store", "shop", "plan", "scheme", "category", "device", "domain",
+            "org", "organisation", "organization", "business", "firm",
+            "hospital", "school", "college", "user", "username",
+        )
+    )
+)  # fmt: skip
 
 # ---------------------------------------------------------------------------
 # INDIAN_ADDRESS -- L1 Gazetteer. Unit-marker/landmark-relative/
@@ -645,6 +705,27 @@ _NEGATIVE_CONTEXT: tuple[str, ...] = (
 for _pii_type in _REGISTERED_TYPES:
     NEGATIVE_CONTEXT_KEYWORDS[_pii_type] = tuple(
         dict.fromkeys((*NEGATIVE_CONTEXT_KEYWORDS.get(_pii_type, ()), *_NEGATIVE_CONTEXT))
+    )
+
+# Header-only form of the same markers: a column named `test_mobile` or
+# `sample_pan` holds illustrative values. Whole-word header matching makes
+# the bare words safe here even though they're deliberately excluded from
+# the free-text list above ("latest", "@example.com").
+_HEADER_NEGATIVE_CONTEXT: tuple[str, ...] = (
+    "test",
+    "dummy",
+    "sample",
+    "fake",
+    "mock",
+    "example",
+    "demo",
+    "synthetic",
+    "placeholder",
+)
+
+for _pii_type in _REGISTERED_TYPES:
+    HEADER_NEGATIVE_KEYWORDS[_pii_type] = tuple(
+        dict.fromkeys((*HEADER_NEGATIVE_KEYWORDS.get(_pii_type, ()), *_HEADER_NEGATIVE_CONTEXT))
     )
 
 

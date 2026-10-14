@@ -164,3 +164,76 @@ def test_negative_context_step_not_configured_when_type_has_none() -> None:
 
     negative_step = next(s for s in span.explanation if s.rule == "negative_context")
     assert negative_step.outcome == "not_configured"
+
+
+# ---------------------------------------------------------------------------
+# Column-header context (tables.py): a table header counts as context for
+# every cell in its column, matched whole-word.
+# ---------------------------------------------------------------------------
+HEADER_MARKER_RE = re.compile(r"\bHDR-\d{4}\b")
+
+register_pattern(
+    "HEADER_MARKER",
+    HEADER_MARKER_RE,
+    0.35,
+    context_keywords=("marker code",),
+    header_keywords=("mk",),
+    header_negative_keywords=("legacy",),
+)
+
+
+def _header_marker_score(text: str, needle: str) -> float:
+    start = text.index(needle)
+    span = next(
+        s
+        for s in detect(text, min_confidence=0.0)
+        if s.entity_type == "HEADER_MARKER" and s.start == start
+    )
+    return span.score
+
+
+def _rows(header: str, n: int = 6) -> str:
+    return header + "\n" + "\n".join(f"{i},HDR-{1000 + i}" for i in range(1, n + 1))
+
+
+def test_free_text_keyword_in_header_boosts_far_rows() -> None:
+    text = _rows("id,marker_code")
+    assert _header_marker_score(text, "HDR-1006") == 0.75
+
+
+def test_header_matching_handles_camel_case_and_punctuation() -> None:
+    for header in ("id,MarkerCode", "id,Marker Code.", "id,marker-code"):
+        assert _header_marker_score(_rows(header), "HDR-1006") == 0.75, header
+
+
+def test_header_only_keyword_matches_whole_word_in_header() -> None:
+    assert _header_marker_score(_rows("id,mk"), "HDR-1006") == 0.75
+    assert _header_marker_score(_rows("id,mk_no"), "HDR-1006") == 0.75
+
+
+def test_header_only_keyword_is_not_a_substring_or_free_text_match() -> None:
+    assert _header_marker_score(_rows("id,mkt_segment"), "HDR-1006") == 0.35
+    assert _header_marker_score("the mk is HDR-1001 here", "HDR-1001") == 0.35
+
+
+def test_unrelated_header_does_not_boost() -> None:
+    assert _header_marker_score(_rows("id,order_ref"), "HDR-1006") == 0.35
+
+
+def test_header_negative_vetoes_header_boost_and_penalises() -> None:
+    assert _header_marker_score(_rows("id,legacy_mk"), "HDR-1006") == round(0.35 - 0.3, 2)
+
+
+def test_window_and_header_boost_once() -> None:
+    text = "id,marker_code\n1,marker code HDR-1001\n2,x\n3,y"
+    assert _header_marker_score(text, "HDR-1001") == 0.75
+
+
+def test_header_explanation_names_keyword_not_header_text() -> None:
+    text = _rows("id,marker_code_secretheader")
+    start = text.index("HDR-1006")
+    span = next(s for s in detect(text, min_confidence=0.0) if s.start == start)
+    step = next(step for step in span.explanation if step.rule == "context")
+    assert step.outcome == "boosted"
+    assert step.detail == 'keyword "marker code" found in column header'
+    assert "secretheader" not in repr(span)

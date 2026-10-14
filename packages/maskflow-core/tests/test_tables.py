@@ -1,0 +1,123 @@
+"""tables.find_tables(): block detection and header lookup across the table
+shapes a coding agent or a log export actually produces. Cell values are
+synthetic placeholders (NUM-*), not PII."""
+
+import time
+
+import pytest
+from maskflow_core.tables import MAX_LINES, find_tables
+
+
+def _header_at(text: str, needle: str) -> str | None:
+    start = text.index(needle)
+    return find_tables(text).header_for(start, start + len(needle))
+
+
+CSV = "id,mobile,status\n1,NUM-1,ok\n2,NUM-2,ok\n3,NUM-3,ok\n4,NUM-4,ok\n5,NUM-5,ok\n"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        CSV,
+        CSV.replace(",", "\t"),
+        CSV.replace(",", ";"),
+        CSV.replace("\n", "\r\n"),
+        # psql
+        "id | mobile | status\n----+--------+-------\n 1 | NUM-1 | ok\n 2 | NUM-5 | ok\n(2 rows)",
+        # mysql box
+        "+----+--------+\n| id | mobile |\n+----+--------+\n"
+        "| 1 | NUM-1 |\n| 2 | NUM-5 |\n+----+--------+",
+        # markdown
+        "| id | mobile |\n|---|:---|\n| 1 | NUM-1 |\n| 2 | NUM-5 |",
+        # sqlite -header
+        "id|mobile|status\n1|NUM-1|ok\n2|NUM-5|ok",
+    ],
+    ids=["csv", "tsv", "semicolon", "crlf", "psql", "mysql", "markdown", "sqlite"],
+)
+def test_header_found_for_every_table_shape(text: str) -> None:
+    assert _header_at(text, "NUM-5") == "mobile"
+
+
+def test_header_found_far_below_header_row() -> None:
+    rows = "\n".join(f"{i},NUM-{i},ok" for i in range(1, 501))
+    text = "id,mobile,status\n" + rows
+    assert _header_at(text, "NUM-500") == "mobile"
+
+
+def test_quoted_csv_cell_with_delimiter_inside() -> None:
+    text = 'name,mobile\n"Kumar, R",NUM-1\n"Iyer, S",NUM-2\n"Das, P",NUM-3'
+    assert _header_at(text, "NUM-3") == "mobile"
+
+
+def test_quoted_header_is_unquoted() -> None:
+    text = '"id","mobile"\n"1","NUM-1"\n"2","NUM-2"'
+    assert _header_at(text, "NUM-2") == "mobile"
+
+
+def test_devanagari_header() -> None:
+    text = "क्रम,मोबाइल\n1,NUM-1\n2,NUM-2"
+    assert _header_at(text, "NUM-2") == "मोबाइल"
+
+
+def test_table_inside_prose_and_two_tables() -> None:
+    text = (
+        "Here is the export you asked for.\n\n"
+        "id,mobile\n1,NUM-1\n2,NUM-2\n\n"
+        "And the accounts:\n\n"
+        "id,account_no\n1,NUM-3\n2,NUM-4\n\n"
+        "Let me know if anything is off."
+    )
+    assert _header_at(text, "NUM-2") == "mobile"
+    assert _header_at(text, "NUM-4") == "account_no"
+
+
+def test_header_row_itself_has_no_header() -> None:
+    assert _header_at(CSV, "mobile") is None
+
+
+def test_span_crossing_cells_has_no_header() -> None:
+    start = CSV.index("1,NUM-1")
+    assert find_tables(CSV).header_for(start, start + len("1,NUM-1")) is None
+
+
+class TestNotATable:
+    def test_single_line(self) -> None:
+        assert not find_tables("id,mobile,NUM-1")
+
+    def test_header_plus_one_row_is_too_short(self) -> None:
+        assert not find_tables("id,mobile\n1,NUM-1")
+
+    def test_numeric_first_row_is_not_a_header(self) -> None:
+        assert not find_tables("1,NUM-1\n2,NUM-2\n3,NUM-3")
+
+    def test_prose_with_commas(self) -> None:
+        text = (
+            "Hello team, please review the attached report before Friday.\n"
+            "Thanks, and let me know if the numbers look odd to you.\n"
+            "Regards, the platform team at the head office in Pune."
+        )
+        assert not find_tables(text)
+
+    def test_ragged_rows_end_the_block(self) -> None:
+        text = "id,mobile\n1,NUM-1\n2,NUM-2,extra\n3,NUM-3"
+        assert _header_at(text, "NUM-3") is None
+
+    def test_unbalanced_quote_line_breaks_the_block(self) -> None:
+        text = 'id,note\n1,"open\n2,closed"\n3,x'
+        assert _header_at(text, "x") is None
+
+    def test_line_cap(self) -> None:
+        text = "id,mobile\n" + "1,NUM-1\n" * (MAX_LINES + 1)
+        assert not find_tables(text)
+
+
+@pytest.mark.benchmark
+def test_scan_is_linear_on_large_and_pathological_input() -> None:
+    big_csv = "id,mobile,status\n" + "".join(f"{i},NUM-{i},ok\n" for i in range(150_000))
+    soup = ('|,;\t"' * 2000 + "\n") * 2000
+    for text in (big_csv, soup):
+        find_tables.cache_clear()
+        started = time.perf_counter()
+        find_tables(text)
+        assert time.perf_counter() - started < 5.0

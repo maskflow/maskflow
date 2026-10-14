@@ -23,6 +23,7 @@ regardless of score, length, or overlap policy.
 from __future__ import annotations
 
 import re
+from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -124,12 +125,25 @@ def resolve(candidates: Sequence[Span], text: str, config: ResolveConfig) -> lis
         key=lambda s: (not s.validated, -s.score, -(s.end - s.start), s.start),
     )
 
-    accepted: list[Span] = []
-    for cand in ordered:
+    # Accepted spans never overlap one another, so sorted by start their ends
+    # are sorted too and the ones a candidate overlaps form one contiguous
+    # run -- found by bisection instead of comparing against every accepted
+    # span (that was O(n^2) and dominated large tabular inputs). Disjoint
+    # and adjacent spans never conflicted at accept time, so skipping them
+    # changes nothing. Overlaps are visited in acceptance order, exactly as
+    # the old full scan did, so explanations and replacements are identical.
+    starts: list[int] = []
+    ends: list[int] = []
+    kept_by_pos: list[tuple[int, Span]] = []  # (acceptance seq, span), by start
+    for seq, cand in enumerate(ordered):
+        lo = bisect_right(ends, cand.start)
+        hi = bisect_left(starts, cand.end)
+        overlapping = sorted(kept_by_pos[lo:hi], key=lambda item: item[0]) if lo < hi else []
+
         conflict = False
         replaces: list[Span] = []
 
-        for kept in accepted:
+        for _, kept in overlapping:
             rel = _relationship(cand, kept, text)
             if rel in (Relationship.DISJOINT, Relationship.ADJACENT):
                 continue
@@ -159,10 +173,19 @@ def resolve(candidates: Sequence[Span], text: str, config: ResolveConfig) -> lis
             break
 
         if not conflict:
-            for kept in replaces:
-                accepted.remove(kept)
-            accepted.append(cand)
+            if replaces:
+                gone = {id(span) for span in replaces}
+                keep = [i for i in range(lo, hi) if id(kept_by_pos[i][1]) not in gone]
+                survivors = [kept_by_pos[i] for i in keep]
+                kept_by_pos[lo:hi] = survivors
+                starts[lo:hi] = [span.start for _, span in survivors]
+                ends[lo:hi] = [span.end for _, span in survivors]
+            at = bisect_left(starts, cand.start)
+            starts.insert(at, cand.start)
+            ends.insert(at, cand.end)
+            kept_by_pos.insert(at, (seq, cand))
 
+    accepted = [span for _, span in kept_by_pos]
     accepted.sort(key=lambda s: s.start)
     return _merge_adjacent(accepted, text, config)
 

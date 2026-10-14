@@ -566,6 +566,11 @@ jobs:
       # check (both -m benchmark) + generator reproducibility + structural
       # checks. Runs the real maskflow-cli scan pipeline (workspace pkg).
       - run: uv run pytest bench/scanbench/harness/tests -q
+      # tabular corpus (CSV/psql/mysql/markdown/sqlite tables): generator
+      # reproducibility + the column-header-context F1 gate (-m benchmark).
+      - run: uv run ruff check bench/tabular
+      - run: uv run ruff format --check bench/tabular
+      - run: uv run pytest bench/tabular/tests -q
       # Pure/deterministic pieces only (task generation, scoring, cache,
       # pipeline masking against a fake model) -- no Anthropic key needed.
       # The live task-model/judge path (pipeline.py's TaskModel.generate(),

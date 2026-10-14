@@ -155,6 +155,46 @@ Every candidate's `explanation` trail records both a `context` and a
 `negative_context` step (`not_configured` when that keyword set is empty),
 so `maskflow explain` shows exactly which keyword moved a score.
 
+### Column headers (tables)
+
+In a table the word that says what a value *is* -- its column header -- is
+usually far more than 40 characters above row 50. When the text is a table
+(CSV, TSV, `;`-separated, psql, mysql box output, `sqlite3 -header`,
+markdown), the column header also counts as context for every cell in that
+column. Each type's own `context_keywords` / `negative_context_keywords` are
+matched against it **whole-word** (`mobile_no`, `MobileNo`, and `Mobile No.`
+all read as "mobile no"). The window still applies, and a value gets at most
+one boost and one penalty.
+
+Two more optional arguments hold labels that are only safe to trust as a
+whole column name, never as a free-text substring:
+
+- **`header_keywords`** -- e.g. `("mob", "ph", "msisdn")`: an unambiguous
+  column label, but `"ph"` would match inside `"graph"` in prose.
+- **`header_negative_keywords`** -- e.g. `("app", "version", "id")`: a
+  header that also contains one of these (`mobile_app_build`, `account_id`)
+  isn't about this type. It gives **no** header boost and applies the normal
+  `0.3` penalty, so such a column always scores at or below an unlabelled
+  one. A type's ordinary negative keywords work the same way in a header.
+
+```python
+PatternRecognizer(
+    "EMPLOYEE_ID",
+    EMPLOYEE_ID_RE,
+    base_confidence=0.4,
+    context_keywords=("employee id", "emp id", "staff number"),
+    header_keywords=("empno", "emp code"),
+    header_negative_keywords=("manager", "test"),
+)
+```
+
+A block counts as a table only if it has at least 3 consecutive lines with
+the same delimiter count and a header row of short labels (no bare numbers,
+at most 4 words per cell). Anything else, including oversized input
+(200k lines, 64 KiB lines, 256 columns), gets no header context. The
+explanation step names the keyword (`keyword "mobile" found in column
+header`), never the header text.
+
 ## Sharing the NLP pass
 
 If your recognizer needs spaCy, subclass `NlpRecognizer` rather than

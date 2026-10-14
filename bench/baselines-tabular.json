@@ -1,0 +1,10 @@
+{
+  "AADHAAR": 0.9913,
+  "BANK_ACCOUNT_IN": 0.9587,
+  "IFSC": 1.0,
+  "INDIAN_MOBILE": 0.9991,
+  "PAN": 1.0,
+  "PERSON_NAME": 0.9882,
+  "PIN_CODE": 1.0,
+  "UPI_VPA": 1.0
+}

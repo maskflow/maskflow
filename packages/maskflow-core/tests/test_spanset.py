@@ -336,3 +336,99 @@ def test_resolve_verbose_does_not_reject_spans_that_only_lost_to_overlap() -> No
 
     assert accepted == [winner]
     assert rejected == []
+
+
+# ---------------------------------------------------------------------------
+# resolve() bisection rewrite: must match the original all-pairs scan
+# exactly -- same survivors, same order, same explanation trails.
+# ---------------------------------------------------------------------------
+def _reference_resolve(candidates: list[Span], text: str, config: ResolveConfig) -> list[Span]:
+    """The pre-0.8.3 O(n^2) acceptance loop, verbatim, as an oracle."""
+    from maskflow_core.entities import ExplanationStep
+    from maskflow_core.spanset import Relationship, _merge_adjacent, _relationship
+
+    live = [s for s in candidates if s.score >= config.threshold_for(s.entity_type)]
+    ordered = sorted(live, key=lambda s: (not s.validated, -s.score, -(s.end - s.start), s.start))
+    accepted: list[Span] = []
+    for cand in ordered:
+        conflict = False
+        replaces: list[Span] = []
+        for kept in accepted:
+            rel = _relationship(cand, kept, text)
+            if rel in (Relationship.DISJOINT, Relationship.ADJACENT):
+                continue
+            if rel == Relationship.CROSSING:
+                conflict = True
+                break
+            prefers_cand = config.policy_for(kept.entity_type) == OverlapPolicy.CONTAINED and (
+                (cand.validated and not kept.validated)
+                or (
+                    cand.validated == kept.validated
+                    and (cand.end - cand.start) < (kept.end - kept.start)
+                )
+            )
+            if prefers_cand:
+                cand.explanation.append(
+                    ExplanationStep(
+                        rule="overlap:contained",
+                        outcome="preferred",
+                        detail=f"over {kept.recognizer} span [{kept.start}:{kept.end}]",
+                    )
+                )
+                replaces.append(kept)
+                continue
+            conflict = True
+            break
+        if not conflict:
+            for kept in replaces:
+                accepted.remove(kept)
+            accepted.append(cand)
+    accepted.sort(key=lambda s: s.start)
+    return _merge_adjacent(accepted, text, config)
+
+
+def _clone(spans: list[Span]) -> list[Span]:
+    return [
+        Span(
+            start=s.start,
+            end=s.end,
+            entity_type=s.entity_type,
+            score=s.score,
+            recognizer=s.recognizer,
+            text=s.text,
+            validated=s.validated,
+            explanation=list(s.explanation),
+        )
+        for s in spans
+    ]
+
+
+def _shape(spans: list[Span]) -> list[tuple[object, ...]]:
+    return [
+        (s.start, s.end, s.entity_type, s.score, s.validated, s.recognizer, tuple(s.explanation))
+        for s in spans
+    ]
+
+
+@pytest.mark.parametrize("policy", list(OverlapPolicy))
+@given(spans=st.lists(_span(), max_size=40))
+@settings(max_examples=300, deadline=None)
+def test_resolve_matches_reference_all_pairs_scan(policy: OverlapPolicy, spans: list[Span]) -> None:
+    config = ResolveConfig(default_threshold=0.3, default_overlap_policy=policy)
+    assert _shape(resolve(_clone(spans), TEXT, config)) == _shape(
+        _reference_resolve(_clone(spans), TEXT, config)
+    )
+
+
+@pytest.mark.benchmark
+def test_resolve_scales_to_many_disjoint_spans() -> None:
+    import time
+
+    text = "x " * 40_000
+    spans = [
+        Span(start=i, end=i + 1, entity_type=TYPE_A, score=0.9, recognizer="t", text="x")
+        for i in range(0, len(text), 2)
+    ]
+    started = time.perf_counter()
+    assert len(resolve(spans, text, ResolveConfig(default_threshold=0.0))) == len(spans)
+    assert time.perf_counter() - started < 2.0
