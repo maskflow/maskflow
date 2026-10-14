@@ -766,6 +766,15 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   every tool call. Found by installing the 0.1.2 plugin from GitHub minutes
   after publishing. The install now passes `--refresh-package
   maskflow-agent`.
+- **Busy parallel tool calls could lose a tool's output on Linux.** Claude
+  Code runs tool calls, and so their hooks, in parallel. The daemon's
+  socket accepted only 5 queued connections (the `socketserver` default),
+  and Linux refuses a Unix-socket connect past that immediately. The hook
+  treated the refusal as "guard down" and withheld that tool's output:
+  safe, but lost. The daemon now queues 128 connections, and the client
+  retries a busy or refused connect for up to 2 s. A missing socket still
+  fails at once. Caught by CI (8 parallel hooks, Ubuntu); the test now
+  runs 24.
 - Docs: the `maskflow/maskflow` marketplace shorthand clones over SSH. Use
   the HTTPS URL if GitHub SSH isn't set up. `--sparse` needs git 2.25 or
   newer.
