@@ -12,92 +12,6 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-agent` `0.1.0`** (new package): a PII guard for Claude Code.
-  Hooks mask personal data in every tool result (Bash, Read, Grep, WebFetch,
-  MCP, ...) before the model sees it. Real values are restored only inside
-  allowlisted database/kubectl commands, at run time, in a separate process.
-  The agent can run `UPDATE kyc ... WHERE pan='<PAN_3>'` against the right
-  row without seeing the PAN. See [`docs/agent.md`](docs/agent.md).
-  - One daemon per session holds the value <-> placeholder mapping in memory
-    only and serialises parallel hooks, so a value always gets the same
-    placeholder. A value identified once is masked everywhere after that,
-    whatever its context (Aho-Corasick).
-  - Fails closed. `PreToolUse` runs with `onFailure: block` and refuses tool
-    calls while the guard is down. `PostToolUse` errors withhold the output
-    with a same-shaped stub. The run-time wrapper never runs a command it
-    can't unmask.
-  - Restoration needs a single-use ticket that the hook issues for the exact
-    command it checked. Direct wrapper calls and direct socket clients get
-    nothing. File edits containing placeholders are refused.
-  - Never grants more than the user's own permission rules: a wrapped
-    command is auto-approved only if the user's allow rules cover the
-    original. Deny and ask rules are kept.
-  - On restart or `--resume`, every placeholder already in the transcript is
-    reserved, so a new value can't take an old name.
-  - `maskflow-agent install|uninstall|doctor`. `doctor` runs synthetic
-    canaries through the real hook processes, including the guard-down
-    path.
-  - Measured in real `claude -p` sessions on a synthetic KYC table: right
-    row updated, 0 of 20 synthetic identifiers in the transcript. About
-    65 ms per hook.
-  - **`maskflow-cli` `0.8.2` -> `0.9.0`**: `maskflow agent ...` passthrough
-    behind a new optional `[agent]` extra.
-
-- **Column-header context for tabular text** (**`maskflow-core` `0.8.3`**,
-  **`maskflow-pack-india` `0.6.1`**). A bare value with no checksum
-  (mobile, bank account, PIN code) needs a context keyword within 40
-  characters. In a table that keyword is the column header, usually far
-  above row 5, so in a CSV export or `psql` output those values leaked.
-  A coding-agent test session sent all 5 mobile numbers in a 5-row
-  customer CSV to the model.
-  - New `maskflow_core.tables`: one linear pass, no regex, finds table
-    blocks (CSV/TSV/`;`, psql, mysql box, `sqlite3 -header`, markdown) and
-    answers "which header is above this cell?". Cells are split lazily, only
-    for lines that hold a match. Hard caps (200k lines, 64 KiB per line, 256
-    columns) fall back to no header context.
-  - `apply_context_boost()` / `apply_negative_context()` also match the
-    column header **whole-word** against each type's existing keywords.
-    Explanations say `keyword "mobile" found in column header` and never
-    include the header text.
-  - New optional `header_keywords=` / `header_negative_keywords=` on
-    `register_pattern()` / `register_custom_recognizer()` /
-    `register_ner_recognizer()` and the three recognizer classes (additive).
-    A header negative (`mobile_app_build`, `account_id`, `product_name`)
-    vetoes the header boost and applies the usual penalty.
-  - A header plus a **single** row counts as a table when it has 3 or more
-    columns, its header cells are at most 3 words, and the row has a cell
-    containing a digit. That's the shape of a one-record lookup
-    (`SELECT * FROM kyc WHERE id=4`). Found while recording the
-    maskflow-agent demo: the mobile in that row was more than 40 chars from
-    its `mobile` header and leaked. IndiaPII-v1.0 and indiapii-tabular-v1.0
-    are unchanged for every entity.
-  - pack-india: header-only labels (`mob`, `ph`, `msisdn`, `acc_no`,
-    `zipcode`, `name`, `customer`, ...), header negatives per type plus a
-    shared `test`/`sample`/`dummy`/`mock` set, and the missing free-text
-    phrases `call me on`, `reach me on`, `contact no`.
-  - New benchmark **indiapii-tabular-v1.0** (300 synthetic tables, 26,062
-    spans, look-alike decoy columns), measured on this change vs `main`:
-    INDIAN_MOBILE recall 0.3% → 100%, PIN_CODE 0.4% → 100%,
-    BANK_ACCOUNT_IN 0.4% → 92.5%, all entities 60.9% → 99.1%. False
-    positives went down, 220 → 153. IndiaPII-v1.0 (prose) is unchanged for
-    every entity, strict and partial. Report in
-    `bench/reports/indiapii-tabular-v1.0/`, plus a CI F1 gate
-    (`bench/baselines-tabular.json`).
-  - Docs: [`docs/custom-recognizers.md`](docs/custom-recognizers.md#column-headers-tables).
-
-### Changed
-
-- **`maskflow-core` `0.8.3`: `spanset.resolve()` is no longer O(n²).** Each
-  candidate was compared against every accepted span. Only overlapping
-  spans can conflict, and accepted spans never overlap one another, so a
-  bisection finds them directly. The output is identical: a Hypothesis test
-  checks it against the old algorithm for every overlap policy. Detecting a
-  78 KB, 2,500-row CSV went from 14 s to 4 s before any header context, and
-  this matters more now that tables yield far more spans.
-- `maskflow-pack-india` `0.6.1` requires `maskflow-core>=0.8.3`.
-
-### Added
-
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
@@ -840,6 +754,99 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
+
+## [core 0.8.3, pack-india 0.6.1, cli 0.9.0, agent 0.1.0] - 2026-10-14
+
+Publishes #120 (column-header context for tabular text, O(n log n) span
+resolution, indiapii-tabular-v1.0), #121 (`maskflow-agent`, a PII guard for
+Claude Code) and #122 (header context for single-row table output).
+
+### Added
+
+- **`maskflow-agent` `0.1.0`** (new package): a PII guard for Claude Code.
+  Hooks mask personal data in every tool result (Bash, Read, Grep, WebFetch,
+  MCP, ...) before the model sees it. Real values are restored only inside
+  allowlisted database/kubectl commands, at run time, in a separate process.
+  The agent can run `UPDATE kyc ... WHERE pan='<PAN_3>'` against the right
+  row without seeing the PAN. See [`docs/agent.md`](docs/agent.md).
+  - One daemon per session holds the value <-> placeholder mapping in memory
+    only and serialises parallel hooks, so a value always gets the same
+    placeholder. A value identified once is masked everywhere after that,
+    whatever its context (Aho-Corasick).
+  - Fails closed. `PreToolUse` runs with `onFailure: block` and refuses tool
+    calls while the guard is down. `PostToolUse` errors withhold the output
+    with a same-shaped stub. The run-time wrapper never runs a command it
+    can't unmask.
+  - Restoration needs a single-use ticket that the hook issues for the exact
+    command it checked. Direct wrapper calls and direct socket clients get
+    nothing. File edits containing placeholders are refused.
+  - Never grants more than the user's own permission rules: a wrapped
+    command is auto-approved only if the user's allow rules cover the
+    original. Deny and ask rules are kept.
+  - On restart or `--resume`, every placeholder already in the transcript is
+    reserved, so a new value can't take an old name.
+  - `maskflow-agent install|uninstall|doctor`. `doctor` runs synthetic
+    canaries through the real hook processes, including the guard-down
+    path.
+  - Measured in real `claude -p` sessions on a synthetic KYC table: right
+    row updated, 0 of 20 synthetic identifiers in the transcript. About
+    65 ms per hook.
+  - **`maskflow-cli` `0.8.2` -> `0.9.0`**: `maskflow agent ...` passthrough
+    behind a new optional `[agent]` extra.
+
+- **Column-header context for tabular text** (**`maskflow-core` `0.8.3`**,
+  **`maskflow-pack-india` `0.6.1`**). A bare value with no checksum
+  (mobile, bank account, PIN code) needs a context keyword within 40
+  characters. In a table that keyword is the column header, usually far
+  above row 5, so in a CSV export or `psql` output those values leaked.
+  A coding-agent test session sent all 5 mobile numbers in a 5-row
+  customer CSV to the model.
+  - New `maskflow_core.tables`: one linear pass, no regex, finds table
+    blocks (CSV/TSV/`;`, psql, mysql box, `sqlite3 -header`, markdown) and
+    answers "which header is above this cell?". Cells are split lazily, only
+    for lines that hold a match. Hard caps (200k lines, 64 KiB per line, 256
+    columns) fall back to no header context.
+  - `apply_context_boost()` / `apply_negative_context()` also match the
+    column header **whole-word** against each type's existing keywords.
+    Explanations say `keyword "mobile" found in column header` and never
+    include the header text.
+  - New optional `header_keywords=` / `header_negative_keywords=` on
+    `register_pattern()` / `register_custom_recognizer()` /
+    `register_ner_recognizer()` and the three recognizer classes (additive).
+    A header negative (`mobile_app_build`, `account_id`, `product_name`)
+    vetoes the header boost and applies the usual penalty.
+  - A header plus a **single** row counts as a table when it has 3 or more
+    columns, its header cells are at most 3 words, and the row has a cell
+    containing a digit. That's the shape of a one-record lookup
+    (`SELECT * FROM kyc WHERE id=4`). Found while recording the
+    maskflow-agent demo: the mobile in that row was more than 40 chars from
+    its `mobile` header and leaked. IndiaPII-v1.0 and indiapii-tabular-v1.0
+    are unchanged for every entity.
+  - pack-india: header-only labels (`mob`, `ph`, `msisdn`, `acc_no`,
+    `zipcode`, `name`, `customer`, ...), header negatives per type plus a
+    shared `test`/`sample`/`dummy`/`mock` set, and the missing free-text
+    phrases `call me on`, `reach me on`, `contact no`.
+  - New benchmark **indiapii-tabular-v1.0** (300 synthetic tables, 26,062
+    spans, look-alike decoy columns), measured on this change vs `main`:
+    INDIAN_MOBILE recall 0.3% → 100%, PIN_CODE 0.4% → 100%,
+    BANK_ACCOUNT_IN 0.4% → 92.5%, all entities 60.9% → 99.1%. False
+    positives went down, 220 → 153. IndiaPII-v1.0 (prose) is unchanged for
+    every entity, strict and partial. Report in
+    `bench/reports/indiapii-tabular-v1.0/`, plus a CI F1 gate
+    (`bench/baselines-tabular.json`).
+  - Docs: [`docs/custom-recognizers.md`](docs/custom-recognizers.md#column-headers-tables).
+
+### Changed
+
+- **`maskflow-core` `0.8.3`: `spanset.resolve()` is no longer O(n²).** Each
+  candidate was compared against every accepted span. Only overlapping
+  spans can conflict, and accepted spans never overlap one another, so a
+  bisection finds them directly. The output is identical: a Hypothesis test
+  checks it against the old algorithm for every overlap policy. Detecting a
+  78 KB, 2,500-row CSV went from 14 s to 4 s before any header context, and
+  this matters more now that tables yield far more spans.
+- `maskflow-pack-india` `0.6.1` requires `maskflow-core>=0.8.3`.
+
 ## [core 0.8.2, pack-india 0.6.0, sdk 0.9.2, cli 0.8.2, bench 0.1.1] - 2026-10-10
 
 ### Fixed
