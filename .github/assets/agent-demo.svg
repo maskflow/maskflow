@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="Split-screen demo: the same Claude Code task on a KYC table without and with maskflow-agent. Without it the model receives Aadhaar, PAN, mobile and UPI values; with it the model sees only placeholders and still updates the right row.">
+<title>maskflow-agent demo</title>
+<style>
+text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:15px;fill:#e6edf3}
+text{white-space:pre}
+.h{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+.l{opacity:0;animation:show 18.0s infinite}
+@keyframes show{0%{opacity:0}3%{opacity:1}92%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.l{animation:none;opacity:1}}
+</style>
+<rect width="1280" height="720" rx="14" fill="#0d1117"/>
+<text class="h" x="640" y="44" text-anchor="middle" font-size="22" font-weight="700" fill="#e6edf3">Same task. Same data. One of them leaks it.</text>
+<rect x="30" y="70" width="600" height="570" rx="10" fill="#161b22" stroke="#30363d"/>
+<circle cx="52" cy="92" r="6" fill="#ff7b72"/>
+<text class="h" x="68" y="97" font-size="16" font-weight="600" fill="#e6edf3">Claude Code</text>
+<rect x="650" y="70" width="600" height="570" rx="10" fill="#161b22" stroke="#30363d"/>
+<circle cx="672" cy="92" r="6" fill="#3fb950"/>
+<text class="h" x="688" y="97" font-size="16" font-weight="600" fill="#e6edf3">Claude Code + maskflow-agent</text>
+<text class="l" x="48" y="132" style="animation-delay:0.60s"><tspan fill="#e6edf3">&gt; Support ticket: KYC for customer 4 is stuck. Look the</tspan></text>
+<text class="l" x="48" y="154" style="animation-delay:1.05s"><tspan fill="#e6edf3">  customer up in kyc.db (use sqlite3 -header; table kyc),</tspan></text>
+<text class="l" x="48" y="176" style="animation-delay:1.50s"><tspan fill="#e6edf3">  then set their status to verified, matching on their PAN.</tspan></text>
+<text class="l" x="48" y="198" style="animation-delay:1.95s"><tspan fill="#e6edf3">  Show me the row afterwards.</tspan></text>
+<text class="l" x="48" y="220" style="animation-delay:2.40s"></text>
+<text class="l" x="48" y="242" style="animation-delay:2.85s"><tspan fill="#79c0ff">$ sqlite3 -header kyc.db &quot;select * from kyc where id=4;&quot;</tspan></text>
+<text class="l" x="48" y="264" style="animation-delay:3.30s"><tspan fill="#8b949e">  the model received:</tspan></text>
+<text class="l" x="48" y="286" style="animation-delay:3.75s"><tspan fill="#e6edf3">    name     </tspan><tspan fill="#ff7b72" font-weight="700">Arjun Reddy</tspan></text>
+<text class="l" x="48" y="308" style="animation-delay:4.20s"><tspan fill="#e6edf3">    aadhaar  </tspan><tspan fill="#ff7b72" font-weight="700">711577498934</tspan></text>
+<text class="l" x="48" y="330" style="animation-delay:4.65s"><tspan fill="#e6edf3">    pan      </tspan><tspan fill="#ff7b72" font-weight="700">YRBPR0593D</tspan></text>
+<text class="l" x="48" y="352" style="animation-delay:5.10s"><tspan fill="#e6edf3">    mobile   </tspan><tspan fill="#ff7b72" font-weight="700">8959853741</tspan></text>
+<text class="l" x="48" y="374" style="animation-delay:5.55s"><tspan fill="#e6edf3">    upi      </tspan><tspan fill="#ff7b72" font-weight="700">arjun99@oksbi</tspan></text>
+<text class="l" x="48" y="396" style="animation-delay:6.00s"></text>
+<text class="l" x="48" y="418" style="animation-delay:6.45s"><tspan fill="#79c0ff">$ sqlite3 -header kyc.db &quot;update kyc set status=&#x27;verified&#x27;</tspan></text>
+<text class="l" x="48" y="440" style="animation-delay:6.90s"><tspan fill="#79c0ff">  where pan=&#x27;</tspan><tspan fill="#ff7b72" font-weight="700">YRBPR0593D</tspan><tspan fill="#79c0ff">&#x27;; select * from kyc where</tspan></text>
+<text class="l" x="48" y="462" style="animation-delay:7.35s"><tspan fill="#79c0ff">  pan=&#x27;</tspan><tspan fill="#ff7b72" font-weight="700">YRBPR0593D</tspan><tspan fill="#79c0ff">&#x27;;&quot;</tspan></text>
+<text class="l" x="48" y="484" style="animation-delay:7.80s"><tspan fill="#3fb950">  -&gt; row updated, status = verified</tspan></text>
+<text class="l" x="48" y="506" style="animation-delay:8.25s"></text>
+<text class="l" x="668" y="132" style="animation-delay:0.60s"><tspan fill="#e6edf3">&gt; Support ticket: KYC for customer 4 is stuck. Look the</tspan></text>
+<text class="l" x="668" y="154" style="animation-delay:1.05s"><tspan fill="#e6edf3">  customer up in kyc.db (use sqlite3 -header; table kyc),</tspan></text>
+<text class="l" x="668" y="176" style="animation-delay:1.50s"><tspan fill="#e6edf3">  then set their status to verified, matching on their PAN.</tspan></text>
+<text class="l" x="668" y="198" style="animation-delay:1.95s"><tspan fill="#e6edf3">  Show me the row afterwards.</tspan></text>
+<text class="l" x="668" y="220" style="animation-delay:2.40s"></text>
+<text class="l" x="668" y="242" style="animation-delay:2.85s"><tspan fill="#79c0ff">$ sqlite3 -header kyc.db &quot;.schema kyc&quot; &quot;SELECT * FROM kyc</tspan></text>
+<text class="l" x="668" y="264" style="animation-delay:3.30s"><tspan fill="#79c0ff">  WHERE rowid=4 OR customer_id=4;&quot; 2&gt;&amp;1 || sqlite3 -header</tspan></text>
+<text class="l" x="668" y="286" style="animation-delay:3.75s"><tspan fill="#79c0ff">  kyc.db &quot;SELECT * FROM kyc LIMIT 10;&quot;</tspan></text>
+<text class="l" x="668" y="308" style="animation-delay:4.20s"><tspan fill="#8b949e">  the model received:</tspan></text>
+<text class="l" x="668" y="330" style="animation-delay:4.65s"><tspan fill="#e6edf3">    name     </tspan><tspan fill="#3fb950" font-weight="700">&lt;PERSON_NAME_5&gt;</tspan></text>
+<text class="l" x="668" y="352" style="animation-delay:5.10s"><tspan fill="#e6edf3">    aadhaar  </tspan><tspan fill="#3fb950" font-weight="700">&lt;AADHAAR_4&gt;</tspan></text>
+<text class="l" x="668" y="374" style="animation-delay:5.55s"><tspan fill="#e6edf3">    pan      </tspan><tspan fill="#3fb950" font-weight="700">&lt;PAN_4&gt;</tspan></text>
+<text class="l" x="668" y="396" style="animation-delay:6.00s"><tspan fill="#e6edf3">    mobile   </tspan><tspan fill="#3fb950" font-weight="700">&lt;INDIAN_MOBILE_4&gt;</tspan></text>
+<text class="l" x="668" y="418" style="animation-delay:6.45s"><tspan fill="#e6edf3">    upi      </tspan><tspan fill="#3fb950" font-weight="700">&lt;UPI_VPA_4&gt;</tspan></text>
+<text class="l" x="668" y="440" style="animation-delay:6.90s"></text>
+<text class="l" x="668" y="462" style="animation-delay:7.35s"><tspan fill="#79c0ff">$ sqlite3 -header kyc.db &quot;UPDATE kyc SET status=&#x27;verified&#x27;</tspan></text>
+<text class="l" x="668" y="484" style="animation-delay:7.80s"><tspan fill="#79c0ff">  WHERE pan=&#x27;</tspan><tspan fill="#3fb950" font-weight="700">&lt;PAN_4&gt;</tspan><tspan fill="#79c0ff">&#x27;; SELECT changes(); SELECT * FROM kyc</tspan></text>
+<text class="l" x="668" y="506" style="animation-delay:8.25s"><tspan fill="#79c0ff">  WHERE pan=&#x27;</tspan><tspan fill="#3fb950" font-weight="700">&lt;PAN_4&gt;</tspan><tspan fill="#79c0ff">&#x27;;&quot;</tspan></text>
+<text class="l" x="668" y="528" style="animation-delay:8.70s"><tspan fill="#3fb950">  -&gt; row updated, status = verified</tspan></text>
+<text class="l" x="668" y="550" style="animation-delay:9.15s"></text>
+<text class="l h" x="48" y="620" font-size="17" font-weight="700" fill="#ff7b72" style="animation-delay:9.60s">Sent to the model: aadhaar, mobile, name, pan, upi</text>
+<text class="l h" x="668" y="620" font-size="17" font-weight="700" fill="#3fb950" style="animation-delay:9.60s">Sent to the model: no personal data. Row updated.</text>
+<text class="h" x="640" y="686" text-anchor="middle" font-size="16" fill="#8b949e">pip install maskflow-agent  ·  maskflow-agent install  ·  synthetic data, real Claude Code sessions</text>
+</svg>

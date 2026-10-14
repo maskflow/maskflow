@@ -195,6 +195,28 @@ answer = unmask_response(str(response), response.source_nodes)
 Full reference in [`packages/maskflow-llamaindex/README.md`](packages/maskflow-llamaindex/README.md)
 and [`docs/llamaindex.md`](docs/llamaindex.md).
 
+## Claude Code: keep customer data out of your coding agent
+
+`maskflow-agent` installs Claude Code hooks that mask PII in every tool result (shell output,
+file reads, searches, MCP) before the model sees it. Real values are restored only inside
+allowlisted database/kubectl commands, at run time, in a separate process. The agent can still
+fix *that* customer's row; the model never sees their Aadhaar, PAN or mobile.
+
+<p align="center">
+  <img src=".github/assets/agent-demo.svg" alt="Split screen of the same Claude Code task on a synthetic KYC table. Left, without the guard: the model receives the customer's name, Aadhaar, PAN, mobile and UPI ID. Right, with maskflow-agent: the model sees only placeholders such as PAN_4, uses them in the UPDATE, and the right row is still updated." width="900">
+</p>
+
+```bash
+pip install maskflow-agent
+maskflow-agent install     # hooks in .claude/settings.json
+maskflow-agent doctor      # proves it end to end with synthetic canaries
+```
+
+It fails closed, never grants permissions you didn't already have, and keeps the transcript on
+disk free of real values. Recorded from real sessions on synthetic data; reproduce it with
+[`packages/maskflow-agent/examples/demo`](packages/maskflow-agent/examples/demo). Threat model and
+limits are in [`docs/agent.md`](docs/agent.md).
+
 ## MCP: a masking proxy for agent tool calls
 
 `maskflow-mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) proxy. Put it in
