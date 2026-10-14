@@ -3,6 +3,7 @@ shapes a coding agent or a log export actually produces. Cell values are
 synthetic placeholders (NUM-*), not PII."""
 
 import time
+from collections.abc import Callable
 
 import pytest
 from maskflow_core.tables import MAX_LINES, find_tables
@@ -128,11 +129,10 @@ def _scan_seconds(text: str) -> float:
     ],
     ids=["csv", "delimiter-soup"],
 )
-def test_scan_time_grows_linearly(make: object) -> None:
+def test_scan_time_grows_linearly(make: Callable[[int], str]) -> None:
     # Growth ratio, not wall-clock: CI runs this under coverage on slow
     # runners. 4x the input should cost ~4x (linear), never ~16x (quadratic).
-    build = make  # type: ignore[assignment]
-    small, large = build(10_000), build(40_000)  # type: ignore[operator]
+    small, large = make(10_000), make(40_000)
     _scan_seconds(small)  # warm-up
     ratio = _scan_seconds(large) / max(_scan_seconds(small), 1e-4)
     assert ratio < 8, f"4x input took {ratio:.1f}x as long"
