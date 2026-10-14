@@ -421,14 +421,21 @@ def test_resolve_matches_reference_all_pairs_scan(policy: OverlapPolicy, spans: 
 
 
 @pytest.mark.benchmark
-def test_resolve_scales_to_many_disjoint_spans() -> None:
+def test_resolve_time_grows_near_linearly() -> None:
+    # Growth ratio, not wall-clock (CI runs under coverage). The old
+    # all-pairs scan was ~16x for 4x the spans; bisection is ~4-5x.
     import time
 
-    text = "x " * 40_000
-    spans = [
-        Span(start=i, end=i + 1, entity_type=TYPE_A, score=0.9, recognizer="t", text="x")
-        for i in range(0, len(text), 2)
-    ]
-    started = time.perf_counter()
-    assert len(resolve(spans, text, ResolveConfig(default_threshold=0.0))) == len(spans)
-    assert time.perf_counter() - started < 2.0
+    def seconds(n: int) -> float:
+        text = "x " * n
+        spans = [
+            Span(start=i, end=i + 1, entity_type=TYPE_A, score=0.9, recognizer="t", text="x")
+            for i in range(0, len(text), 2)
+        ]
+        started = time.perf_counter()
+        assert len(resolve(spans, text, ResolveConfig(default_threshold=0.0))) == n
+        return time.perf_counter() - started
+
+    seconds(2_000)  # warm-up
+    ratio = seconds(20_000) / max(seconds(5_000), 1e-4)
+    assert ratio < 8, f"4x the spans took {ratio:.1f}x as long"
