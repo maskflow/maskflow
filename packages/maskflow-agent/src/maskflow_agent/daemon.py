@@ -41,6 +41,22 @@ _NOISY_PROMPT_TYPES = frozenset({"PERSON_NAME", "INDIAN_ADDRESS", "PERSON", "LOC
 log = logging.getLogger("maskflow_agent.daemon")
 
 
+class _ProblemCounter(logging.Handler):
+    """Counts WARNING+ records so a clean session's log can be deleted at
+    shutdown while a log with something worth reading is kept."""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.count = 0
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.count += 1
+
+
+_problems = _ProblemCounter()
+log.addHandler(_problems)
+
+
 class _KnownValues:
     """Every value this session has already masked, matched literally in
     later text whatever its context -- a bare mobile in a `grep` hit is
@@ -308,6 +324,12 @@ def serve(session_id: str, idle_seconds: float, patterns_only: bool) -> int:
     # Written before the slow engine import, so a hook that arrives while we
     # load waits for us instead of starting a second daemon.
     pid_file.write_text(str(os.getpid()))
+    try:
+        swept = paths.sweep_stale()
+        if swept:
+            log.info("removed %d stale session file(s)", swept)
+    except OSError:
+        pass
     if sock_path.exists():
         # Another live daemon owns this session: don't steal its socket.
         try:
@@ -354,6 +376,7 @@ def serve(session_id: str, idle_seconds: float, patterns_only: bool) -> int:
         if paths.live_pid(session_id) == os.getpid():
             pid_file.unlink(missing_ok=True)
         log.info("daemon stopped")
+        paths.remove_session_files(session_id, keep_log=_problems.count > 0)
     return 0
 
 
