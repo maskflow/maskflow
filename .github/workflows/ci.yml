@@ -15,6 +15,7 @@ jobs:
       sdk_python: ${{ steps.filter.outputs.sdk_python }}
       evidence: ${{ steps.filter.outputs.evidence }}
       attest: ${{ steps.filter.outputs.attest }}
+      agent: ${{ steps.filter.outputs.agent }}
       gateway: ${{ steps.filter.outputs.gateway }}
       litellm_guardrail: ${{ steps.filter.outputs.litellm_guardrail }}
       langchain: ${{ steps.filter.outputs.langchain }}
@@ -60,6 +61,11 @@ jobs:
               - 'pyproject.toml'
             attest:
               - 'packages/maskflow-attest/**'
+            agent:
+              - 'packages/maskflow-agent/**'
+              - 'packages/maskflow-sdk/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-india/**'
               - 'packages/maskflow-bench/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
@@ -268,6 +274,30 @@ jobs:
       - run: uv run ruff format --check packages/maskflow-attest
       - run: uv run mypy packages/maskflow-attest/src --strict
       - run: uv run pytest packages/maskflow-attest/tests -q
+
+  agent:
+    # Claude Code hook guard. Unix sockets only in v1, so no Windows leg.
+    needs: changes
+    if: needs.changes.outputs.agent == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-agent
+      - run: uv run ruff format --check packages/maskflow-agent
+      - run: uv run mypy packages/maskflow-agent/src --strict
+      - run: uv run pytest packages/maskflow-agent/tests -q
+      - run: uv run pytest packages/maskflow-agent/tests -m leak -q
 
   gateway:
     needs: changes
@@ -613,7 +643,7 @@ jobs:
 
   pip-audit:
     needs: changes
-    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.evidence == 'true' || needs.changes.outputs.attest == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.evidence == 'true' || needs.changes.outputs.attest == 'true' || needs.changes.outputs.agent == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

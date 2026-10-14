@@ -424,6 +424,7 @@ def test_resolve_matches_reference_all_pairs_scan(policy: OverlapPolicy, spans: 
 def test_resolve_time_grows_near_linearly() -> None:
     # Growth ratio, not wall-clock (CI runs under coverage). The old
     # all-pairs scan was ~16x for 4x the spans; bisection is ~4-5x.
+    import gc
     import time
 
     def seconds(n: int) -> float:
@@ -432,9 +433,16 @@ def test_resolve_time_grows_near_linearly() -> None:
             Span(start=i, end=i + 1, entity_type=TYPE_A, score=0.9, recognizer="t", text="x")
             for i in range(0, len(text), 2)
         ]
-        started = time.perf_counter()
-        assert len(resolve(spans, text, ResolveConfig(default_threshold=0.0))) == n
-        return time.perf_counter() - started
+        best = float("inf")
+        gc.disable()  # a collection mid-run is the main source of outliers
+        try:
+            for _ in range(3):  # best of 3: noise only ever adds time
+                started = time.perf_counter()
+                assert len(resolve(spans, text, ResolveConfig(default_threshold=0.0))) == n
+                best = min(best, time.perf_counter() - started)
+        finally:
+            gc.enable()
+        return best
 
     seconds(2_000)  # warm-up
     ratio = seconds(20_000) / max(seconds(5_000), 1e-4)

@@ -11,6 +11,7 @@ import maskflow_pack_intl  # noqa: F401 -- import side effect registers pack-int
 import maskflow_pack_india  # noqa: F401 -- import side effect registers pack-india's entity types
 import typer
 
+from .commands.agent_cmd import agent
 from .commands.bench_cmd import bench
 from .commands.config_cmd import app as config_app
 from .commands.doctor_cmd import doctor
@@ -23,6 +24,11 @@ app.command("doctor")(doctor)
 app.command("explain")(explain)
 app.command("scan")(scan)
 app.command("bench")(bench)
+app.command(
+    "agent",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    add_help_option=False,
+)(agent)
 
 
 def main() -> None:

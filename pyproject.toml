@@ -24,6 +24,9 @@ dependencies = [
     # maskflow-cli subcommand) -- listed here, same as maskflow-bench above,
     # purely so a plain `uv sync` installs it into the shared dev venv.
     "maskflow-attest",
+    # Standalone console script (`maskflow-agent`, Claude Code hooks) --
+    # listed so a plain `uv sync` installs it into the shared dev venv.
+    "maskflow-agent",
 ]
 
 [tool.uv.sources]
@@ -40,6 +43,7 @@ maskflow-mcp = { workspace = true }
 maskflow-evidence = { workspace = true }
 maskflow-bench = { workspace = true }
 maskflow-attest = { workspace = true }
+maskflow-agent = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]

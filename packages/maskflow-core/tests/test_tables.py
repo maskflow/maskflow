@@ -2,6 +2,7 @@
 shapes a coding agent or a log export actually produces. Cell values are
 synthetic placeholders (NUM-*), not PII."""
 
+import gc
 import time
 from collections.abc import Callable
 
@@ -114,10 +115,17 @@ class TestNotATable:
 
 
 def _scan_seconds(text: str) -> float:
-    find_tables.cache_clear()
-    started = time.perf_counter()
-    find_tables(text)
-    return time.perf_counter() - started
+    best = float("inf")
+    gc.disable()  # a collection mid-run is the main source of outliers
+    try:
+        for _ in range(3):  # best of 3: noise only ever adds time
+            find_tables.cache_clear()
+            started = time.perf_counter()
+            find_tables(text)
+            best = min(best, time.perf_counter() - started)
+    finally:
+        gc.enable()
+    return best
 
 
 @pytest.mark.benchmark
