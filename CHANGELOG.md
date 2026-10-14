@@ -12,6 +12,37 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent` `0.1.0`** (new package): a PII guard for Claude Code.
+  Hooks mask personal data in every tool result (Bash, Read, Grep, WebFetch,
+  MCP, ...) before the model sees it. Real values are restored only inside
+  allowlisted database/kubectl commands, at run time, in a separate process.
+  The agent can run `UPDATE kyc ... WHERE pan='<PAN_3>'` against the right
+  row without seeing the PAN. See [`docs/agent.md`](docs/agent.md).
+  - One daemon per session holds the value <-> placeholder mapping in memory
+    only and serialises parallel hooks, so a value always gets the same
+    placeholder. A value identified once is masked everywhere after that,
+    whatever its context (Aho-Corasick).
+  - Fails closed. `PreToolUse` runs with `onFailure: block` and refuses tool
+    calls while the guard is down. `PostToolUse` errors withhold the output
+    with a same-shaped stub. The run-time wrapper never runs a command it
+    can't unmask.
+  - Restoration needs a single-use ticket that the hook issues for the exact
+    command it checked. Direct wrapper calls and direct socket clients get
+    nothing. File edits containing placeholders are refused.
+  - Never grants more than the user's own permission rules: a wrapped
+    command is auto-approved only if the user's allow rules cover the
+    original. Deny and ask rules are kept.
+  - On restart or `--resume`, every placeholder already in the transcript is
+    reserved, so a new value can't take an old name.
+  - `maskflow-agent install|uninstall|doctor`. `doctor` runs synthetic
+    canaries through the real hook processes, including the guard-down
+    path.
+  - Measured in real `claude -p` sessions on a synthetic KYC table: right
+    row updated, 0 of 20 synthetic identifiers in the transcript. About
+    65 ms per hook.
+  - **`maskflow-cli` `0.8.2` -> `0.9.0`**: `maskflow agent ...` passthrough
+    behind a new optional `[agent]` extra.
+
 - **Column-header context for tabular text** (**`maskflow-core` `0.8.3`**,
   **`maskflow-pack-india` `0.6.1`**). A bare value with no checksum
   (mobile, bank account, PIN code) needs a context keyword within 40

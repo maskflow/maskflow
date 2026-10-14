@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.8.2"
+version = "0.9.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -86,8 +86,14 @@ postgres = [
 bench = [
     "maskflow-bench>=0.1.0,<0.2",
 ]
+# `maskflow agent install|uninstall|doctor` -- passthrough to maskflow-agent's
+# own console script (Claude Code PII guard). Lazy-imported by agent_cmd.py.
+agent = [
+    "maskflow-agent>=0.1.0,<0.2",
+]
 
 [tool.uv.sources]
+maskflow-agent = { workspace = true }
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
 maskflow-pack-india = { workspace = true }
