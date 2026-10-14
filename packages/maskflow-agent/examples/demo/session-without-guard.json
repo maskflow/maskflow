@@ -1,0 +1,14 @@
+{
+  "prompt": "Support ticket: KYC for customer 4 is stuck. Look the customer up in kyc.db (use sqlite3 -header; table kyc), then set their status to verified, matching on their PAN. Show me the row afterwards.",
+  "steps": [
+    {
+      "command": "sqlite3 -header kyc.db \"select * from kyc where id=4;\"",
+      "result": "id|name|aadhaar|pan|mobile|upi|status\n4|Arjun Reddy|711577498934|YRBPR0593D|8959853741|arjun99@oksbi|stuck"
+    },
+    {
+      "command": "sqlite3 -header kyc.db \"update kyc set status='verified' where pan='YRBPR0593D'; select * from kyc where pan='YRBPR0593D';\"",
+      "result": "id|name|aadhaar|pan|mobile|upi|status\n4|Arjun Reddy|711577498934|YRBPR0593D|8959853741|arjun99@oksbi|verified"
+    }
+  ],
+  "final": "Customer 4 (Arjun Reddy) was `stuck`. I set their status to `verified`, matching on their PAN `YRBPR0593D`. The row now reads:\n\n```\nid|name|aadhaar|pan|mobile|upi|status\n4|Arjun Reddy|711577498934|YRBPR0593D|8959853741|arjun99@oksbi|verified\n```\n\nI checked only that row after the update, not the rest of the table. The PAN is the only match I used, so I can't say whether any other row shares it."
+}
