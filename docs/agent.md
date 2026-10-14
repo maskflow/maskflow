@@ -11,7 +11,6 @@ mobile and bank account → all of it goes into the model's context.
 
 ![The same Claude Code task with and without maskflow-agent](../.github/assets/agent-demo.svg)
 
-
 - **Every tool result is masked before the model sees it.** Shell output,
   file reads, searches, web fetches and MCP results. Aadhaar, PAN, UPI IDs,
   mobiles, bank accounts, names, ... become `<AADHAAR_1>`, `<PAN_3>`,
