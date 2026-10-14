@@ -234,6 +234,8 @@ class PatternRecognizer(Recognizer):
         context_keywords: tuple[str, ...] | None = None,
         default_threshold: float = 0.0,
         negative_context_keywords: tuple[str, ...] | None = None,
+        header_keywords: tuple[str, ...] | None = None,
+        header_negative_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.entity_type = pii_type
         self.regex = regex
@@ -242,6 +244,8 @@ class PatternRecognizer(Recognizer):
         self.context_keywords = context_keywords
         self.default_threshold = default_threshold
         self.negative_context_keywords = negative_context_keywords
+        self.header_keywords = header_keywords
+        self.header_negative_keywords = header_negative_keywords
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         registered_type = PIIType.register(self.entity_type)
@@ -257,6 +261,8 @@ class PatternRecognizer(Recognizer):
             self.validator,
             self.context_keywords,
             self.negative_context_keywords,
+            header_keywords=self.header_keywords,
+            header_negative_keywords=self.header_negative_keywords,
         )
 
 
@@ -272,6 +278,8 @@ class GazetteerRecognizer(Recognizer):
         context_keywords: tuple[str, ...] | None = None,
         default_threshold: float = 0.0,
         negative_context_keywords: tuple[str, ...] | None = None,
+        header_keywords: tuple[str, ...] | None = None,
+        header_negative_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.entity_type = pii_type
         self.match_fn = match_fn
@@ -279,6 +287,8 @@ class GazetteerRecognizer(Recognizer):
         self.context_keywords = context_keywords
         self.default_threshold = default_threshold
         self.negative_context_keywords = negative_context_keywords
+        self.header_keywords = header_keywords
+        self.header_negative_keywords = header_negative_keywords
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
         registered_type = PIIType.register(self.entity_type)
@@ -291,6 +301,8 @@ class GazetteerRecognizer(Recognizer):
             self.validator,
             self.context_keywords,
             self.negative_context_keywords,
+            header_keywords=self.header_keywords,
+            header_negative_keywords=self.header_negative_keywords,
         )
 
 
@@ -323,6 +335,8 @@ class NlpRecognizer(Recognizer):
         agreement_boost: float = 0.0,
         negative_context_keywords: tuple[str, ...] | None = None,
         span_filter: NerSpanFilter | None = None,
+        header_keywords: tuple[str, ...] | None = None,
+        header_negative_keywords: tuple[str, ...] | None = None,
     ) -> None:
         self.spacy_label = spacy_label
         self.entity_type = pii_type
@@ -331,6 +345,8 @@ class NlpRecognizer(Recognizer):
         self.context_keywords = context_keywords
         self.agreement_boost = agreement_boost
         self.negative_context_keywords = negative_context_keywords
+        self.header_keywords = header_keywords
+        self.header_negative_keywords = header_negative_keywords
         self.span_filter = span_filter
 
     def analyze(self, text: str, ctx: AnalysisContext) -> Iterable[Span]:
@@ -407,6 +423,8 @@ class NlpRecognizer(Recognizer):
             self.agreement_boost,
             self.negative_context_keywords,
             self.span_filter,
+            header_keywords=self.header_keywords,
+            header_negative_keywords=self.header_negative_keywords,
         )
 
 

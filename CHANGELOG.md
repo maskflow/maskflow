@@ -12,6 +12,54 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **Column-header context for tabular text** (**`maskflow-core` `0.8.3`**,
+  **`maskflow-pack-india` `0.6.1`**). A bare value with no checksum
+  (mobile, bank account, PIN code) needs a context keyword within 40
+  characters. In a table that keyword is the column header, usually far
+  above row 5, so in a CSV export or `psql` output those values leaked.
+  A coding-agent test session sent all 5 mobile numbers in a 5-row
+  customer CSV to the model.
+  - New `maskflow_core.tables`: one linear pass, no regex, finds table
+    blocks (CSV/TSV/`;`, psql, mysql box, `sqlite3 -header`, markdown) and
+    answers "which header is above this cell?". Cells are split lazily, only
+    for lines that hold a match. Hard caps (200k lines, 64 KiB per line, 256
+    columns) fall back to no header context.
+  - `apply_context_boost()` / `apply_negative_context()` also match the
+    column header **whole-word** against each type's existing keywords.
+    Explanations say `keyword "mobile" found in column header` and never
+    include the header text.
+  - New optional `header_keywords=` / `header_negative_keywords=` on
+    `register_pattern()` / `register_custom_recognizer()` /
+    `register_ner_recognizer()` and the three recognizer classes (additive).
+    A header negative (`mobile_app_build`, `account_id`, `product_name`)
+    vetoes the header boost and applies the usual penalty.
+  - pack-india: header-only labels (`mob`, `ph`, `msisdn`, `acc_no`,
+    `zipcode`, `name`, `customer`, ...), header negatives per type plus a
+    shared `test`/`sample`/`dummy`/`mock` set, and the missing free-text
+    phrases `call me on`, `reach me on`, `contact no`.
+  - New benchmark **indiapii-tabular-v1.0** (300 synthetic tables, 26,062
+    spans, look-alike decoy columns), measured on this change vs `main`:
+    INDIAN_MOBILE recall 0.3% → 100%, PIN_CODE 0.4% → 100%,
+    BANK_ACCOUNT_IN 0.4% → 92.5%, all entities 60.9% → 99.1%. False
+    positives went down, 220 → 153. IndiaPII-v1.0 (prose) is unchanged for
+    every entity, strict and partial. Report in
+    `bench/reports/indiapii-tabular-v1.0/`, plus a CI F1 gate
+    (`bench/baselines-tabular.json`).
+  - Docs: [`docs/custom-recognizers.md`](docs/custom-recognizers.md#column-headers-tables).
+
+### Changed
+
+- **`maskflow-core` `0.8.3`: `spanset.resolve()` is no longer O(n²).** Each
+  candidate was compared against every accepted span. Only overlapping
+  spans can conflict, and accepted spans never overlap one another, so a
+  bisection finds them directly. The output is identical: a Hypothesis test
+  checks it against the old algorithm for every overlap policy. Detecting a
+  78 KB, 2,500-row CSV went from 14 s to 4 s before any header context, and
+  this matters more now that tables yield far more spans.
+- `maskflow-pack-india` `0.6.1` requires `maskflow-core>=0.8.3`.
+
+### Added
+
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector

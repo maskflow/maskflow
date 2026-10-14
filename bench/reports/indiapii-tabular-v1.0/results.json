@@ -1,0 +1,158 @@
+{
+  "corpus": "indiapii-tabular-v1.0",
+  "generated_at": "2026-10-14T07:58:16.946163+00:00",
+  "num_docs": 300,
+  "canonical_labels": [
+    "AADHAAR",
+    "BANK_ACCOUNT_IN",
+    "IFSC",
+    "INDIAN_MOBILE",
+    "PAN",
+    "PERSON_NAME",
+    "PIN_CODE",
+    "UPI_VPA"
+  ],
+  "adapters": {
+    "maskflow": {
+      "available": true,
+      "skipped_reason": "",
+      "strict": {
+        "AADHAAR": {
+          "precision": 0.987240356083086,
+          "recall": 1.0,
+          "f1": 0.9935792145736897,
+          "tp": 3327,
+          "fp": 43,
+          "fn": 0
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 0.9983405243942914,
+          "recall": 0.9252537680713626,
+          "f1": 0.9604086845466157,
+          "tp": 3008,
+          "fp": 5,
+          "fn": 243
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3205,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9991891891891892,
+          "recall": 1.0,
+          "f1": 0.9995944301743951,
+          "tp": 3697,
+          "fp": 3,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3327,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.9669260700389105,
+          "recall": 1.0,
+          "f1": 0.983184965380811,
+          "tp": 2982,
+          "fp": 102,
+          "fn": 0
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 0.9996943765281173,
+          "f1": 0.999847164909063,
+          "tp": 3271,
+          "fp": 0,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3001,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "partial": {
+        "AADHAAR": {
+          "precision": 0.987240356083086,
+          "recall": 1.0,
+          "f1": 0.9935792145736897,
+          "tp": 3327,
+          "fp": 43,
+          "fn": 0
+        },
+        "BANK_ACCOUNT_IN": {
+          "precision": 0.9983405243942914,
+          "recall": 0.9252537680713626,
+          "f1": 0.9604086845466157,
+          "tp": 3008,
+          "fp": 5,
+          "fn": 243
+        },
+        "IFSC": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3205,
+          "fp": 0,
+          "fn": 0
+        },
+        "INDIAN_MOBILE": {
+          "precision": 0.9991891891891892,
+          "recall": 1.0,
+          "f1": 0.9995944301743951,
+          "tp": 3697,
+          "fp": 3,
+          "fn": 0
+        },
+        "PAN": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3327,
+          "fp": 0,
+          "fn": 0
+        },
+        "PERSON_NAME": {
+          "precision": 0.9669260700389105,
+          "recall": 1.0,
+          "f1": 0.983184965380811,
+          "tp": 2982,
+          "fp": 102,
+          "fn": 0
+        },
+        "PIN_CODE": {
+          "precision": 1.0,
+          "recall": 0.9996943765281173,
+          "f1": 0.999847164909063,
+          "tp": 3271,
+          "fp": 0,
+          "fn": 1
+        },
+        "UPI_VPA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "tp": 3001,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "latency_ms_per_kb": 69.61641542613161,
+      "median_doc_ms": 50.18700499931583,
+      "p95_doc_ms": 678.6681840003439,
+      "peak_memory_mb": 183.4765625,
+      "doc_errors": 0
+    }
+  }
+}

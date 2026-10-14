@@ -22,7 +22,12 @@ import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from .context import CONTEXT_KEYWORDS, NEGATIVE_CONTEXT_KEYWORDS
+from .context import (
+    CONTEXT_KEYWORDS,
+    HEADER_KEYWORDS,
+    HEADER_NEGATIVE_KEYWORDS,
+    NEGATIVE_CONTEXT_KEYWORDS,
+)
 from .entities import PIIType
 
 # A plain type-alias assignment, not an annotation -- `from __future__ import
@@ -89,6 +94,22 @@ CustomMatchFn = Callable[[str], Iterable[tuple[int, int, str, float]]]
 CUSTOM_RECOGNIZERS: dict[PIIType, list[tuple[CustomMatchFn, Validator | None]]] = {}
 
 
+def _set_header_keywords(
+    registered_type: PIIType,
+    header_keywords: tuple[str, ...] | None,
+    header_negative_keywords: tuple[str, ...] | None,
+) -> None:
+    """Header-only keywords (see context.py): matched whole-word against a
+    table column header, never as free-text substrings -- for labels like
+    "mob" or "test" that are unambiguous as a column name but too short to
+    trust inside prose. Same last-write-wins-per-type semantics as the
+    other keyword kwargs."""
+    if header_keywords:
+        HEADER_KEYWORDS[registered_type] = header_keywords
+    if header_negative_keywords:
+        HEADER_NEGATIVE_KEYWORDS[registered_type] = header_negative_keywords
+
+
 def register_pattern(
     pii_type: str,
     regex: re.Pattern[str],
@@ -96,6 +117,8 @@ def register_pattern(
     validator: Validator | None = None,
     context_keywords: tuple[str, ...] | None = None,
     negative_context_keywords: tuple[str, ...] | None = None,
+    header_keywords: tuple[str, ...] | None = None,
+    header_negative_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Register a new (regex, base_confidence, validator) rule for `pii_type`,
     registering the PIIType itself first if it isn't already known."""
@@ -105,6 +128,7 @@ def register_pattern(
         CONTEXT_KEYWORDS[registered_type] = context_keywords
     if negative_context_keywords:
         NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
+    _set_header_keywords(registered_type, header_keywords, header_negative_keywords)
     return registered_type
 
 
@@ -114,6 +138,8 @@ def register_custom_recognizer(
     validator: Validator | None = None,
     context_keywords: tuple[str, ...] | None = None,
     negative_context_keywords: tuple[str, ...] | None = None,
+    header_keywords: tuple[str, ...] | None = None,
+    header_negative_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Register a non-regex match source (e.g. a gazetteer automaton) for
     `pii_type`, registering the PIIType itself first if it isn't already
@@ -126,6 +152,7 @@ def register_custom_recognizer(
         CONTEXT_KEYWORDS[registered_type] = context_keywords
     if negative_context_keywords:
         NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
+    _set_header_keywords(registered_type, header_keywords, header_negative_keywords)
     return registered_type
 
 
@@ -138,6 +165,8 @@ def register_ner_recognizer(
     agreement_boost: float = 0.0,
     negative_context_keywords: tuple[str, ...] | None = None,
     span_filter: NerSpanFilter | None = None,
+    header_keywords: tuple[str, ...] | None = None,
+    header_negative_keywords: tuple[str, ...] | None = None,
 ) -> PIIType:
     """Map a spaCy entity label (e.g. "PERSON") onto `pii_type`, registering the
     PIIType itself first if it isn't already known. ner.py's generic NER pass
@@ -152,6 +181,7 @@ def register_ner_recognizer(
         CONTEXT_KEYWORDS[registered_type] = context_keywords
     if negative_context_keywords:
         NEGATIVE_CONTEXT_KEYWORDS[registered_type] = negative_context_keywords
+    _set_header_keywords(registered_type, header_keywords, header_negative_keywords)
     return registered_type
 
 
