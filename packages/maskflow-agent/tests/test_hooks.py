@@ -370,3 +370,63 @@ def test_missing_socket_fails_fast(agent_home: Path) -> None:
     started = time.monotonic()
     assert not protocol.ping(f"absent-{uuid.uuid4().hex[:8]}")
     assert time.monotonic() - started < 0.5
+
+
+# -- headerless SELECT output: column names from the command ------------------------
+def _bash(session_id: str, command: str, stdout: str) -> dict:
+    return run_hook(
+        "post-tool-use",
+        {"session_id": session_id, "tool_name": "Bash", "tool_input": {"command": command},
+         "tool_response": {"stdout": stdout, "stderr": "", "interrupted": False,
+                           "isImage": False}},
+    )  # fmt: skip
+
+
+@pytest.mark.leak
+@pytest.mark.parametrize(
+    ("command", "row"),
+    [
+        ('sqlite3 kyc.db "select id, name, mobile from kyc where id=4"', "4|x|{m}"),
+        ("psql -t -A -c 'SELECT k.id, k.mobile AS phone FROM kyc k'", "4|{m}"),
+        ("mysql -N -B -e 'select id, mobile from kyc'", "4\t{m}"),
+        ("python -m maskflow_agent exec --session s --ticket t -- "
+         "'sqlite3 kyc.db \"select id, mobile from kyc\"'", "4|{m}"),
+    ],
+    ids=["sqlite", "psql-alias", "mysql-tabs", "wrapped-command"],
+)  # fmt: skip
+def test_headerless_select_row_masked_via_column_names(
+    session_id: str, command: str, row: str
+) -> None:
+    mobile = synthetic_mobile()  # never seen before in this session
+    out = _bash(session_id, command, row.format(m=mobile) + "\n")
+    assert mobile not in out["_raw"]
+    stdout = _masked(out)["stdout"]
+    assert "<INDIAN_MOBILE_" in stdout
+    assert not stdout.startswith(("id", "4|id"))  # the hint header is stripped again
+
+
+def test_hint_never_masks_a_non_pii_column(session_id: str) -> None:
+    order_id = synthetic_mobile()  # mobile-shaped, but an order id
+    out = _bash(session_id, 'sqlite3 db "select id, order_id from orders"', f"1|{order_id}\n")
+    assert out == {"_raw": ""} or order_id in out["_raw"]
+
+
+@pytest.mark.parametrize(
+    "command",
+    ['sqlite3 db "select * from kyc"', 'sqlite3 db "select count(*) from kyc"',
+     'sqlite3 db "select id, mobile from a; select id, pan from b"', "cat rows.txt"],
+)  # fmt: skip
+def test_no_hint_without_an_explicit_single_column_list(command: str) -> None:
+    assert hooks._with_header_hint(command, "4|9876543210\n") is None
+
+
+def test_no_hint_when_output_already_has_a_header() -> None:
+    cmd = 'sqlite3 -header db "select id, mobile from kyc"'
+    assert hooks._with_header_hint(cmd, "id|mobile\n4|9876543210\n") is None
+
+
+def test_select_columns_parsing() -> None:
+    assert hooks._select_columns("SELECT k.id, upper(k.name) AS nm, mobile FROM kyc k") == [
+        "id", "nm", "mobile",
+    ]  # fmt: skip
+    assert hooks._select_columns("select coalesce(a, b), c from t") == ["b", "c"]

@@ -261,10 +261,84 @@ def pre_tool_use(payload: dict[str, Any]) -> None:
         )
 
 
+_SELECT_RE = re.compile(r"\bselect\s+(.{1,2000}?)\s+from\b", re.I | re.S)
+_IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_DELIMS = ("|", "\t", ",")
+
+
+def _select_columns(command: str) -> list[str] | None:
+    """Column names of the command's single SELECT with an explicit column
+    list (alias if given, else the last identifier: `k.mobile` -> mobile).
+    None for SELECT *, expressions without an alias, or several SELECTs."""
+    found = _SELECT_RE.findall(command)
+    if len(found) != 1:
+        return None
+    parts, depth, current = [], 0, ""
+    for ch in found[0]:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append(current)
+            current = ""
+        else:
+            current += ch
+    parts.append(current)
+    columns = []
+    for part in parts:
+        part = part.strip().strip("\"'`")
+        if not part or "*" in part:
+            return None
+        alias = re.split(r"\s+as\s+", part, flags=re.I)
+        name = _IDENT_RE.findall(alias[-1])
+        if not name:
+            return None
+        columns.append(name[-1].lower())
+    return columns or None
+
+
+def _with_header_hint(command: str, stdout: str) -> tuple[str, str] | None:
+    """(header line, stdout with it prepended) when `stdout` looks like the
+    headerless rows of a SELECT whose column names are in `command` --
+    `sqlite3` / `psql -t` / `mysql -N` output. The masking engine then reads
+    each value under its column name, as it does for any table."""
+    columns = _select_columns(command)
+    first = next((line for line in stdout.splitlines() if line.strip()), "")
+    if not columns or len(columns) < 2 or not first:
+        return None
+    if any(c in first.lower() for c in columns if len(c) > 2):
+        return None  # already has a header row
+    for delim in _DELIMS:
+        if first.count(delim) == len(columns) - 1:
+            header = delim.join(columns)
+            return header, f"{header}\n{stdout}"
+    return None
+
+
 def post_tool_use(payload: dict[str, Any]) -> None:
     response = payload.get("tool_response")
     try:
-        result = protocol.request(payload["session_id"], "mask_value", value=response)
+        value, header = response, None
+        command = (payload.get("tool_input") or {}).get("command")
+        if (
+            payload.get("tool_name") == "Bash"
+            and isinstance(command, str)
+            and isinstance(response, dict)
+            and isinstance(response.get("stdout"), str)
+        ):
+            hint = _with_header_hint(command, response["stdout"])
+            if hint is not None:
+                header, hinted = hint
+                value = {**response, "stdout": hinted}
+        result = protocol.request(payload["session_id"], "mask_value", value=value)
+        if header is not None:
+            out = result["value"]["stdout"]
+            if out.startswith(header + "\n"):
+                result["value"]["stdout"] = out[len(header) + 1 :]
+                result["changed"] = result["value"] != response
+            else:  # never expected; mask it the ordinary way instead
+                result = protocol.request(payload["session_id"], "mask_value", value=response)
         if not result.get("changed"):
             return
         masked = result["value"]
