@@ -82,6 +82,20 @@ def test_span_crossing_cells_has_no_header() -> None:
     assert find_tables(CSV).header_for(start, start + len("1,NUM-1")) is None
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "id|name|mobile|status\n4|R|NUM-1|stuck",  # sqlite3 -header, one row
+        "id,name,mobile\n4,R,NUM-1\n",
+        " id | name | mobile\n----+------+-------\n  4 | R | NUM-1\n(1 row)",  # psql
+        "| id | name | mobile |\n|---|---|---|\n| 4 | R | NUM-1 |",
+    ],
+    ids=["sqlite", "csv", "psql", "markdown"],
+)
+def test_single_row_lookup_with_three_columns_is_a_table(text: str) -> None:
+    assert _header_at(text, "NUM-1") == "mobile"
+
+
 class TestNotATable:
     def test_single_line(self) -> None:
         assert not find_tables("id,mobile,NUM-1")
@@ -97,6 +111,13 @@ class TestNotATable:
             "Hello team, please review the attached report before Friday.\n"
             "Thanks, and let me know if the numbers look odd to you.\n"
             "Regards, the platform team at the head office in Pune."
+        )
+        assert not find_tables(text)
+
+    def test_two_prose_lines_with_commas(self) -> None:
+        text = (
+            "Thanks for the update, the numbers look fine, ship it today.\n"
+            "Also, once merged, ping the team so they can rebase."
         )
         assert not find_tables(text)
 

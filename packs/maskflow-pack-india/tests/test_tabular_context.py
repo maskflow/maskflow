@@ -69,6 +69,13 @@ class TestMobileHeaderPositive:
         text = f"| Customer | Mobile |\n|---|---|\n| x | {a} |\n| y | {b} |"
         assert _found(text, PIIType.INDIAN_MOBILE) == {a, b}
 
+    def test_single_row_lookup(self) -> None:
+        # `sqlite3 -header kyc.db "SELECT * FROM kyc WHERE id=4"`: header + one
+        # row, value > 40 chars from its header word.
+        a = MOBILES[0]
+        text = f"id|name|aadhaar_status|pan_status|mobile|upi_status|status\n4|x|ok|ok|{a}|ok|stuck"
+        assert _found(text, PIIType.INDIAN_MOBILE) == {a}
+
     def test_call_me_on_free_text(self) -> None:
         a = MOBILES[0]
         assert _found(f"pls call me on {a} after 5", PIIType.INDIAN_MOBILE) == {a}

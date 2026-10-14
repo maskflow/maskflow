@@ -33,6 +33,13 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
     `register_ner_recognizer()` and the three recognizer classes (additive).
     A header negative (`mobile_app_build`, `account_id`, `product_name`)
     vetoes the header boost and applies the usual penalty.
+  - A header plus a **single** row counts as a table when it has 3 or more
+    columns, its header cells are at most 3 words, and the row has a cell
+    containing a digit. That's the shape of a one-record lookup
+    (`SELECT * FROM kyc WHERE id=4`). Found while recording the
+    maskflow-agent demo: the mobile in that row was more than 40 chars from
+    its `mobile` header and leaked. IndiaPII-v1.0 and indiapii-tabular-v1.0
+    are unchanged for every entity.
   - pack-india: header-only labels (`mob`, `ph`, `msisdn`, `acc_no`,
     `zipcode`, `name`, `customer`, ...), header negatives per type plus a
     shared `test`/`sample`/`dummy`/`mock` set, and the missing free-text
