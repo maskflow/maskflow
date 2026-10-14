@@ -755,6 +755,23 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.1.4] - 2026-10-15
+
+### Fixed
+
+- **Headerless query output: a bare value could reach the model the first
+  time it was seen.** `sqlite3 db "select id, name, mobile from kyc"`,
+  `psql -t` and `mysql -N` print rows with no header, so a bare mobile had no
+  context and wasn't masked. When a Bash command contains a single `SELECT`
+  with an explicit column list (aliases and `table.col` are handled) and its
+  output has no header row, the post-tool hook adds the column names as a
+  temporary header line, masks, then strips the line again. The engine reads
+  each value under its column name, as it does for any table. This covers
+  commands run through the run-time unmask wrapper too. `SELECT *`,
+  expressions without an alias and multi-statement commands get no hint
+  (unchanged behaviour). A non-PII column such as `order_id` is never
+  masked because of the hint.
+
 ## [agent 0.1.3] - 2026-10-15
 
 ### Fixed
