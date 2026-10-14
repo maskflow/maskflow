@@ -35,6 +35,24 @@ maskflow-agent install              # writes .claude/settings.json (commit it to
 maskflow-agent doctor               # proves it end to end with synthetic canaries
 ```
 
+**Or, as a Claude Code plugin.** No `pip install`, and no edits to your
+`settings.json`:
+
+```
+/plugin marketplace add maskflow/maskflow
+/plugin install maskflow-agent@maskflow
+```
+
+From a shell, `claude plugin marketplace add maskflow/maskflow --sparse
+.claude-plugin plugins` checks out only the plugin, not the whole repository.
+If [uv](https://docs.astral.sh/uv/) is installed, the plugin's first session
+builds its own environment (the pinned `maskflow-agent` plus the spaCy model).
+That took about a minute, once, in testing; later sessions start in seconds.
+Without uv, `pip install maskflow-agent` and the plugin uses it from your
+PATH. Until one of these exists, every tool call is denied. Use the plugin
+**or** `maskflow-agent install`, not both: `doctor` flags hooks installed
+twice.
+
 `install` also loads the masking engine once, so your first session doesn't
 pay the cold start (about 30 s on a fresh install while Python compiles and
 spaCy loads; about 2 s after that). Skip it with `--no-warm-up`.

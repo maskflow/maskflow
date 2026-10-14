@@ -1,0 +1,55 @@
+#!/bin/sh
+# maskflow-agent Claude Code plugin: hook launcher.
+#
+#   maskflow-hook <session-start|pre-tool-use|post-tool-use|user-prompt-submit|session-end>
+#
+# Finds a Python with maskflow-agent installed and hands the hook (stdin
+# included) to it, in this order:
+#   1. $MASKFLOW_AGENT_PYTHON                       explicit override
+#   2. the plugin's own environment                 $CLAUDE_PLUGIN_DATA/venv-<version>
+#   3. `maskflow-agent` on PATH                     e.g. after `pip install maskflow-agent`
+# On session-start, if none exists and `uv` is installed, it builds (2): the
+# pinned maskflow-agent plus the spaCy English model. Otherwise the session is
+# told how to install it, and every tool call is denied until it is -- the
+# guard never lets a tool run unmasked.
+set -u
+EVENT="${1:-}"
+VERSION="0.1.2"
+DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/maskflow-agent}"
+VENV="$DATA/venv-$VERSION"
+MODEL="https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
+
+run_with() {
+  exec "$1" -m maskflow_agent hook "$EVENT"
+}
+
+if [ -n "${MASKFLOW_AGENT_PYTHON:-}" ]; then run_with "$MASKFLOW_AGENT_PYTHON"; fi
+if [ -f "$VENV/.ready" ]; then run_with "$VENV/bin/python"; fi
+if command -v maskflow-agent >/dev/null 2>&1; then exec maskflow-agent hook "$EVENT"; fi
+
+if [ "$EVENT" = "session-start" ] && command -v uv >/dev/null 2>&1; then
+  mkdir -p "$DATA"
+  # Old versions' environments from earlier plugin releases.
+  for old in "$DATA"/venv-*; do
+    [ -d "$old" ] && [ "$old" != "$VENV" ] && rm -rf "$old"
+  done
+  rm -rf "$VENV"
+  if uv venv -q --python 3.12 "$VENV" </dev/null >&2 \
+    && VIRTUAL_ENV="$VENV" uv pip install -q "maskflow-agent==$VERSION" "en_core_web_sm @ $MODEL" </dev/null >&2 \
+    && "$VENV/bin/python" -c "import maskflow_agent" </dev/null >&2; then
+    : > "$VENV/.ready"
+    run_with "$VENV/bin/python"
+  fi
+  rm -rf "$VENV"
+fi
+
+HOW="Install it with: pip install maskflow-agent (or install uv and start a new session)."
+case "$EVENT" in
+  session-start)
+    printf '{"systemMessage":"MaskFlow PII guard is not installed, so tool calls are blocked. %s"}' "$HOW"
+    ;;
+  pre-tool-use)
+    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"MaskFlow PII guard is not installed, so this tool output could not be masked. Ask the user to run: pip install maskflow-agent"}}'
+    ;;
+esac
+exit 0

@@ -337,5 +337,6 @@ def test_session_end_summary_and_log_hold_counts_only(fresh_session: str) -> Non
     summary = paths.summary_path(fresh_session).read_text()
     assert json.loads(summary)["distinct_values_by_type"] == {"AADHAAR": 1}
     assert value not in summary
-    assert value not in paths.log_path(fresh_session).read_text()
+    log = paths.log_path(fresh_session)
+    assert not log.exists() or value not in log.read_text()
     assert not protocol.ping(fresh_session)

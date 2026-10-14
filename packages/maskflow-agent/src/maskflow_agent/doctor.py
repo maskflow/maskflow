@@ -72,6 +72,34 @@ def _claude_version() -> tuple[int, ...] | None:
     return tuple(int(g) for g in match.groups()) if match else None
 
 
+def _plugin_active(cwd: Path) -> str | None:
+    """The id of an enabled maskflow-agent Claude Code plugin that applies to
+    `cwd` (user scope, or a project/local install for this directory)."""
+    exe = shutil.which("claude")
+    if not exe:
+        return None
+    try:
+        out = subprocess.run(
+            [exe, "plugin", "list", "--json"],
+            capture_output=True, text=True, timeout=30, check=False, cwd=cwd,
+        ).stdout  # fmt: skip
+        entries = json.loads(out or "[]")
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        return None
+    here = cwd.resolve()
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict) or not str(entry.get("id", "")).startswith(
+            "maskflow-agent@"
+        ):
+            continue
+        if not entry.get("enabled"):
+            continue
+        project = entry.get("projectPath")
+        if entry.get("scope") == "user" or (project and Path(project).resolve() == here):
+            return str(entry["id"])
+    return None
+
+
 class _Report:
     def __init__(self) -> None:
         self.failed = 0
@@ -107,7 +135,21 @@ def run(cwd: Path) -> int:
         s: install.installed(install.settings_path(s, cwd)) for s in ("project", "local", "user")
     }
     active = [s for s, events in scopes.items() if events]
-    if report.check(bool(active), "hooks installed", "Run `maskflow-agent install`."):
+    plugin = _plugin_active(cwd)
+    if plugin:
+        report.note(f"Claude Code plugin {plugin} is enabled for this project")
+        report.check(
+            not active,
+            "hooks installed once (plugin only)",
+            f"Also found in {', '.join(active)} settings -- every hook would run twice. "
+            "Run `maskflow-agent uninstall --scope <scope>` or remove the plugin.",
+        )
+    elif report.check(
+        bool(active),
+        "hooks installed",
+        "Run `maskflow-agent install`, or install the Claude Code plugin "
+        "(/plugin install maskflow-agent@maskflow).",
+    ):
         for scope in active:
             missing = sorted(set(install.EXPECTED_EVENTS) - set(scopes[scope]))
             report.check(
