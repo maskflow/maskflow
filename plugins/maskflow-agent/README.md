@@ -9,7 +9,8 @@ Claude Code plugin: no `pip install` and no edits to your `settings.json`.
 ```
 
 From a shell, `claude plugin marketplace add maskflow/maskflow --sparse
-.claude-plugin plugins` checks out only what the plugin needs. (`--sparse` needs git 2.25 or newer).
+.claude-plugin plugins` checks out only what the plugin needs (`--sparse` needs git 2.25 or newer).
+
 If the `maskflow/maskflow` shorthand fails with "Could not read from remote
 repository", Claude Code is cloning over SSH and your machine isn't set up
 for GitHub SSH. Use the HTTPS URL instead:
