@@ -212,6 +212,9 @@ maskflow-agent install     # hooks in .claude/settings.json
 maskflow-agent doctor      # proves it end to end with synthetic canaries
 ```
 
+Or install it as a Claude Code plugin: `/plugin marketplace add maskflow/maskflow`, then
+`/plugin install maskflow-agent@maskflow`.
+
 It fails closed, never grants permissions you didn't already have, and keeps the transcript on
 disk free of real values. Recorded from real sessions on synthetic data; reproduce it with
 [`packages/maskflow-agent/examples/demo`](packages/maskflow-agent/examples/demo). Threat model and

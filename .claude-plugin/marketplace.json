@@ -1,0 +1,15 @@
+{
+  "name": "maskflow",
+  "description": "MaskFlow plugins for Claude Code",
+  "owner": {
+    "name": "MaskFlow",
+    "url": "https://maskflow.in"
+  },
+  "plugins": [
+    {
+      "name": "maskflow-agent",
+      "source": "./plugins/maskflow-agent",
+      "description": "Masks Aadhaar, PAN, UPI, mobile, bank-account and other personal data in every tool result before Claude sees it; restores real values only inside allowlisted database commands, at run time. Fails closed."
+    }
+  ]
+}

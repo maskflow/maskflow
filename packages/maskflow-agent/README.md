@@ -15,6 +15,13 @@ maskflow-agent install        # adds hooks to .claude/settings.json
 maskflow-agent doctor         # proves it end to end with synthetic canaries
 ```
 
+Or as a Claude Code plugin, with no pip and no settings edits:
+
+```
+/plugin marketplace add maskflow/maskflow
+/plugin install maskflow-agent@maskflow
+```
+
 - Tool output masked: Bash, Read, Grep, WebFetch, MCP, ...
 - One placeholder per value for the whole session. A value identified once is
   masked everywhere after that.

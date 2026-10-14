@@ -63,6 +63,8 @@ jobs:
               - 'packages/maskflow-attest/**'
             agent:
               - 'packages/maskflow-agent/**'
+              - 'plugins/maskflow-agent/**'
+              - '.claude-plugin/**'
               - 'packages/maskflow-sdk/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-india/**'

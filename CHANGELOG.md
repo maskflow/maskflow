@@ -755,6 +755,35 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.1.2] - 2026-10-15
+
+### Added
+
+- **Claude Code plugin** (`plugins/maskflow-agent`, marketplace in
+  `.claude-plugin/marketplace.json`): `/plugin marketplace add
+  maskflow/maskflow`, then `/plugin install maskflow-agent@maskflow`. No
+  pip and no `settings.json` edits.
+  - The plugin's hooks are the ones `maskflow-agent install` writes. A small
+    POSIX launcher finds a runtime in this order: `$MASKFLOW_AGENT_PYTHON`,
+    the plugin's own environment, then `maskflow-agent` on PATH.
+  - On the first session, if `uv` is available, the launcher builds the
+    plugin's own environment: the pinned `maskflow-agent` plus the spaCy
+    model, in `$CLAUDE_PLUGIN_DATA`. Measured: 62 s for the first session,
+    6 s for later ones.
+  - With no runtime, every tool call is denied with an install hint.
+  - Tests keep the plugin's version, the launcher's pin and the package
+    version identical, and the plugin's hooks identical to `install`'s.
+- `maskflow-agent doctor` recognises an enabled plugin for the project, and
+  fails if the hooks are installed twice (plugin plus settings).
+
+### Fixed
+
+- Per-session files no longer pile up in `~/.maskflow/agent`. On a clean
+  shutdown the daemon removes its start lock, and its log unless the log
+  recorded a warning or error. A start-up sweep removes lock, log and pid
+  files older than 7 days from sessions that crashed or were killed.
+  Session summaries are kept. After `doctor`, the directory is empty.
+
 ## [agent 0.1.1] - 2026-10-14
 
 ### Fixed
