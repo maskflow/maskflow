@@ -300,6 +300,14 @@ class _RequestHandler(socketserver.StreamRequestHandler):
 
 def serve(session_id: str, idle_seconds: float, patterns_only: bool) -> int:
     sock_path = paths.socket_path(session_id)
+    pid_file = paths.pid_path(session_id)
+    other = paths.live_pid(session_id)
+    if other is not None and other != os.getpid():
+        log.info("another daemon (pid %d) owns this session", other)
+        return 0
+    # Written before the slow engine import, so a hook that arrives while we
+    # load waits for us instead of starting a second daemon.
+    pid_file.write_text(str(os.getpid()))
     if sock_path.exists():
         # Another live daemon owns this session: don't steal its socket.
         try:
@@ -343,6 +351,8 @@ def serve(session_id: str, idle_seconds: float, patterns_only: bool) -> int:
     finally:
         server.server_close()
         Path(sock_path).unlink(missing_ok=True)
+        if paths.live_pid(session_id) == os.getpid():
+            pid_file.unlink(missing_ok=True)
         log.info("daemon stopped")
     return 0
 

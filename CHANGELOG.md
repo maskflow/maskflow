@@ -755,6 +755,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.1.1] - 2026-10-14
+
+### Fixed
+
+- **`maskflow-agent` `0.1.1`: no duplicate daemons on a cold first start.**
+  On a fresh install the first engine load (bytecode compile + spaCy) took
+  about 26 s. A hook that gave up waiting, or one that fired in parallel,
+  could spawn a second daemon for the same session. `maskflow-agent doctor`
+  failed 5 checks on its first run against the published 0.1.0.
+  - A start lock lets only one hook spawn the daemon. The daemon writes a
+    pid file before the slow import, so a hook that arrives while it loads
+    waits for it instead of starting another. A daemon that finds a live
+    owner for its session exits.
+  - The start wait is now 150 s (was 45 s), and the `SessionStart` and
+    `PreToolUse` hook timeouts are 180 s.
+  - `maskflow-agent install` loads the engine once (`--no-warm-up` skips
+    it), so the first real session starts warm.
+  - Verified: a fresh venv with the 0.1.1 wheel and no warm-up passes all
+    12 `doctor` checks on its first, cold run (26 s), with a single daemon.
+
 ## [core 0.8.3, pack-india 0.6.1, cli 0.9.0, agent 0.1.0] - 2026-10-14
 
 Publishes #120 (column-header context for tabular text, O(n log n) span

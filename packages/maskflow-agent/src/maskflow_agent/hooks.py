@@ -32,7 +32,9 @@ WITHHELD = (
 _TOKEN_RE = re.compile(r"<[A-Z][A-Z_]*?_\d+(?:_[0-9a-f]+)?>")
 _WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 _WRAPPER_RE = re.compile(r"maskflow[_-]agent\b.*\bexec\b|maskflow_agent\.execwrap", re.S)
-_START_TIMEOUT = 45.0
+# A cold first start after `pip install` (bytecode compile + spaCy) took 26 s
+# on an M-series-class laptop; leave generous room on slower machines.
+_START_TIMEOUT = 150.0
 
 CONTEXT = (
     "MaskFlow PII guard is active. Personal data in tool results (Aadhaar, PAN, "
@@ -94,9 +96,41 @@ def ensure_daemon(session_id: str, transcript_path: str | None = None) -> bool:
     """Start the session's daemon if it isn't answering. A (re)started
     daemon first reserves every placeholder already in the transcript, so a
     value seen from now on can never be given a name the model has already
-    seen for a different value."""
+    seen for a different value.
+
+    Hooks fire in parallel, and a cold first start (fresh install: bytecode
+    compile + spaCy load) can take tens of seconds. So: one spawner at a time
+    (a start lock), and a daemon that is alive but still loading (its pid
+    file) is waited for, never duplicated."""
     if protocol.ping(session_id):
         return True
+    import fcntl
+
+    deadline = time.monotonic() + _START_TIMEOUT
+    with open(paths.start_lock_path(session_id), "a") as lock:
+        while True:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError:
+                if time.monotonic() > deadline:
+                    return False
+                time.sleep(0.2)
+        try:
+            if protocol.ping(session_id):
+                return True  # another hook started it while we waited
+            if paths.live_pid(session_id) is None:
+                _spawn(session_id)
+            while time.monotonic() < deadline:
+                if protocol.ping(session_id, timeout=1.0):
+                    return _reserve(session_id, transcript_path)
+                time.sleep(0.2)
+            return False
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def _spawn(session_id: str) -> None:
     import subprocess
 
     log = open(paths.log_path(session_id), "ab")  # noqa: SIM115 -- handed to the child
@@ -111,18 +145,17 @@ def ensure_daemon(session_id: str, transcript_path: str | None = None) -> bool:
         )
     finally:
         log.close()
-    deadline = time.monotonic() + _START_TIMEOUT
-    while time.monotonic() < deadline:
-        if protocol.ping(session_id, timeout=1.0):
-            tokens = _transcript_tokens(transcript_path)
-            if tokens:
-                try:
-                    protocol.request(session_id, "reserve", tokens=tokens)
-                except protocol.DaemonUnavailable:
-                    return False
-            return True
-        time.sleep(0.2)
-    return False
+
+
+def _reserve(session_id: str, transcript_path: str | None) -> bool:
+    tokens = _transcript_tokens(transcript_path)
+    if not tokens:
+        return True
+    try:
+        protocol.request(session_id, "reserve", tokens=tokens)
+    except protocol.DaemonUnavailable:
+        return False
+    return True
 
 
 # -- handlers -----------------------------------------------------------------

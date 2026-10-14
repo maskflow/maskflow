@@ -58,6 +58,25 @@ def socket_path(session_id: str) -> Path:
     return _socket_dir() / f"{safe_id(session_id)}.sock"
 
 
+def pid_path(session_id: str) -> Path:
+    return home() / f"{safe_id(session_id)}.pid"
+
+
+def start_lock_path(session_id: str) -> Path:
+    return home() / f"{safe_id(session_id)}.start.lock"
+
+
+def live_pid(session_id: str) -> int | None:
+    """PID of a daemon process for this session that is still alive (running
+    or still loading the engine), else None."""
+    try:
+        pid = int(pid_path(session_id).read_text().strip())
+        os.kill(pid, 0)
+    except (OSError, ValueError):
+        return None
+    return pid
+
+
 def log_path(session_id: str) -> Path:
     return home() / f"{safe_id(session_id)}.log"
 
