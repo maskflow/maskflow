@@ -27,7 +27,11 @@ _DELIMITERS = ("\t", "|", ",", ";")
 # markdown) never quotes.
 _QUOTED = frozenset({"\t", ",", ";"})
 
-MIN_BLOCK_LINES = 3  # header + at least two data rows
+MIN_BLOCK_LINES = 3  # header + at least two data rows ...
+# ... except a header + ONE row with at least this many columns: the shape of
+# every single-record lookup (`SELECT * FROM kyc WHERE id=4`). Three or more
+# delimited columns on both lines is distinctive enough not to be prose.
+MIN_COLUMNS_SINGLE_ROW = 3
 MAX_LINES = 200_000
 MAX_LINE_LENGTH = 64 * 1024
 MAX_COLUMNS = 256
@@ -110,6 +114,26 @@ def _looks_like_header(cells: list[str]) -> bool:
         if cell.replace(".", "", 1).replace("-", "", 1).isdigit():
             return False
     return True
+
+
+def _single_row_evidence(
+    headers: list[str],
+    lines: list[str],
+    separator: list[bool],
+    first: int,
+    stop: int,
+    delim: str,
+) -> bool:
+    """Extra proof for a header + one-row block: header cells read as short
+    labels (at most 3 words) and the row holds a cell with a digit, as every
+    record lookup does. Two comma-heavy prose lines fail both."""
+    if any(len(h.split()) > 3 for h in headers):
+        return False
+    row = next((k for k in range(first + 1, stop) if not separator[k]), None)
+    if row is None:
+        return False
+    cells = _split_cells(lines[row], delim) or []
+    return any(any(ch.isdigit() for ch in _cell_text(lines[row], c)) for c in cells)
 
 
 @dataclass(frozen=True)
@@ -198,7 +222,7 @@ def find_tables(text: str) -> TableIndex:
         if separator[i] or not lines[i].strip():
             i += 1
             continue
-        best_delim, best_end, best_rows = "", i, 0
+        best_delim, best_end, best_rows, best_cols = "", i, 0, 0
         for delim in _DELIMITERS:
             want = counts[delim][i]
             if want < 1:
@@ -208,12 +232,18 @@ def find_tables(text: str) -> TableIndex:
                 content_rows += not separator[j]
                 j += 1
             if content_rows > best_rows:
-                best_delim, best_end, best_rows = delim, j, content_rows
-        if best_rows < MIN_BLOCK_LINES:
+                best_delim, best_end, best_rows, best_cols = delim, j, content_rows, want + 1
+        single_row_ok = best_rows == 2 and best_cols >= MIN_COLUMNS_SINGLE_ROW
+        if best_rows < MIN_BLOCK_LINES and not single_row_ok:
             i += 1
             continue
         header_line = lines[i]
         headers = [_cell_text(header_line, c) for c in _split_cells(header_line, best_delim) or []]
+        if best_rows < MIN_BLOCK_LINES and not _single_row_evidence(
+            headers, lines, separator, i, best_end, best_delim
+        ):
+            i += 1
+            continue
         if _looks_like_header(headers):
             blocks.append(_Block(i, best_end, best_delim, tuple(headers)))
         i = best_end
