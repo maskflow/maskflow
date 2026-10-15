@@ -206,12 +206,25 @@ def run(cwd: Path) -> int:
             )
 
         for agent in sorted(set(others)):
-            event, payload = adapters.load(agent).probe(session, csv)
+            module = adapters.load(agent)
+            event, payload = module.probe(session, csv)
             proc = subprocess.run(
                 [sys.executable, "-m", "maskflow_agent", "hook", "--agent", agent, event],
                 input=json.dumps(payload), capture_output=True, text=True, timeout=180,
                 check=False,
             )  # fmt: skip
+            if hasattr(module, "rewritten"):  # wrap mode: run the rewritten command
+                try:
+                    command = module.rewritten(json.loads(proc.stdout or "{}"))
+                except ValueError:
+                    command = None
+                if command is None:
+                    report.check(False, f"{agent} hook wraps shell commands")
+                    continue
+                proc = subprocess.run(
+                    ["bash", "-c", command], capture_output=True, text=True, timeout=180,
+                    check=False,
+                )  # fmt: skip
             leaked = [k for k, v in canaries.items() if v in proc.stdout]
             report.check(
                 proc.returncode == 0 and not leaked and "<AADHAAR_" in proc.stdout,

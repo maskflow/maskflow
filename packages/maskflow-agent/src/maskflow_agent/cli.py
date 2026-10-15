@@ -56,8 +56,9 @@ def main(argv: list[str] | None = None) -> int:
             choices=("claude", *adapters.AGENTS),
             default="claude",
             help="claude: Claude Code (default) | copilot: GitHub Copilot CLI, cloud "
-            "agent and VS Code agent mode | cursor: Cursor desktop and CLI "
-            "(all but claude are experimental)",
+            "agent and VS Code agent mode | cursor: Cursor desktop and CLI | codex: "
+            "OpenAI Codex CLI | gemini: Gemini CLI | antigravity: Google Antigravity "
+            "CLI and IDE (all but claude are experimental)",
         )
         p.add_argument(
             "--scope",
@@ -66,8 +67,8 @@ def main(argv: list[str] | None = None) -> int:
             help="claude -- project: .claude/settings.json (default, commit it to share "
             "with your team) | local: .claude/settings.local.json | user: "
             "~/.claude/settings.json. copilot -- project: .github/hooks/ | user: "
-            "~/.copilot/hooks/. cursor -- project: .cursor/hooks.json | user: "
-            "~/.cursor/hooks.json",
+            "~/.copilot/hooks/. Others: the agent's project or user hooks file "
+            "(see docs/agent.md)",
         )
         p.add_argument(
             "--portable",
@@ -136,6 +137,8 @@ def _install_other(
         return 0
     module.install(path, portable=portable)
     print(f"maskflow-agent hooks for {agent} installed in {path}")
+    if getattr(module, "INSTALL_NOTE", None):
+        print(f"  {module.INSTALL_NOTE}")
     if adapters.STATUS.get(agent) != "verified":
         print(
             f"  note: {agent} support is EXPERIMENTAL -- built from the agent's hook "

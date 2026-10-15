@@ -27,9 +27,9 @@ import sys
 from types import ModuleType
 from typing import Any
 
-AGENTS = ("copilot", "cursor")
+AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity")
 
-STATUS: dict[str, str] = {"copilot": "experimental", "cursor": "experimental"}
+STATUS: dict[str, str] = {agent: "experimental" for agent in AGENTS}
 
 
 def load(agent: str) -> ModuleType:

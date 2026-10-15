@@ -12,6 +12,21 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: Codex CLI, Gemini CLI and Google Antigravity support
+  (experimental).** Install with `maskflow-agent install --agent
+  codex|gemini|antigravity`.
+  - **Codex and Gemini CLI** can't hand back an edited tool result, but
+    their blocking decision *replaces* the result with the hook's reason.
+    The guard puts the masked result there, so every tool gets
+    Claude-Code-level masking.
+  - **Codex: restores only in sessions that don't ask for approval.** A
+    rewritten command needs `permissionDecision: "allow"`, which would
+    otherwise skip an approval the user asked for. Elsewhere placeholders
+    pass literally, with a note.
+  - **Antigravity** runs in wrap mode and never returns `auto_approve`.
+  - **Shared:** per-agent config merging keeps other hooks and settings.
+    `doctor` runs a wrap-mode agent's rewritten probe command and checks
+    its output.
 - **`maskflow-agent`: Cursor support (experimental).**
   `maskflow-agent install --agent cursor [--scope user] [--portable]`
   merges hooks into `.cursor/hooks.json` and keeps any existing hooks;

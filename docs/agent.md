@@ -149,6 +149,9 @@ hooks are allowed to do:
 | GitHub Copilot CLI and cloud agent | experimental | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
 | VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
 | Cursor (desktop and CLI) | experimental | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
+| OpenAI Codex CLI | experimental | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
+| Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
+| Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
 
 *Experimental* means the adapter was built from the agent's hook
 documentation and tested against those payload shapes, but hasn't yet passed
@@ -223,6 +226,60 @@ Cursor-specific limits:
   `workspaceOpen` is documented for the CLI.
 - If Cursor's shell sandbox blocks the wrapper's local socket, wrapped
   commands are **refused**. They don't run unmasked. Not yet tested live.
+
+### Codex CLI
+
+```bash
+maskflow-agent install --agent codex                 # .codex/hooks.json
+maskflow-agent install --agent codex --scope user    # ~/.codex/hooks.json
+```
+
+Codex runs a hook only after you review it. Start `codex`, run `/hooks`,
+and trust the maskflow-agent hooks. Project hooks also load only in a
+trusted project.
+
+- Masking: a tool result holding personal data is replaced, through
+  `decision: "block"`, by the masked result under a one-line
+  `[maskflow: ...]` header. This covers shell, `exec_command`,
+  `apply_patch` and MCP.
+- Restoring placeholders: Codex only accepts a rewritten command together
+  with `permissionDecision: "allow"`, which would skip an approval you asked
+  for. So placeholders are restored only in sessions that already run
+  commands without asking (for example `--full-auto`/`never`). Elsewhere
+  they are passed literally, with a note to the model.
+
+### Gemini CLI
+
+```bash
+maskflow-agent install --agent gemini                # .gemini/settings.json (merged)
+```
+
+Google replaced Gemini CLI with Antigravity CLI on 2026-06-18. This
+adapter is for installs that still run Gemini CLI. Every tool result
+holding personal data is replaced, through `AfterTool` `decision: "deny"`,
+by the masked result. Allowlisted commands get the run-time restore
+(`BeforeTool` rewrites the arguments without touching approvals). Older
+Gemini CLI versions may also need `"tools": {"enableHooks": true}` in
+settings.
+
+### Google Antigravity (CLI and IDE)
+
+```bash
+maskflow-agent install --agent antigravity               # .agents/hooks.json
+maskflow-agent install --agent antigravity --scope user  # ~/.gemini/config/hooks.json
+```
+
+Wrap mode:
+
+- `run_command` runs through the mask-only wrapper.
+- `grep_search` is refused.
+- `view_file` is refused for files holding personal data.
+- Tools whose name starts with `mcp` are refused. Antigravity doesn't
+  document how MCP tools are named, so an MCP tool named differently isn't
+  caught.
+
+The guard returns `allow`, which leaves Antigravity's own approval policy
+in charge. It never returns `auto_approve`.
 
 ## Limits
 
