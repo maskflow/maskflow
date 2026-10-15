@@ -274,4 +274,5 @@ def test_support_status_is_measured() -> None:
         "cline",
         "copilot",
         "devin",
+        "gemini",
     }

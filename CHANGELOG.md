@@ -755,6 +755,29 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.2.3] - 2026-10-16
+
+### Changed
+
+- **Gemini CLI verified.** It is slow (about 2 minutes per answer), not
+  broken, as 0.2.2 wrongly said. A live run with a 7-minute budget showed
+  the model only placeholders for both `run_shell_command` and
+  `read_file`, with 0 raw values in Gemini's logs. All nine agents are now
+  verified; VS Code agent mode is still untested.
+
+### Corrected
+
+- **Antigravity's verification in 0.2.2 rested on incomplete evidence.**
+  The `view_file` refusal had been seen, but the shell-read run was never
+  recorded, and the placeholder found came from another agent's file.
+  Re-tested 2026-10-16: Antigravity's own conversation store shows the
+  wrapped command ran and the agent received the masked row. Evidence now
+  has to be the masked row in the agent's own record. A bare
+  `<AADHAAR_1>` doesn't count, because the guard's start-of-session
+  message uses it as an example.
+- Docs: Antigravity's non-interactive mode denies the wrapped command
+  unless a permission rule allows it. Shown how to add a narrow rule.
+
 ## [agent 0.2.2] - 2026-10-15
 
 ### Changed
