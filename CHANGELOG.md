@@ -12,6 +12,25 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: GitHub Copilot support (experimental).**
+  `maskflow-agent install --agent copilot [--scope user] [--portable]`
+  writes `.github/hooks/maskflow-agent.json` (or the copy under
+  `~/.copilot/hooks/`). Copilot CLI, the Copilot cloud agent and VS Code
+  agent mode all read that one file. The guard tells the harnesses apart by
+  payload shape:
+  - **Copilot CLI and cloud agent:** every tool result is masked after it
+    runs (`postToolUse` → `modifiedResult`). Placeholders are restored at
+    run time inside allowlisted commands (`modifiedArgs`), and placeholder
+    writes are refused. An unreadable payload, a guard that is down, or an
+    error in the hook all withhold the result. The after-tool hook never
+    exits non-zero, because Copilot would then pass the original through.
+  - **VS Code agent mode:** wrap mode, because VS Code's hooks can't
+    replace a result.
+  - `maskflow-agent doctor` lists other agents' installs with their status
+    and pushes synthetic canaries through each one.
+  - Marked *experimental*: built from GitHub's and VS Code's hook
+    references, not yet tested against a live session (Copilot CLI access
+    was policy-blocked on the test account).
 - **`maskflow-agent`: agent-neutral guard core and a mask-only wrapper**
   (groundwork for agents other than Claude Code). The masking, unmask and
   deny policy moved out of the Claude Code hook module into
