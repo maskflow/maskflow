@@ -260,6 +260,15 @@ def fail(event: str, payload: dict[str, Any]) -> tuple[Any, int]:
 
 # -- install ------------------------------------------------------------------------
 FILE_NAME = "maskflow-agent.json"
+# Found in a live test (Copilot CLI 1.0.97): a project's .github/hooks is
+# skipped -- silently -- unless the folder is trusted, while
+# ~/.copilot/hooks always loads.
+INSTALL_NOTE = (
+    "IMPORTANT: Copilot CLI loads a project's .github/hooks ONLY when the folder is "
+    "trusted (run `copilot` here once and choose to trust it); otherwise these hooks "
+    "are silently skipped and nothing is masked. `--scope user` (~/.copilot/hooks) "
+    "always loads and is the safer choice on your own machine."
+)
 # Copilot lets a tool's original result through when an after-tool hook
 # times out, so leave room for a cold engine start (ensure_daemon: 150 s).
 _TIMEOUTS = {

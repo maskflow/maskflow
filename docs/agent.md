@@ -147,19 +147,42 @@ hooks are allowed to do:
 | Agent | Status | How the guard works there |
 |---|---|---|
 | Claude Code | verified | Every tool result is masked after it runs. |
-| GitHub Copilot CLI and cloud agent | experimental | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
+| GitHub Copilot CLI and cloud agent | **verified** (CLI) | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
 | VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
-| Cursor (desktop and CLI) | experimental | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
+| Cursor (desktop and CLI) | **verified** (CLI) | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
 | OpenAI Codex CLI | **verified** | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
-| Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
-| Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
-| OpenCode | experimental | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
-| Cline (CLI, SDK, Kanban) | experimental | Every tool result is masked after it runs (`afterTool`). Installed as a local plugin file. Cline's plugins don't run in its VS Code or JetBrains extensions. |
-| Devin Desktop (formerly Windsurf) | experimental | **Gate**: hooks can only block. Commands must run in the wrapper form, which the guard hands the agent. Cascade's built-in search has no hook, so its results are **not** masked. |
+| Gemini CLI | experimental (couldn't be tested: deprecated upstream, no longer answers on a free key) | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
+| Google Antigravity (CLI and IDE) | **verified** (CLI) | **Wrap mode**. `PostToolUse` can't change anything. |
+| OpenCode | **verified** | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
+| Cline (CLI, SDK, Kanban) | **verified** (CLI) | Every tool result is masked after it runs (`afterTool`). Installed as a local plugin file. Cline's plugins don't run in its VS Code or JetBrains extensions. |
+| Devin Desktop (formerly Windsurf) | **verified** | **Gate**: hooks can only block. Commands must run in the wrapper form, which the guard hands the agent. Cascade's built-in search has no hook, so its results are **not** masked. |
 
 *Experimental* means the adapter was built from the agent's hook
 documentation and tested against those payload shapes, but hasn't yet passed
 a live session test. `maskflow-agent install` and `doctor` print the status.
+
+**Live tests (2026-10-15).** Each verified agent was given a CSV of
+synthetic identifiers (a Verhoeff-valid generated Aadhaar, a PAN-shaped
+string, a mobile number) and asked to read it. The model answered only with
+`<AADHAAR_1>`, `<PAN_1>`, `<INDIAN_MOBILE_1>`. Afterwards we scanned the
+agent's own local files. Versions: Codex CLI 0.162, Cursor CLI 2026.10.14,
+Antigravity CLI 1.3.5, OpenCode 1.19.0, Cline CLI 3.0.71, Copilot CLI
+1.0.97, Devin Desktop. Still untested live: VS Code agent mode, Gemini CLI.
+
+**Raw output in agents' own local logs.** Three agents write each tool's
+*original* output to their own local session storage before or alongside
+the hook. That copy isn't sent to the model, but real values reach local
+disk. Treat these directories as sensitive, or clear them after working on
+production data:
+
+| Agent | Where |
+|---|---|
+| Codex CLI | `~/.codex/sessions/.../rollout-*.jsonl` (`aggregated_output`) |
+| GitHub Copilot CLI | `~/.copilot/session-state/<id>/events.jsonl` (`tool.execution_complete`, `hook.start`) |
+| OpenCode | `~/.local/share/opencode/opencode.db` (live bash output in its event log) |
+
+Cursor, Antigravity, Cline and Devin Desktop kept no raw values in our
+tests.
 
 **Wrap mode** is for agents whose hooks can rewrite a tool call before it
 runs but can't change its result:
@@ -181,6 +204,11 @@ maskflow-agent install --agent copilot               # .github/hooks/maskflow-ag
 maskflow-agent install --agent copilot --scope user  # ~/.copilot/hooks/
 maskflow-agent install --agent copilot --portable    # runs `maskflow-agent` from PATH
 ```
+
+**Use `--scope user` for Copilot CLI.** Copilot CLI loads a project's
+`.github/hooks` only when the folder is *trusted*. In an untrusted folder
+those hooks are skipped silently and nothing is masked; a live test found
+this. `~/.copilot/hooks` always loads. `install` prints this warning.
 
 All three harnesses read the same file. The guard tells them apart by the
 payload: Copilot CLI sends camelCase fields, VS Code its own snake_case

@@ -75,7 +75,11 @@ def test_known_value_masked_without_context(session_id: str) -> None:
 def test_known_value_inside_longer_number_untouched(session_id: str) -> None:
     mobile = synthetic_mobile()
     _post(session_id, "Read", {"content": f"mobile: {mobile}"})
-    longer = f"9{mobile}1"
+    # 12 digits: pick the last digit so it is NOT a valid Aadhaar (a random
+    # one passes the Verhoeff check 1 time in 10 and would rightly be masked).
+    from maskflow_pack_india.checksums import verhoeff_is_valid
+
+    longer = next(f"9{mobile}{d}" for d in "0123456789" if not verhoeff_is_valid(f"9{mobile}{d}"))
     out = _post(session_id, "Bash", {"stdout": f"order {longer}"})
     assert out == {"_raw": ""} or longer in out["_raw"]
 

@@ -1,7 +1,7 @@
 {
   "name": "maskflow-agent",
   "displayName": "MaskFlow PII guard",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Masks Aadhaar, PAN, UPI, mobile, bank-account and other personal data in every tool result before Claude sees it; restores real values only inside allowlisted database commands, at run time. Fails closed.",
   "author": {
     "name": "MaskFlow",

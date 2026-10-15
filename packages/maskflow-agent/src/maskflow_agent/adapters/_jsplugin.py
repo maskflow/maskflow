@@ -53,6 +53,14 @@ def handle(
         return {}, 0
     if event == "before":
         kind = kind_of(tool, tool_input)
+        commands = tool_input.get("commands") if isinstance(tool_input, dict) else None
+        if (
+            kind == "shell"
+            and isinstance(tool_input, dict)
+            and isinstance(commands, list)
+            and commands
+        ):
+            return _before_many(sid, tool_input, commands, payload.get("cwd")), 0
         key, command = shell_command(tool_input) if kind == "shell" else (None, None)
         pre = guard.pre_tool(
             sid, kind=kind, tool_input=tool_input, command=command, cwd=payload.get("cwd")
@@ -64,11 +72,31 @@ def handle(
         return {}, 0
     if event == "after":
         _, command = shell_command(tool_input) if tool in shell_tools else (None, None)
+        many = tool_input.get("commands") if isinstance(tool_input, dict) else None
+        if command is None and tool in shell_tools and isinstance(many, list) and len(many) == 1:
+            command = many[0] if isinstance(many[0], str) else None
         masked = guard.mask_output(sid, payload.get("result"), command)
         return ({"result": masked} if masked is not None else {}), 0
     if event == "end":
         guard.end_session(sid)
     return {}, 0
+
+
+def _before_many(sid: str, tool_input: dict[str, Any], commands: list[Any], cwd: Any) -> Any:
+    """A tool taking a list of commands (Cline's `run_commands`): each one
+    gets the same decision a single command would."""
+    rewritten: list[Any] = []
+    for command in commands:
+        if not isinstance(command, str):
+            rewritten.append(command)
+            continue
+        pre = guard.pre_tool(sid, kind="shell", tool_input=command, command=command, cwd=cwd)
+        if pre.deny is not None:
+            return {"deny": pre.deny}
+        rewritten.append(pre.command if pre.command is not None else command)
+    if rewritten == commands:
+        return {}
+    return {"input": {**tool_input, "commands": rewritten}}
 
 
 def fail(event: str, payload: dict[str, Any]) -> tuple[Any, int]:
