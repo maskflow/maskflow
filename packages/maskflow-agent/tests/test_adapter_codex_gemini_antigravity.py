@@ -260,3 +260,11 @@ def test_antigravity_install_keeps_other_named_hooks(tmp_path: Path) -> None:
     assert data["maskflow-agent"]["PreToolUse"][0]["matcher"] == "*"
     assert antigravity.is_installed(path) and antigravity.uninstall(path)
     assert json.loads(path.read_text()) == other
+
+
+def test_support_status_is_measured() -> None:
+    from maskflow_agent import adapters
+
+    # Only agents that passed a live session test are "verified".
+    assert adapters.STATUS["codex"] == "verified"
+    assert {a for a, s in adapters.STATUS.items() if s == "verified"} == {"codex"}

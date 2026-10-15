@@ -29,7 +29,13 @@ from typing import Any
 
 AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity", "devin", "opencode", "cline")
 
-STATUS: dict[str, str] = {agent: "experimental" for agent in AGENTS}
+# "verified": passed a live session test against the real agent (see
+# docs/agent.md "Measured"). Everything else is built from the agent's hook
+# documentation and tested against those payload shapes only.
+VERIFIED = frozenset({"codex"})
+STATUS: dict[str, str] = {
+    agent: "verified" if agent in VERIFIED else "experimental" for agent in AGENTS
+}
 
 
 def load(agent: str) -> ModuleType:
