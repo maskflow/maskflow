@@ -151,7 +151,7 @@ hooks are allowed to do:
 | VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
 | Cursor (desktop and CLI) | **verified** (CLI) | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
 | OpenAI Codex CLI | **verified** | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
-| Gemini CLI | experimental (couldn't be tested: deprecated upstream, no longer answers on a free key) | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
+| Gemini CLI | **verified** | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
 | Google Antigravity (CLI and IDE) | **verified** (CLI) | **Wrap mode**. `PostToolUse` can't change anything. |
 | OpenCode | **verified** | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
 | Cline (CLI, SDK, Kanban) | **verified** (CLI) | Every tool result is masked after it runs (`afterTool`). Installed as a local plugin file. Cline's plugins don't run in its VS Code or JetBrains extensions. |
@@ -167,7 +167,12 @@ string, a mobile number) and asked to read it. The model answered only with
 `<AADHAAR_1>`, `<PAN_1>`, `<INDIAN_MOBILE_1>`. Afterwards we scanned the
 agent's own local files. Versions: Codex CLI 0.162, Cursor CLI 2026.10.14,
 Antigravity CLI 1.3.5, OpenCode 1.19.0, Cline CLI 3.0.71, Copilot CLI
-1.0.97, Devin Desktop. Still untested live: VS Code agent mode, Gemini CLI.
+1.0.97, Devin Desktop, Gemini CLI 0.64. Still untested live: VS Code agent mode.
+
+Evidence is the masked row (`1,Test User,<AADHAAR_1>,<PAN_1>,<INDIAN_MOBILE_1>`)
+found in the agent's own record of what the model received. A bare
+`<AADHAAR_1>` doesn't count, because the guard's start-of-session message
+uses it as an example.
 
 **Raw output in agents' own local logs.** Three agents write each tool's
 *original* output to their own local session storage before or alongside
@@ -322,6 +327,12 @@ Wrap mode:
 
 The guard returns `allow`, which leaves Antigravity's own approval policy
 in charge. It never returns `auto_approve`.
+
+In non-interactive mode (`agy -p`) Antigravity can't ask you, so it denies
+the wrapped command unless a permission rule allows it. Approve it
+interactively, or add a narrow rule to `~/.gemini/antigravity-cli/settings.json`
+(e.g. `command(regex:...maskflow_agent exec ... --mask-only -- 'your command')`).
+A broad rule that allows every wrapped command allows every command.
 
 ### Devin Desktop (formerly Windsurf)
 
