@@ -1,4 +1,5 @@
-"""`maskflow-agent exec --session S -- '<command with placeholders>'`
+"""`maskflow-agent exec --session S --ticket T -- '<command with placeholders>'`
+`maskflow-agent exec --session S --mask-only -- '<command>'`
 
 The PreToolUse hook rewrites an allowlisted Bash command into this wrapper,
 so the command Claude Code records, shows and logs only ever contains
@@ -9,6 +10,10 @@ they are printed. Stdlib only.
 Fails closed: if the daemon can't be reached, or the single-use ticket the
 PreToolUse hook obtained for this exact command is missing, spent or
 expired, the command does NOT run.
+
+`--mask-only` restores nothing (so needs no ticket): the command runs as
+written and only its output is masked. Agents whose hooks can't replace a
+tool's output after it ran get every shell command rewritten into this form.
 """
 
 from __future__ import annotations
@@ -26,7 +31,9 @@ MAX_CAPTURE = 64 * 1024 * 1024
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="maskflow-agent exec")
     parser.add_argument("--session", required=True)
-    parser.add_argument("--ticket", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--ticket")
+    mode.add_argument("--mask-only", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args(argv)
     parts = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -35,16 +42,25 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     command = parts[0]
 
-    try:
-        real = protocol.request(args.session, "unmask_text", text=command, ticket=args.ticket)[
-            "text"
-        ]
-    except (protocol.DaemonUnavailable, KeyError):
-        sys.stderr.write(
-            "maskflow: placeholders can't be restored (guard not running, or this run "
-            "wasn't approved by the guard's hook). The command was not run.\n"
-        )
-        return EXIT_GUARD_DOWN
+    if args.mask_only:
+        if not protocol.ping(args.session):
+            sys.stderr.write(
+                "maskflow: the PII guard isn't running for this session, so this "
+                "command's output couldn't be masked. The command was not run.\n"
+            )
+            return EXIT_GUARD_DOWN
+        real = command
+    else:
+        try:
+            real = protocol.request(args.session, "unmask_text", text=command, ticket=args.ticket)[
+                "text"
+            ]
+        except (protocol.DaemonUnavailable, KeyError):
+            sys.stderr.write(
+                "maskflow: placeholders can't be restored (guard not running, or this run "
+                "wasn't approved by the guard's hook). The command was not run.\n"
+            )
+            return EXIT_GUARD_DOWN
 
     proc = subprocess.run(
         ["bash", "-c", real],

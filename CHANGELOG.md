@@ -12,6 +12,26 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: agent-neutral guard core and a mask-only wrapper**
+  (groundwork for agents other than Claude Code). The masking, unmask and
+  deny policy moved out of the Claude Code hook module into
+  `maskflow_agent.guard`. Each agent's adapter now only translates its own
+  hook JSON, so every agent gets the same policy. Claude Code's hook
+  output is byte-identical: a recorded golden sequence was checked before
+  and after the move. New for agents whose hooks can't replace a tool's
+  output after it ran ("wrap mode"):
+  - `maskflow-agent exec --mask-only` runs a command unchanged, masks its
+    stdout/stderr, and restores nothing, so it needs no ticket. It refuses
+    to run when the session's guard is down.
+  - In wrap mode every shell command is rewritten into the mask-only
+    wrapper. A command already in that exact canonical form passes
+    unchanged; anything riding along with it (`; cat x`, a newline, a
+    redirect, an env prefix, another interpreter) is denied. Allowlisted
+    commands with placeholders keep the ticketed unmask path.
+  - Built-in search is denied, and a built-in file read is denied when the
+    file holds personal data. Both denials point the agent to the shell,
+    whose output is masked.
+
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
