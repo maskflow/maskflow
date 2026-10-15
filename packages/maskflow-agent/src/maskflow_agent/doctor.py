@@ -215,7 +215,7 @@ def run(cwd: Path) -> int:
             )  # fmt: skip
             if hasattr(module, "rewritten"):  # wrap mode: run the rewritten command
                 try:
-                    command = module.rewritten(json.loads(proc.stdout or "{}"))
+                    command = module.rewritten(json.loads(proc.stdout or "{}"), proc.stderr)
                 except ValueError:
                     command = None
                 if command is None:

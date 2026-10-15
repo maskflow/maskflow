@@ -159,6 +159,6 @@ def probe(session_id: str, text: str) -> tuple[str, dict[str, Any]]:
     }
 
 
-def rewritten(out: Any) -> str | None:
+def rewritten(out: Any, stderr: str = "") -> str | None:
     command = (out.get("overwrite") or {}).get("CommandLine") if isinstance(out, dict) else None
     return command if isinstance(command, str) else None

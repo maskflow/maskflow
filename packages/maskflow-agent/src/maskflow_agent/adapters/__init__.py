@@ -27,7 +27,7 @@ import sys
 from types import ModuleType
 from typing import Any
 
-AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity")
+AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity", "devin")
 
 STATUS: dict[str, str] = {agent: "experimental" for agent in AGENTS}
 
@@ -59,8 +59,9 @@ def main(agent: str, event: str) -> int:
         if not isinstance(payload, dict):
             raise ValueError
     except ValueError:
-        _emit(adapter.fail(event, {})[0])  # unreadable payload: fail closed
-        return 0
+        out, code = adapter.fail(event, {})  # unreadable payload: fail closed
+        _emit(out)
+        return int(code)
     try:
         out, code = adapter.handle(event, payload)
     except Exception:  # noqa: BLE001 -- last-resort fail-closed

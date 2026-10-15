@@ -58,7 +58,8 @@ def main(argv: list[str] | None = None) -> int:
             help="claude: Claude Code (default) | copilot: GitHub Copilot CLI, cloud "
             "agent and VS Code agent mode | cursor: Cursor desktop and CLI | codex: "
             "OpenAI Codex CLI | gemini: Gemini CLI | antigravity: Google Antigravity "
-            "CLI and IDE (all but claude are experimental)",
+            "CLI and IDE | devin: Devin Desktop / Windsurf (all but claude are "
+            "experimental)",
         )
         p.add_argument(
             "--scope",

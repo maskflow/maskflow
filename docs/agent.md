@@ -152,6 +152,7 @@ hooks are allowed to do:
 | OpenAI Codex CLI | experimental | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
 | Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
 | Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
+| Devin Desktop (formerly Windsurf) | experimental | **Gate**: hooks can only block. Commands must run in the wrapper form, which the guard hands the agent. Cascade's built-in search has no hook, so its results are **not** masked. |
 
 *Experimental* means the adapter was built from the agent's hook
 documentation and tested against those payload shapes, but hasn't yet passed
@@ -280,6 +281,39 @@ Wrap mode:
 
 The guard returns `allow`, which leaves Antigravity's own approval policy
 in charge. It never returns `auto_approve`.
+
+### Devin Desktop (formerly Windsurf)
+
+```bash
+maskflow-agent install --agent devin                 # .devin/hooks.json (merged)
+maskflow-agent install --agent devin --scope user    # ~/.codeium/windsurf/hooks.json
+```
+
+Cascade's hooks can only block (exit code 2, with the message shown to the
+agent). They can't rewrite a command or a result. The guard is therefore a
+gate:
+
+- **Commands:** every command is blocked unless it is exactly the
+  mask-only wrapper form for this conversation. The block message contains
+  that exact command, so the agent re-runs it and its output comes back
+  masked. Anything added around the wrapper is blocked.
+- **Placeholders:** they can't be restored in Devin Desktop.
+- **File reads:** a file holding personal data is blocked, and the message
+  gives the wrapped `cat` to run instead.
+- **MCP:** tools are blocked, with a pointer to `maskflow-mcp`.
+- **Writes:** writes containing placeholders are blocked.
+- **Prompts:** `prompt_mode: block` blocks prompts holding personal data.
+  There is no channel for a warning.
+
+Devin-specific limits:
+
+- **Built-in search and directory listing have no hook.** Their results
+  reach the model unmasked.
+- Cascade lets an action through when a hook exits with anything but 2,
+  including a crash. The adapter exits 2 on every failure it can catch, but
+  can't if Python itself fails to start.
+- Every command takes one extra round: the blocked attempt, then the
+  wrapped re-run.
 
 ## Limits
 

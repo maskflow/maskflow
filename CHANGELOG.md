@@ -12,6 +12,21 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: Devin Desktop (formerly Windsurf) support
+  (experimental).** Install with `maskflow-agent install --agent devin`.
+  Cascade's hooks can only block, so the adapter is a gate:
+  - Every command is blocked unless it is the exact mask-only wrapper form
+    for this conversation. The block message hands the agent that exact
+    command.
+  - Reads of files holding personal data are blocked, with a wrapped `cat`
+    to run instead.
+  - MCP tools and placeholder writes are blocked.
+  - Every failure exits 2, because Cascade lets any other exit code
+    through.
+  - Not covered: Cascade's built-in search has no hook, so its results
+    aren't masked.
+  - Also fixed in the shared adapter runner: an unreadable payload now
+    returns the adapter's own fail-closed exit code.
 - **`maskflow-agent`: Codex CLI, Gemini CLI and Google Antigravity support
   (experimental).** Install with `maskflow-agent install --agent
   codex|gemini|antigravity`.
