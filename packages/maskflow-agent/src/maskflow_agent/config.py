@@ -1,7 +1,8 @@
 """Guard configuration and the unmask allowlist. Stdlib only.
 
-Config is read from the first of `<cwd>/.claude/maskflow-agent.json`,
-`$MASKFLOW_AGENT_HOME/config.json`; missing files mean defaults:
+Config is read from the first of `<cwd>/.maskflow/agent.json`,
+`<cwd>/.claude/maskflow-agent.json`, `$MASKFLOW_AGENT_HOME/config.json`;
+missing files mean defaults:
 
     {
       "unmask_allow": ["psql", "mysql", "kubectl exec"],   // replaces defaults
@@ -57,6 +58,7 @@ class AgentConfig(NamedTuple):
 def _candidates(cwd: str | None) -> list[Path]:
     found = []
     if cwd:
+        found.append(Path(cwd) / ".maskflow" / "agent.json")
         found.append(Path(cwd) / ".claude" / "maskflow-agent.json")
     found.append(paths.home() / "config.json")
     return found

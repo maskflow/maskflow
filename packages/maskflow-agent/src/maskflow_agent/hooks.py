@@ -18,35 +18,20 @@ tool result through because something went wrong.
 from __future__ import annotations
 
 import json
-import os
-import re
 import sys
-import time
 from typing import Any
 
-from . import paths, protocol
+from . import guard, protocol
 
-WITHHELD = (
-    "[maskflow: output withheld -- the PII guard could not mask it. Run `maskflow-agent doctor`.]"
-)
-_TOKEN_RE = re.compile(r"<[A-Z][A-Z_]*?_\d+(?:_[0-9a-f]+)?>")
+# Re-exported: the plugin, doctor and tests use these names.
+WITHHELD = guard.WITHHELD
+CONTEXT = guard.CONTEXT
+withheld = guard.withheld
+ensure_daemon = guard.ensure_daemon
+_select_columns = guard.select_columns
+_with_header_hint = guard.with_header_hint
+
 _WRITE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
-_WRAPPER_RE = re.compile(r"maskflow[_-]agent\b.*\bexec\b|maskflow_agent\.execwrap", re.S)
-# A cold first start after `pip install` (bytecode compile + spaCy) took 26 s
-# on an M-series-class laptop; leave generous room on slower machines.
-_START_TIMEOUT = 150.0
-
-CONTEXT = (
-    "MaskFlow PII guard is active. Personal data in tool results (Aadhaar, PAN, "
-    "UPI IDs, phone numbers, bank accounts, names, ...) is replaced with "
-    "placeholders like <AADHAAR_1> or <INDIAN_MOBILE_3>; the same value always "
-    "gets the same placeholder in this session. Use placeholders verbatim. In "
-    "allowlisted database/kubectl commands (psql, mysql, sqlite3, ...) they are "
-    "replaced with the real values when the command runs, so e.g. "
-    "`psql -c \"UPDATE kyc SET status='ok' WHERE pan='<PAN_3>'\"` updates the right "
-    "row. They are never converted back inside file edits. Do not try to decode, "
-    "hex-dump or otherwise recover the hidden values."
-)
 
 
 # -- helpers ----------------------------------------------------------------
@@ -55,107 +40,12 @@ def _emit(obj: dict[str, Any]) -> None:
     sys.stdout.flush()
 
 
-def withheld(value: Any) -> Any:
-    """Same shape as `value`, every string leaf replaced (Claude Code ignores
-    a replacement whose shape doesn't match a built-in tool's schema, so the
-    stub must keep keys and types)."""
-    if isinstance(value, str):
-        return WITHHELD if value else value
-    if isinstance(value, list):
-        return [withheld(v) for v in value]
-    if isinstance(value, dict):
-        return {k: withheld(v) for k, v in value.items()}
-    return value
-
-
-def _strings(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, list):
-        return [s for v in value for s in _strings(v)]
-    if isinstance(value, dict):
-        return [s for v in value.values() for s in _strings(v)]
-    return []
-
-
-def _daemon_cmd(session_id: str) -> list[str]:
-    return [sys.executable, "-m", "maskflow_agent", "daemon", "--session", session_id]
-
-
-def _transcript_tokens(transcript_path: str | None) -> list[str]:
-    if not transcript_path or not os.path.isfile(transcript_path):
-        return []
-    try:
-        with open(transcript_path, encoding="utf-8", errors="replace") as f:
-            return sorted({m.group(0) for m in _TOKEN_RE.finditer(f.read())})
-    except OSError:
-        return []
-
-
-def ensure_daemon(session_id: str, transcript_path: str | None = None) -> bool:
-    """Start the session's daemon if it isn't answering. A (re)started
-    daemon first reserves every placeholder already in the transcript, so a
-    value seen from now on can never be given a name the model has already
-    seen for a different value.
-
-    Hooks fire in parallel, and a cold first start (fresh install: bytecode
-    compile + spaCy load) can take tens of seconds. So: one spawner at a time
-    (a start lock), and a daemon that is alive but still loading (its pid
-    file) is waited for, never duplicated."""
-    if protocol.ping(session_id):
-        return True
-    import fcntl
-
-    deadline = time.monotonic() + _START_TIMEOUT
-    with open(paths.start_lock_path(session_id), "a") as lock:
-        while True:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError:
-                if time.monotonic() > deadline:
-                    return False
-                time.sleep(0.2)
-        try:
-            if protocol.ping(session_id):
-                return True  # another hook started it while we waited
-            if paths.live_pid(session_id) is None:
-                _spawn(session_id)
-            while time.monotonic() < deadline:
-                if protocol.ping(session_id, timeout=1.0):
-                    return _reserve(session_id, transcript_path)
-                time.sleep(0.2)
-            return False
-        finally:
-            fcntl.flock(lock, fcntl.LOCK_UN)
-
-
-def _spawn(session_id: str) -> None:
-    import subprocess
-
-    log = open(paths.log_path(session_id), "ab")  # noqa: SIM115 -- handed to the child
-    try:
-        subprocess.Popen(
-            _daemon_cmd(session_id),
-            stdin=subprocess.DEVNULL,
-            stdout=log,
-            stderr=log,
-            start_new_session=True,
-            close_fds=True,
-        )
-    finally:
-        log.close()
-
-
-def _reserve(session_id: str, transcript_path: str | None) -> bool:
-    tokens = _transcript_tokens(transcript_path)
-    if not tokens:
-        return True
-    try:
-        protocol.request(session_id, "reserve", tokens=tokens)
-    except protocol.DaemonUnavailable:
-        return False
-    return True
+def _kind(tool: str) -> str:
+    if tool == "Bash":
+        return "shell"
+    if tool in _WRITE_TOOLS:
+        return "write"
+    return "other"
 
 
 # -- handlers -----------------------------------------------------------------
@@ -185,165 +75,52 @@ def _deny(reason: str) -> None:
 
 
 def pre_tool_use(payload: dict[str, Any]) -> None:
-    session_id = payload["session_id"]
-    if not ensure_daemon(session_id, payload.get("transcript_path")):
-        _deny(
-            "MaskFlow PII guard is not running for this session, so this tool's output "
-            "could not be masked. Ask the user to run `maskflow-agent doctor`."
-        )
-        return
+    from . import config
 
     tool = payload.get("tool_name", "")
     tool_input = payload.get("tool_input") or {}
-    text = "\n".join(_strings(tool_input))
-    if tool == "Bash" and _WRAPPER_RE.search(text):
-        _deny("Commands may not invoke the MaskFlow unmask wrapper directly.")
+    command = tool_input.get("command") if tool == "Bash" else None
+    cwd = payload.get("cwd")
+    pre = guard.pre_tool(
+        payload["session_id"],
+        kind=_kind(tool),
+        tool_input=tool_input,
+        command=command if isinstance(command, str) else None,
+        cwd=cwd,
+        transcript_path=payload.get("transcript_path"),
+        user_rule=lambda c: config.user_bash_decision(c, cwd),
+    )
+    if pre.deny is not None:
+        _deny(pre.deny)
         return
-    if "<" not in text:
+    if pre.command is not None:
+        decision: dict[str, Any] = {
+            "hookEventName": "PreToolUse",
+            "updatedInput": {**tool_input, "command": pre.command},
+        }
+        if pre.permission is not None:
+            decision["permissionDecision"] = pre.permission
+            decision["permissionDecisionReason"] = (
+                "maskflow: placeholders are restored to real values when this runs"
+            )
+        _emit({"hookSpecificOutput": decision})
         return
-    tokens = protocol.request(session_id, "tokens_in", text=text).get("tokens", [])
-    if not tokens:
-        return
-
-    if tool in _WRITE_TOOLS:
-        _deny(
-            f"This edit contains MaskFlow placeholders ({', '.join(tokens[:3])}). They "
-            "stand for real values that the model never sees, and are never converted "
-            "back inside files -- writing them would replace real data with "
-            "placeholders. Edit around them, or ask the user to make this change."
-        )
-        return
-
-    if tool == "Bash" and isinstance(tool_input.get("command"), str):
-        import shlex
-
-        from . import config
-
-        command = tool_input["command"]
-        cfg = config.load(payload.get("cwd"))
-        if config.is_unmask_allowed(command, cfg.unmask_allow):
-            user_rule = config.user_bash_decision(command, payload.get("cwd"))
-            if user_rule == "deny":
-                _deny("This command matches one of your Bash deny rules.")
-                return
-            ticket = protocol.request(session_id, "issue_ticket", command=command)["ticket"]
-            wrapped = shlex.join(
-                [sys.executable, "-m", "maskflow_agent", "exec",
-                 "--session", session_id, "--ticket", ticket, "--"]
-            )  # fmt: skip
-            new_input = dict(tool_input)
-            new_input["command"] = f"{wrapped} {shlex.quote(command)}"
-            decision: dict[str, Any] = {
-                "hookEventName": "PreToolUse",
-                "updatedInput": new_input,
-            }
-            # Never grant more than the user already had: auto-approve only
-            # when their own allow rules cover the original command. With no
-            # decision, Claude Code's normal permission flow (prompt / auto
-            # mode) judges the wrapped command.
-            if user_rule in ("allow", "ask"):
-                decision["permissionDecision"] = user_rule
-                decision["permissionDecisionReason"] = (
-                    "maskflow: placeholders are restored to real values when this runs"
-                )
-            _emit({"hookSpecificOutput": decision})
-            return
+    if pre.note is not None:
         _emit(
-            {
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "additionalContext": (
-                        "MaskFlow: this command is not on the unmask allowlist, so "
-                        f"{', '.join(tokens[:3])} were passed literally, not as real values."
-                    ),
-                }
-            }
+            {"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": pre.note}}
         )
-
-
-_SELECT_RE = re.compile(r"\bselect\s+(.{1,2000}?)\s+from\b", re.I | re.S)
-_IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-_DELIMS = ("|", "\t", ",")
-
-
-def _select_columns(command: str) -> list[str] | None:
-    """Column names of the command's single SELECT with an explicit column
-    list (alias if given, else the last identifier: `k.mobile` -> mobile).
-    None for SELECT *, expressions without an alias, or several SELECTs."""
-    found = _SELECT_RE.findall(command)
-    if len(found) != 1:
-        return None
-    parts, depth, current = [], 0, ""
-    for ch in found[0]:
-        if ch == "(":
-            depth += 1
-        elif ch == ")":
-            depth -= 1
-        if ch == "," and depth == 0:
-            parts.append(current)
-            current = ""
-        else:
-            current += ch
-    parts.append(current)
-    columns = []
-    for part in parts:
-        part = part.strip().strip("\"'`")
-        if not part or "*" in part:
-            return None
-        alias = re.split(r"\s+as\s+", part, flags=re.I)
-        name = _IDENT_RE.findall(alias[-1])
-        if not name:
-            return None
-        columns.append(name[-1].lower())
-    return columns or None
-
-
-def _with_header_hint(command: str, stdout: str) -> tuple[str, str] | None:
-    """(header line, stdout with it prepended) when `stdout` looks like the
-    headerless rows of a SELECT whose column names are in `command` --
-    `sqlite3` / `psql -t` / `mysql -N` output. The masking engine then reads
-    each value under its column name, as it does for any table."""
-    columns = _select_columns(command)
-    first = next((line for line in stdout.splitlines() if line.strip()), "")
-    if not columns or len(columns) < 2 or not first:
-        return None
-    if any(c in first.lower() for c in columns if len(c) > 2):
-        return None  # already has a header row
-    for delim in _DELIMS:
-        if first.count(delim) == len(columns) - 1:
-            header = delim.join(columns)
-            return header, f"{header}\n{stdout}"
-    return None
 
 
 def post_tool_use(payload: dict[str, Any]) -> None:
     response = payload.get("tool_response")
-    try:
-        value, header = response, None
-        command = (payload.get("tool_input") or {}).get("command")
-        if (
-            payload.get("tool_name") == "Bash"
-            and isinstance(command, str)
-            and isinstance(response, dict)
-            and isinstance(response.get("stdout"), str)
-        ):
-            hint = _with_header_hint(command, response["stdout"])
-            if hint is not None:
-                header, hinted = hint
-                value = {**response, "stdout": hinted}
-        result = protocol.request(payload["session_id"], "mask_value", value=value)
-        if header is not None:
-            out = result["value"]["stdout"]
-            if out.startswith(header + "\n"):
-                result["value"]["stdout"] = out[len(header) + 1 :]
-                result["changed"] = result["value"] != response
-            else:  # never expected; mask it the ordinary way instead
-                result = protocol.request(payload["session_id"], "mask_value", value=response)
-        if not result.get("changed"):
-            return
-        masked = result["value"]
-    except Exception:  # noqa: BLE001 -- fail closed on anything
-        masked = withheld(response)
+    command = (payload.get("tool_input") or {}).get("command")
+    masked = guard.mask_output(
+        payload["session_id"],
+        response,
+        command if payload.get("tool_name") == "Bash" and isinstance(command, str) else None,
+    )
+    if masked is None:
+        return
     _emit({"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": masked}})
 
 
@@ -353,42 +130,23 @@ def user_prompt_submit(payload: dict[str, Any]) -> None:
     cfg = config.load(payload.get("cwd"))
     if cfg.prompt_mode == "off":
         return
-    try:
-        counts = protocol.request(
-            payload["session_id"], "scan", text=str(payload.get("prompt", ""))
-        ).get("counts", {})
-    except protocol.DaemonUnavailable:
+    found = guard.prompt_findings(payload["session_id"], str(payload.get("prompt", "")))
+    if found is None:
         return
-    if not counts:
-        return
-    found = ", ".join(f"{label} x{n}" for label, n in sorted(counts.items()))
     if cfg.prompt_mode == "block":
         _emit(
             {
                 "decision": "block",
-                "reason": (
-                    f"MaskFlow: your prompt contains personal data ({found}). It was not "
-                    "sent. Remove it, or reference the record by a non-personal key."
-                ),
+                "reason": guard.prompt_blocked(found),
                 "suppressOriginalPrompt": True,
             }
         )
         return
-    _emit(
-        {
-            "systemMessage": (
-                f"MaskFlow: your prompt contains personal data ({found}) and was sent to "
-                "the model as typed -- prompts can't be masked. Tool results are masked."
-            )
-        }
-    )
+    _emit({"systemMessage": guard.prompt_warning(found)})
 
 
 def session_end(payload: dict[str, Any]) -> None:
-    try:
-        protocol.request(payload["session_id"], "end", timeout=1.0)
-    except protocol.DaemonUnavailable:
-        pass
+    guard.end_session(payload["session_id"])
 
 
 HANDLERS = {

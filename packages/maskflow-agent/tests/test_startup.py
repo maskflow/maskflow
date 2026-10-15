@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 from conftest import run_hook
-from maskflow_agent import daemon, hooks, install, paths, protocol
+from maskflow_agent import daemon, guard, install, paths, protocol
 
 
 def _daemons_for(session_id: str) -> int:
@@ -41,9 +41,9 @@ def test_still_loading_daemon_is_waited_for_not_duplicated(
     try:
         paths.pid_path(session).write_text(str(loading.pid))  # alive, no socket yet
         spawned: list[str] = []
-        monkeypatch.setattr(hooks, "_spawn", spawned.append)
-        monkeypatch.setattr(hooks, "_START_TIMEOUT", 1.5)
-        assert hooks.ensure_daemon(session) is False
+        monkeypatch.setattr(guard, "_spawn", spawned.append)
+        monkeypatch.setattr(guard, "_START_TIMEOUT", 1.5)
+        assert guard.ensure_daemon(session) is False
         assert spawned == []
     finally:
         loading.kill()
@@ -58,9 +58,9 @@ def test_dead_pid_file_does_not_block_a_start(
     dead.wait()
     paths.pid_path(session).write_text(str(dead.pid))
     spawned: list[str] = []
-    monkeypatch.setattr(hooks, "_spawn", spawned.append)
-    monkeypatch.setattr(hooks, "_START_TIMEOUT", 0.5)
-    hooks.ensure_daemon(session)
+    monkeypatch.setattr(guard, "_spawn", spawned.append)
+    monkeypatch.setattr(guard, "_START_TIMEOUT", 0.5)
+    guard.ensure_daemon(session)
     assert spawned == [session]
 
 

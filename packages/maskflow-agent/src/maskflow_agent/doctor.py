@@ -131,12 +131,25 @@ def run(cwd: Path) -> int:
             "Upgrade Claude Code: older versions can't block a tool when the guard fails.",
         )
 
+    from . import adapters
+
+    others: list[str] = []
+    for agent in adapters.AGENTS:
+        module = adapters.load(agent)
+        for scope in ("project", "user"):
+            path = module.config_path(scope, cwd)
+            if module.is_installed(path):
+                others.append(agent)
+                report.note(f"{agent} hooks in {path} ({adapters.STATUS[agent]})")
+
     scopes = {
         s: install.installed(install.settings_path(s, cwd)) for s in ("project", "local", "user")
     }
     active = [s for s, events in scopes.items() if events]
     plugin = _plugin_active(cwd)
-    if plugin:
+    if not active and not plugin and others:
+        report.note("Claude Code hooks not installed (other agents are)")
+    elif plugin:
         report.note(f"Claude Code plugin {plugin} is enabled for this project")
         report.check(
             not active,
@@ -190,6 +203,32 @@ def run(cwd: Path) -> int:
             report.check(
                 code == 0 and not leaked and "<AADHAAR_" in out,
                 f"{tool} output masked" + (f" -- LEAKED {leaked}" if leaked else ""),
+            )
+
+        for agent in sorted(set(others)):
+            module = adapters.load(agent)
+            event, payload = module.probe(session, csv)
+            proc = subprocess.run(
+                [sys.executable, "-m", "maskflow_agent", "hook", "--agent", agent, event],
+                input=json.dumps(payload), capture_output=True, text=True, timeout=180,
+                check=False,
+            )  # fmt: skip
+            if hasattr(module, "rewritten"):  # wrap mode: run the rewritten command
+                try:
+                    command = module.rewritten(json.loads(proc.stdout or "{}"), proc.stderr)
+                except ValueError:
+                    command = None
+                if command is None:
+                    report.check(False, f"{agent} hook wraps shell commands")
+                    continue
+                proc = subprocess.run(
+                    ["bash", "-c", command], capture_output=True, text=True, timeout=180,
+                    check=False,
+                )  # fmt: skip
+            leaked = [k for k, v in canaries.items() if v in proc.stdout]
+            report.check(
+                proc.returncode == 0 and not leaked and "<AADHAAR_" in proc.stdout,
+                f"{agent} hook masks tool output" + (f" -- LEAKED {leaked}" if leaked else ""),
             )
 
         code, out = _run_hook(

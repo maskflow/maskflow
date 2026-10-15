@@ -1,4 +1,4 @@
-# maskflow-agent: PII guard for Claude Code
+# maskflow-agent: PII guard for AI coding agents
 
 Use Claude Code on production data without Indian PII reaching the model.
 
@@ -116,7 +116,8 @@ settings file.
 
 ### Configuration
 
-`.claude/maskflow-agent.json` (or `~/.maskflow/agent/config.json`):
+`.maskflow/agent.json` in the project (works for every agent), or
+`.claude/maskflow-agent.json`, or `~/.maskflow/agent/config.json`:
 
 ```json
 {
@@ -136,6 +137,212 @@ settings file.
 - Overhead: about **65 ms per hook** (p50, Apple M-series). That is mostly
   Python start-up plus one local socket round trip, so about 130 ms per tool
   call. A 200-row CSV result takes about 350 ms to mask.
+
+## Other agents
+
+Claude Code is the reference integration. The guard also runs inside other
+agents' hook systems. How much it can protect depends on what each agent's
+hooks are allowed to do:
+
+| Agent | Status | How the guard works there |
+|---|---|---|
+| Claude Code | verified | Every tool result is masked after it runs. |
+| GitHub Copilot CLI and cloud agent | experimental | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
+| VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
+| Cursor (desktop and CLI) | experimental | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
+| OpenAI Codex CLI | experimental | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
+| Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
+| Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
+| OpenCode | experimental | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
+| Cline (CLI, SDK, Kanban) | experimental | Every tool result is masked after it runs (`afterTool`). Installed as a local plugin file. Cline's plugins don't run in its VS Code or JetBrains extensions. |
+| Devin Desktop (formerly Windsurf) | experimental | **Gate**: hooks can only block. Commands must run in the wrapper form, which the guard hands the agent. Cascade's built-in search has no hook, so its results are **not** masked. |
+
+*Experimental* means the adapter was built from the agent's hook
+documentation and tested against those payload shapes, but hasn't yet passed
+a live session test. `maskflow-agent install` and `doctor` print the status.
+
+**Wrap mode** is for agents whose hooks can rewrite a tool call before it
+runs but can't change its result:
+
+- Every shell command is rewritten to run inside `maskflow-agent exec
+  --mask-only`, which masks its output and restores nothing.
+- Allowlisted commands containing placeholders still get the run-time
+  restore.
+- The agent's built-in search is refused, and so is a built-in file read
+  when the file holds personal data. Both refusals tell the agent to use
+  the shell instead, where the output is masked.
+- MCP tools are refused, with a pointer to the `maskflow-mcp` proxy, which
+  masks MCP results itself.
+
+### GitHub Copilot (CLI, cloud agent, VS Code)
+
+```bash
+maskflow-agent install --agent copilot               # .github/hooks/maskflow-agent.json
+maskflow-agent install --agent copilot --scope user  # ~/.copilot/hooks/
+maskflow-agent install --agent copilot --portable    # runs `maskflow-agent` from PATH
+```
+
+All three harnesses read the same file. The guard tells them apart by the
+payload: Copilot CLI sends camelCase fields, VS Code its own snake_case
+format. For the **cloud agent**, commit a `--portable` file and install the
+package in `.github/workflows/copilot-setup-steps.yml`
+(`pip install maskflow-agent`). If the package is missing, the before-tool
+hook fails, and Copilot then refuses every tool call.
+
+Copilot-specific limits:
+
+- Copilot passes the **original** result through when an after-tool hook
+  **times out** or exits non-zero. The installed timeout is 180 s, and the
+  hook never exits non-zero.
+- A **failed** tool's error text goes to `postToolUseFailure`, which can't
+  replace it.
+- Copilot discards a config hook's output for `userPromptSubmitted`, so
+  personal data in prompts gets no warning in the CLI. VS Code shows the
+  warning.
+- In VS Code wrap mode, a background terminal command's output appears only
+  when the command exits.
+
+### Cursor
+
+```bash
+maskflow-agent install --agent cursor                # .cursor/hooks.json (merged, other hooks kept)
+maskflow-agent install --agent cursor --scope user   # ~/.cursor/hooks.json
+```
+
+Cursor's hooks can replace a tool result only for MCP tools, so Cursor runs
+in wrap mode:
+
+- `Shell` commands run through the mask-only wrapper.
+- `Grep` and semantic search are refused, with a hint to use `rg`.
+- `beforeReadFile` refuses a file holding personal data. This covers the
+  agent's reads and @-attached files.
+- `beforeTabFileRead` does the same for Tab completion, which also sends
+  file content to a model.
+- MCP results are masked after the call.
+
+The before-hooks are installed with `failClosed: true`, so a crash or a
+timeout blocks the action instead of letting it through. Prompts holding
+personal data get a warning (`prompt_mode: block` refuses them).
+
+Cursor-specific limits:
+
+- Cursor doesn't document whether its CLI runs every hook. Only
+  `workspaceOpen` is documented for the CLI.
+- If Cursor's shell sandbox blocks the wrapper's local socket, wrapped
+  commands are **refused**. They don't run unmasked. Not yet tested live.
+
+### Codex CLI
+
+```bash
+maskflow-agent install --agent codex                 # .codex/hooks.json
+maskflow-agent install --agent codex --scope user    # ~/.codex/hooks.json
+```
+
+Codex runs a hook only after you review it. Start `codex`, run `/hooks`,
+and trust the maskflow-agent hooks. Project hooks also load only in a
+trusted project.
+
+- Masking: a tool result holding personal data is replaced, through
+  `decision: "block"`, by the masked result under a one-line
+  `[maskflow: ...]` header. This covers shell, `exec_command`,
+  `apply_patch` and MCP.
+- Restoring placeholders: Codex only accepts a rewritten command together
+  with `permissionDecision: "allow"`, which would skip an approval you asked
+  for. So placeholders are restored only in sessions that already run
+  commands without asking (for example `--full-auto`/`never`). Elsewhere
+  they are passed literally, with a note to the model.
+
+### Gemini CLI
+
+```bash
+maskflow-agent install --agent gemini                # .gemini/settings.json (merged)
+```
+
+Google replaced Gemini CLI with Antigravity CLI on 2026-06-18. This
+adapter is for installs that still run Gemini CLI. Every tool result
+holding personal data is replaced, through `AfterTool` `decision: "deny"`,
+by the masked result. Allowlisted commands get the run-time restore
+(`BeforeTool` rewrites the arguments without touching approvals). Older
+Gemini CLI versions may also need `"tools": {"enableHooks": true}` in
+settings.
+
+### Google Antigravity (CLI and IDE)
+
+```bash
+maskflow-agent install --agent antigravity               # .agents/hooks.json
+maskflow-agent install --agent antigravity --scope user  # ~/.gemini/config/hooks.json
+```
+
+Wrap mode:
+
+- `run_command` runs through the mask-only wrapper.
+- `grep_search` is refused.
+- `view_file` is refused for files holding personal data.
+- Tools whose name starts with `mcp` are refused. Antigravity doesn't
+  document how MCP tools are named, so an MCP tool named differently isn't
+  caught.
+
+The guard returns `allow`, which leaves Antigravity's own approval policy
+in charge. It never returns `auto_approve`.
+
+### Devin Desktop (formerly Windsurf)
+
+```bash
+maskflow-agent install --agent devin                 # .devin/hooks.json (merged)
+maskflow-agent install --agent devin --scope user    # ~/.codeium/windsurf/hooks.json
+```
+
+Cascade's hooks can only block (exit code 2, with the message shown to the
+agent). They can't rewrite a command or a result. The guard is therefore a
+gate:
+
+- **Commands:** every command is blocked unless it is exactly the
+  mask-only wrapper form for this conversation. The block message contains
+  that exact command, so the agent re-runs it and its output comes back
+  masked. Anything added around the wrapper is blocked.
+- **Placeholders:** they can't be restored in Devin Desktop.
+- **File reads:** a file holding personal data is blocked, and the message
+  gives the wrapped `cat` to run instead.
+- **MCP:** tools are blocked, with a pointer to `maskflow-mcp`.
+- **Writes:** writes containing placeholders are blocked.
+- **Prompts:** `prompt_mode: block` blocks prompts holding personal data.
+  There is no channel for a warning.
+
+Devin-specific limits:
+
+- **Built-in search and directory listing have no hook.** Their results
+  reach the model unmasked.
+- Cascade lets an action through when a hook exits with anything but 2,
+  including a crash. The adapter exits 2 on every failure it can catch, but
+  can't if Python itself fails to start.
+- Every command takes one extra round: the blocked attempt, then the
+  wrapped re-run.
+
+### OpenCode and Cline
+
+```bash
+maskflow-agent install --agent opencode   # .opencode/plugins/maskflow-agent.js
+maskflow-agent install --agent cline      # .cline/plugins/maskflow-agent.js
+# --scope user: ~/.config/opencode/plugins/ or ~/.cline/plugins/
+```
+
+Both agents extend through JavaScript plugins, not hook commands. The
+installer writes a small plugin file (no npm package) that sends every
+tool call through `maskflow-agent hook --agent opencode|cline`, so the
+policy is the same as for every other agent:
+
+- Every tool result is masked; if the guard doesn't answer, it is withheld.
+- Placeholder writes are refused.
+- Allowlisted commands get the run-time restore.
+
+Uninstall removes only a file the installer wrote.
+
+Cline gives each plugin hook 3 seconds and ignores one that times out,
+which would let the original result through. The plugin therefore keeps a
+2.5 s budget of its own and withholds the result when the guard misses it.
+It also starts the guard in the background when a session begins, so a
+cold start doesn't cost a result. Expect the first tool call of a cold
+session to be asked to retry.
 
 ## Limits
 
@@ -158,5 +365,5 @@ settings file.
 - **`--resume` starts a new mapping.** Placeholders from before the resume
   can't be restored. New values never reuse their names: the restarted
   daemon reserves every placeholder already in the transcript.
-- **Cursor is not supported yet.** Its hooks can only replace MCP tool
-  output.
+- **Other agents** have narrower coverage than Claude Code. See
+  [Other agents](#other-agents).
