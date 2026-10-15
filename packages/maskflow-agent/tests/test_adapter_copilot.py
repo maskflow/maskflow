@@ -255,5 +255,6 @@ def test_cli_install_command(tmp_path: Path) -> None:
         cwd=tmp_path, capture_output=True, text=True, timeout=600, check=False,
     )  # fmt: skip
     assert proc.returncode == 0, proc.stderr[-300:]
-    assert "EXPERIMENTAL" in proc.stdout
+    assert "EXPERIMENTAL" not in proc.stdout  # verified live
+    assert "trusted" in proc.stdout and "--scope user" in proc.stdout
     assert copilot.is_installed(copilot.config_path("project", tmp_path))

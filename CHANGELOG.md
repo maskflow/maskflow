@@ -755,6 +755,38 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.2.2] - 2026-10-15
+
+### Changed
+
+- **Six more agents verified in live sessions:** Cursor, Google
+  Antigravity, OpenCode, Cline, GitHub Copilot CLI and Devin Desktop. Each
+  read a CSV of synthetic identifiers through the released adapter, and the
+  model saw only placeholders. Verified so far: Claude Code, Codex, Cursor,
+  Antigravity, OpenCode, Cline, Copilot CLI, Devin Desktop. Still
+  experimental: VS Code agent mode, and Gemini CLI, which couldn't be
+  tested because it no longer answers on a free key.
+
+### Fixed
+
+- **Copilot CLI: a project install could silently protect nothing.**
+  Copilot loads `.github/hooks` only in trusted folders and skips them
+  without a warning elsewhere. In the first live test the synthetic values
+  reached the model. `install --agent copilot` now explains this and
+  recommends `--scope user` (`~/.copilot/hooks`), which always loads.
+- **Cline: placeholders weren't restored in `run_commands`.** Its shell
+  tool takes a list (`{"commands": [...]}`, seen in a live session); each
+  command now gets the same decision as a single one.
+- A test that built a 12-digit "not an Aadhaar" number failed about 1 run
+  in 10, whenever the number happened to pass the Verhoeff check (masking
+  it was correct). It now picks a checksum-invalid number.
+
+### Documented
+
+- Codex, Copilot CLI and OpenCode keep each tool's original output in
+  their own local session storage. That copy isn't sent to the model;
+  paths are in docs/agent.md.
+
 ## [agent 0.2.1] - 2026-10-15
 
 ### Changed

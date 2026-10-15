@@ -266,5 +266,12 @@ def test_support_status_is_measured() -> None:
     from maskflow_agent import adapters
 
     # Only agents that passed a live session test are "verified".
-    assert adapters.STATUS["codex"] == "verified"
-    assert {a for a, s in adapters.STATUS.items() if s == "verified"} == {"codex"}
+    assert {a for a, s in adapters.STATUS.items() if s == "verified"} == {
+        "codex",
+        "cursor",
+        "antigravity",
+        "opencode",
+        "cline",
+        "copilot",
+        "devin",
+    }

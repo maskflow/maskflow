@@ -207,3 +207,26 @@ def test_install_uninstall_roundtrip(module: Any, tmp_path: Path) -> None:
     assert '["maskflow-agent", "hook", "--agent"' in path.read_text()
     module.install(path)  # re-install over our own file is fine
     assert module.is_installed(path) and module.uninstall(path) and not path.exists()
+
+
+def test_cline_run_commands_list(session_id: str) -> None:
+    """Cline's shell tool takes `{"commands": [...]}` (seen in a live session)."""
+    token = token_for(session_id, synthetic_pan())
+    out, _, _ = run_agent_hook(
+        "cline", "before",
+        {"session": session_id, "tool": "run_commands",
+         "input": {"commands": ["ls", f"psql -c \"select '{token}'\""]}},
+    )  # fmt: skip
+    first, second = out["input"]["commands"]
+    assert first == "ls" and "--ticket" in second and token in second
+    plain, raw, _ = run_agent_hook(
+        "cline", "before",
+        {"session": session_id, "tool": "run_commands", "input": {"commands": ["ls"]}},
+    )  # fmt: skip
+    assert plain == {}
+    wrapper = f"python -m maskflow_agent exec --session {session_id} --ticket x -- ls"
+    denied, _, _ = run_agent_hook(
+        "cline", "before",
+        {"session": session_id, "tool": "run_commands", "input": {"commands": [wrapper]}},
+    )  # fmt: skip
+    assert "deny" in denied

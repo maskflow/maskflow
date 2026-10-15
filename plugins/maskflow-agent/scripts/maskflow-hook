@@ -16,7 +16,7 @@
 # guard never lets a tool run unmasked.
 set -u
 EVENT="${1:-}"
-VERSION="0.2.1"
+VERSION="0.2.2"
 DATA="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/maskflow-agent}"
 VENV="$DATA/venv-$VERSION"
 MODEL="https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"

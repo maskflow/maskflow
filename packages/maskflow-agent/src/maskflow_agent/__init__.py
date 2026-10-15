@@ -11,4 +11,4 @@ process, so this package's top level and the hook client (`hooks.py`,
 masking engine is imported by the per-session daemon (`daemon.py`) alone.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
