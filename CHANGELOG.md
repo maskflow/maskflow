@@ -755,6 +755,25 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
 
+## [agent 0.2.1] - 2026-10-15
+
+### Changed
+
+- **Codex CLI support is now verified.** It passed a live session test
+  with Codex CLI 0.162. Codex read a CSV of synthetic identifiers through
+  the released 0.2.0 adapter. The model received only placeholders and
+  answered with `<AADHAAR_1>`, `<PAN_1>`, `<INDIAN_MOBILE_1>`: 0 raw
+  values were in what was sent to the model. This confirms that a blocking
+  `PostToolUse` *replaces* the tool result with the hook's reason.
+  `install`/`doctor` now print `verified` for Codex.
+
+### Documented
+
+- Codex writes each command's original output to its own local session
+  log (`~/.codex/sessions/`, `aggregated_output`). That record isn't sent
+  to the model, but real values reach local disk there. Found during the
+  live test.
+
 ## [agent 0.2.0] - 2026-10-15
 
 The guard now runs in coding agents beyond Claude Code. Claude Code stays

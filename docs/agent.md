@@ -150,7 +150,7 @@ hooks are allowed to do:
 | GitHub Copilot CLI and cloud agent | experimental | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
 | VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
 | Cursor (desktop and CLI) | experimental | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
-| OpenAI Codex CLI | experimental | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
+| OpenAI Codex CLI | **verified** | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
 | Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
 | Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
 | OpenCode | experimental | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
@@ -246,6 +246,16 @@ trusted project.
   `decision: "block"`, by the masked result under a one-line
   `[maskflow: ...]` header. This covers shell, `exec_command`,
   `apply_patch` and MCP.
+- **Verified live** (Codex CLI 0.162, 2026-10-15). Codex read a CSV of
+  synthetic identifiers. The model received only placeholders and answered
+  with `<AADHAAR_1>`, `<PAN_1>`, `<INDIAN_MOBILE_1>`. **0** raw values
+  were in what was sent to the model.
+- **Codex's own session file keeps the raw output.** Codex records each
+  command's original output in its local session log
+  (`~/.codex/sessions/.../rollout-*.jsonl`, `aggregated_output`). That
+  record is for its own display and isn't sent to the model. It does mean
+  real values are written to local disk. Treat that directory as
+  sensitive, or clear it after working on production data.
 - Restoring placeholders: Codex only accepts a rewritten command together
   with `permissionDecision: "allow"`, which would skip an approval you asked
   for. So placeholders are restored only in sessions that already run

@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-agent"
-version = "0.2.0"
+version = "0.2.1"
 description = "MaskFlow guard for AI coding agents (Claude Code, GitHub Copilot, Cursor, Codex, Antigravity, Gemini CLI, OpenCode, Cline, Devin Desktop): masks PII (Aadhaar, PAN, UPI, mobile, ...) in tool output before the model sees it, and restores values only inside allowlisted commands at run time."
 readme = "README.md"
 requires-python = ">=3.10"
