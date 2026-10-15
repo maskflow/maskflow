@@ -12,6 +12,19 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: Cursor support (experimental).**
+  `maskflow-agent install --agent cursor [--scope user] [--portable]`
+  merges hooks into `.cursor/hooks.json` and keeps any existing hooks;
+  uninstall removes only ours. Cursor's hooks can replace a result only for
+  MCP tools, so Cursor runs in wrap mode:
+  - `Shell` goes through the mask-only wrapper.
+  - `Grep`/semantic search are denied with a shell hint.
+  - `beforeReadFile` and `beforeTabFileRead` refuse files holding personal
+    data.
+  - MCP results are masked via `updated_mcp_tool_output`.
+  - Before-hooks use `failClosed: true` and always answer explicitly,
+    because Cursor counts an empty answer as a failure.
+  - Prompts holding personal data get a warning (or a block).
 - **`maskflow-agent`: GitHub Copilot support (experimental).**
   `maskflow-agent install --agent copilot [--scope user] [--portable]`
   writes `.github/hooks/maskflow-agent.json` (or the copy under

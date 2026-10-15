@@ -148,6 +148,7 @@ hooks are allowed to do:
 | Claude Code | verified | Every tool result is masked after it runs. |
 | GitHub Copilot CLI and cloud agent | experimental | Every tool result is masked after it runs (`postToolUse` → `modifiedResult`). |
 | VS Code agent mode (Copilot) | experimental | **Wrap mode** (see below). VS Code's hooks can't replace a tool result. |
+| Cursor (desktop and CLI) | experimental | **Wrap mode**. MCP results are masked after the call. Reads and Tab completion are gated on file content. |
 
 *Experimental* means the adapter was built from the agent's hook
 documentation and tested against those payload shapes, but hasn't yet passed
@@ -193,6 +194,35 @@ Copilot-specific limits:
   warning.
 - In VS Code wrap mode, a background terminal command's output appears only
   when the command exits.
+
+### Cursor
+
+```bash
+maskflow-agent install --agent cursor                # .cursor/hooks.json (merged, other hooks kept)
+maskflow-agent install --agent cursor --scope user   # ~/.cursor/hooks.json
+```
+
+Cursor's hooks can replace a tool result only for MCP tools, so Cursor runs
+in wrap mode:
+
+- `Shell` commands run through the mask-only wrapper.
+- `Grep` and semantic search are refused, with a hint to use `rg`.
+- `beforeReadFile` refuses a file holding personal data. This covers the
+  agent's reads and @-attached files.
+- `beforeTabFileRead` does the same for Tab completion, which also sends
+  file content to a model.
+- MCP results are masked after the call.
+
+The before-hooks are installed with `failClosed: true`, so a crash or a
+timeout blocks the action instead of letting it through. Prompts holding
+personal data get a warning (`prompt_mode: block` refuses them).
+
+Cursor-specific limits:
+
+- Cursor doesn't document whether its CLI runs every hook. Only
+  `workspaceOpen` is documented for the CLI.
+- If Cursor's shell sandbox blocks the wrapper's local socket, wrapped
+  commands are **refused**. They don't run unmasked. Not yet tested live.
 
 ## Limits
 

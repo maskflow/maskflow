@@ -95,3 +95,27 @@ def fresh_session(agent_home: Path) -> Iterator[str]:
         protocol.request(sid, "end", timeout=5)
     except protocol.DaemonUnavailable:
         pass
+
+
+def run_agent_hook(
+    agent: str, event: str, payload: Any, raw: str | None = None
+) -> tuple[dict[str, Any], str, int]:
+    """One adapter hook as the agent runs it: fresh process, JSON on stdin.
+    Returns (parsed stdout or {}, raw stdout, exit code)."""
+    proc = subprocess.run(
+        [sys.executable, "-m", "maskflow_agent", "hook", "--agent", agent, event],
+        input=raw if raw is not None else json.dumps(payload),
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    out = json.loads(proc.stdout) if proc.stdout.strip() else {}
+    return out, proc.stdout, proc.returncode
+
+
+def token_for(session_id: str, value: str) -> str:
+    """The session's placeholder for a synthetic PAN."""
+    masked = protocol.request(session_id, "mask_value", value=f"pan: {value}")["value"]
+    start = masked.index("<PAN_")
+    return str(masked[start : masked.index(">", start) + 1])

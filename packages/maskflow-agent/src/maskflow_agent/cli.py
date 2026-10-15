@@ -38,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     import argparse
     from pathlib import Path
 
+    from . import adapters
+
     parser = argparse.ArgumentParser(
         prog="maskflow-agent",
         description="MaskFlow PII guard for AI coding agents (Claude Code, GitHub Copilot, ...).",
@@ -51,10 +53,11 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name, help=help_text)
         p.add_argument(
             "--agent",
-            choices=("claude", "copilot"),
+            choices=("claude", *adapters.AGENTS),
             default="claude",
             help="claude: Claude Code (default) | copilot: GitHub Copilot CLI, cloud "
-            "agent and VS Code agent mode (experimental)",
+            "agent and VS Code agent mode | cursor: Cursor desktop and CLI "
+            "(all but claude are experimental)",
         )
         p.add_argument(
             "--scope",
@@ -63,12 +66,13 @@ def main(argv: list[str] | None = None) -> int:
             help="claude -- project: .claude/settings.json (default, commit it to share "
             "with your team) | local: .claude/settings.local.json | user: "
             "~/.claude/settings.json. copilot -- project: .github/hooks/ | user: "
-            "~/.copilot/hooks/",
+            "~/.copilot/hooks/. cursor -- project: .cursor/hooks.json | user: "
+            "~/.cursor/hooks.json",
         )
         p.add_argument(
             "--portable",
             action="store_true",
-            help="copilot: run `maskflow-agent` from PATH instead of this interpreter's "
+            help="non-Claude agents: run `maskflow-agent` from PATH instead of this interpreter's "
             "absolute path (for a committed file used on other machines or by the "
             "Copilot cloud agent)",
         )
