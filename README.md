@@ -195,7 +195,7 @@ answer = unmask_response(str(response), response.source_nodes)
 Full reference in [`packages/maskflow-llamaindex/README.md`](packages/maskflow-llamaindex/README.md)
 and [`docs/llamaindex.md`](docs/llamaindex.md).
 
-## Claude Code: keep customer data out of your coding agent
+## Coding agents: keep customer data out of Claude Code, Copilot, Cursor, Codex, ...
 
 `maskflow-agent` installs Claude Code hooks that mask PII in every tool result (shell output,
 file reads, searches, MCP) before the model sees it. Real values are restored only inside
@@ -214,6 +214,11 @@ maskflow-agent doctor      # proves it end to end with synthetic canaries
 
 Or install it as a Claude Code plugin: `/plugin marketplace add maskflow/maskflow`, then
 `/plugin install maskflow-agent@maskflow`.
+
+**Other agents (experimental):** GitHub Copilot (CLI, cloud agent, VS Code), Cursor, OpenAI
+Codex, Google Antigravity, Gemini CLI, OpenCode, Cline and Devin Desktop. Install with
+`maskflow-agent install --agent <name>`. Coverage differs per agent, because some agents' hooks can't
+replace a tool's result. The table is in [`docs/agent.md`](docs/agent.md#other-agents).
 
 It fails closed, never grants permissions you didn't already have, and keeps the transcript on
 disk free of real values. Recorded from real sessions on synthetic data; reproduce it with

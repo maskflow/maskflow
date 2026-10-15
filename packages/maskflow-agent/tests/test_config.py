@@ -89,3 +89,11 @@ def test_allow_only_when_every_command_covered(tmp_path: Path) -> None:
 
 def test_no_rules_means_no_decision(tmp_path: Path) -> None:
     assert config.user_bash_decision("psql -c 'x'", str(tmp_path)) is None
+
+
+def test_agent_neutral_config_path_wins(tmp_path: Path) -> None:
+    (tmp_path / ".maskflow").mkdir()
+    (tmp_path / ".maskflow" / "agent.json").write_text('{"prompt_mode": "block"}')
+    (tmp_path / ".claude").mkdir()
+    (tmp_path / ".claude" / "maskflow-agent.json").write_text('{"prompt_mode": "off"}')
+    assert config.load(str(tmp_path)).prompt_mode == "block"

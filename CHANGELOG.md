@@ -12,100 +12,6 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
-- **`maskflow-agent`: OpenCode and Cline support (experimental).**
-  Install with `maskflow-agent install --agent opencode|cline`. The
-  installer writes a local JS plugin file (no npm package) that sends each
-  tool call through `maskflow-agent hook --agent <name>`.
-  - **Both:** every tool result is masked (OpenCode `tool.execute.after`,
-    Cline `afterTool`). Placeholder writes are refused, and allowlisted
-    commands get the run-time restore.
-  - **Fail closed in the plugin:** if the guard doesn't answer, the result
-    is withheld and the call refused.
-  - **Cline:** a 2.5 s budget inside Cline's 3 s hook limit, plus a
-    background start at session setup.
-  - **Tests:** the generated plugins are driven under Node.js.
-- **`maskflow-agent`: Devin Desktop (formerly Windsurf) support
-  (experimental).** Install with `maskflow-agent install --agent devin`.
-  Cascade's hooks can only block, so the adapter is a gate:
-  - Every command is blocked unless it is the exact mask-only wrapper form
-    for this conversation. The block message hands the agent that exact
-    command.
-  - Reads of files holding personal data are blocked, with a wrapped `cat`
-    to run instead.
-  - MCP tools and placeholder writes are blocked.
-  - Every failure exits 2, because Cascade lets any other exit code
-    through.
-  - Not covered: Cascade's built-in search has no hook, so its results
-    aren't masked.
-  - Also fixed in the shared adapter runner: an unreadable payload now
-    returns the adapter's own fail-closed exit code.
-- **`maskflow-agent`: Codex CLI, Gemini CLI and Google Antigravity support
-  (experimental).** Install with `maskflow-agent install --agent
-  codex|gemini|antigravity`.
-  - **Codex and Gemini CLI** can't hand back an edited tool result, but
-    their blocking decision *replaces* the result with the hook's reason.
-    The guard puts the masked result there, so every tool gets
-    Claude-Code-level masking.
-  - **Codex: restores only in sessions that don't ask for approval.** A
-    rewritten command needs `permissionDecision: "allow"`, which would
-    otherwise skip an approval the user asked for. Elsewhere placeholders
-    pass literally, with a note.
-  - **Antigravity** runs in wrap mode and never returns `auto_approve`.
-  - **Shared:** per-agent config merging keeps other hooks and settings.
-    `doctor` runs a wrap-mode agent's rewritten probe command and checks
-    its output.
-- **`maskflow-agent`: Cursor support (experimental).**
-  `maskflow-agent install --agent cursor [--scope user] [--portable]`
-  merges hooks into `.cursor/hooks.json` and keeps any existing hooks;
-  uninstall removes only ours. Cursor's hooks can replace a result only for
-  MCP tools, so Cursor runs in wrap mode:
-  - `Shell` goes through the mask-only wrapper.
-  - `Grep`/semantic search are denied with a shell hint.
-  - `beforeReadFile` and `beforeTabFileRead` refuse files holding personal
-    data.
-  - MCP results are masked via `updated_mcp_tool_output`.
-  - Before-hooks use `failClosed: true` and always answer explicitly,
-    because Cursor counts an empty answer as a failure.
-  - Prompts holding personal data get a warning (or a block).
-- **`maskflow-agent`: GitHub Copilot support (experimental).**
-  `maskflow-agent install --agent copilot [--scope user] [--portable]`
-  writes `.github/hooks/maskflow-agent.json` (or the copy under
-  `~/.copilot/hooks/`). Copilot CLI, the Copilot cloud agent and VS Code
-  agent mode all read that one file. The guard tells the harnesses apart by
-  payload shape:
-  - **Copilot CLI and cloud agent:** every tool result is masked after it
-    runs (`postToolUse` → `modifiedResult`). Placeholders are restored at
-    run time inside allowlisted commands (`modifiedArgs`), and placeholder
-    writes are refused. An unreadable payload, a guard that is down, or an
-    error in the hook all withhold the result. The after-tool hook never
-    exits non-zero, because Copilot would then pass the original through.
-  - **VS Code agent mode:** wrap mode, because VS Code's hooks can't
-    replace a result.
-  - `maskflow-agent doctor` lists other agents' installs with their status
-    and pushes synthetic canaries through each one.
-  - Marked *experimental*: built from GitHub's and VS Code's hook
-    references, not yet tested against a live session (Copilot CLI access
-    was policy-blocked on the test account).
-- **`maskflow-agent`: agent-neutral guard core and a mask-only wrapper**
-  (groundwork for agents other than Claude Code). The masking, unmask and
-  deny policy moved out of the Claude Code hook module into
-  `maskflow_agent.guard`. Each agent's adapter now only translates its own
-  hook JSON, so every agent gets the same policy. Claude Code's hook
-  output is byte-identical: a recorded golden sequence was checked before
-  and after the move. New for agents whose hooks can't replace a tool's
-  output after it ran ("wrap mode"):
-  - `maskflow-agent exec --mask-only` runs a command unchanged, masks its
-    stdout/stderr, and restores nothing, so it needs no ticket. It refuses
-    to run when the session's guard is down.
-  - In wrap mode every shell command is rewritten into the mask-only
-    wrapper. A command already in that exact canonical form passes
-    unchanged; anything riding along with it (`; cat x`, a newline, a
-    redirect, an env prefix, another interpreter) is denied. Allowlisted
-    commands with placeholders keep the ticketed unmask path.
-  - Built-in search is denied, and a built-in file read is denied when the
-    file holds personal data. Both denials point the agent to the shell,
-    whose output is masked.
-
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
   a command. `maskflow bench --my-data <path>` runs MaskFlow's detector
@@ -848,6 +754,112 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
   `rule`, `outcome`, `delta`, `detail`) so decision trails can be rendered,
   serialized, or asserted on by field instead of by substring match. This
   is the core support `maskflow explain` is built on.
+
+## [agent 0.2.0] - 2026-10-15
+
+The guard now runs in coding agents beyond Claude Code. Claude Code stays
+**verified**; every other agent is **experimental** until a live session test
+passes (`install` and `doctor` print the status). Coverage per agent is in
+docs/agent.md ("Other agents").
+
+### Added
+
+- **`maskflow-agent`: OpenCode and Cline support (experimental).**
+  Install with `maskflow-agent install --agent opencode|cline`. The
+  installer writes a local JS plugin file (no npm package) that sends each
+  tool call through `maskflow-agent hook --agent <name>`.
+  - **Both:** every tool result is masked (OpenCode `tool.execute.after`,
+    Cline `afterTool`). Placeholder writes are refused, and allowlisted
+    commands get the run-time restore.
+  - **Fail closed in the plugin:** if the guard doesn't answer, the result
+    is withheld and the call refused.
+  - **Cline:** a 2.5 s budget inside Cline's 3 s hook limit, plus a
+    background start at session setup.
+  - **Tests:** the generated plugins are driven under Node.js.
+- **`maskflow-agent`: Devin Desktop (formerly Windsurf) support
+  (experimental).** Install with `maskflow-agent install --agent devin`.
+  Cascade's hooks can only block, so the adapter is a gate:
+  - Every command is blocked unless it is the exact mask-only wrapper form
+    for this conversation. The block message hands the agent that exact
+    command.
+  - Reads of files holding personal data are blocked, with a wrapped `cat`
+    to run instead.
+  - MCP tools and placeholder writes are blocked.
+  - Every failure exits 2, because Cascade lets any other exit code
+    through.
+  - Not covered: Cascade's built-in search has no hook, so its results
+    aren't masked.
+  - Also fixed in the shared adapter runner: an unreadable payload now
+    returns the adapter's own fail-closed exit code.
+- **`maskflow-agent`: Codex CLI, Gemini CLI and Google Antigravity support
+  (experimental).** Install with `maskflow-agent install --agent
+  codex|gemini|antigravity`.
+  - **Codex and Gemini CLI** can't hand back an edited tool result, but
+    their blocking decision *replaces* the result with the hook's reason.
+    The guard puts the masked result there, so every tool gets
+    Claude-Code-level masking.
+  - **Codex: restores only in sessions that don't ask for approval.** A
+    rewritten command needs `permissionDecision: "allow"`, which would
+    otherwise skip an approval the user asked for. Elsewhere placeholders
+    pass literally, with a note.
+  - **Antigravity** runs in wrap mode and never returns `auto_approve`.
+  - **Shared:** per-agent config merging keeps other hooks and settings.
+    `doctor` runs a wrap-mode agent's rewritten probe command and checks
+    its output.
+- **`maskflow-agent`: Cursor support (experimental).**
+  `maskflow-agent install --agent cursor [--scope user] [--portable]`
+  merges hooks into `.cursor/hooks.json` and keeps any existing hooks;
+  uninstall removes only ours. Cursor's hooks can replace a result only for
+  MCP tools, so Cursor runs in wrap mode:
+  - `Shell` goes through the mask-only wrapper.
+  - `Grep`/semantic search are denied with a shell hint.
+  - `beforeReadFile` and `beforeTabFileRead` refuse files holding personal
+    data.
+  - MCP results are masked via `updated_mcp_tool_output`.
+  - Before-hooks use `failClosed: true` and always answer explicitly,
+    because Cursor counts an empty answer as a failure.
+  - Prompts holding personal data get a warning (or a block).
+- **`maskflow-agent`: GitHub Copilot support (experimental).**
+  `maskflow-agent install --agent copilot [--scope user] [--portable]`
+  writes `.github/hooks/maskflow-agent.json` (or the copy under
+  `~/.copilot/hooks/`). Copilot CLI, the Copilot cloud agent and VS Code
+  agent mode all read that one file. The guard tells the harnesses apart by
+  payload shape:
+  - **Copilot CLI and cloud agent:** every tool result is masked after it
+    runs (`postToolUse` → `modifiedResult`). Placeholders are restored at
+    run time inside allowlisted commands (`modifiedArgs`), and placeholder
+    writes are refused. An unreadable payload, a guard that is down, or an
+    error in the hook all withhold the result. The after-tool hook never
+    exits non-zero, because Copilot would then pass the original through.
+  - **VS Code agent mode:** wrap mode, because VS Code's hooks can't
+    replace a result.
+  - `maskflow-agent doctor` lists other agents' installs with their status
+    and pushes synthetic canaries through each one.
+  - Marked *experimental*: built from GitHub's and VS Code's hook
+    references, not yet tested against a live session (Copilot CLI access
+    was policy-blocked on the test account).
+- **`maskflow-agent`: agent-neutral guard core and a mask-only wrapper**
+  (groundwork for agents other than Claude Code). The masking, unmask and
+  deny policy moved out of the Claude Code hook module into
+  `maskflow_agent.guard`. Each agent's adapter now only translates its own
+  hook JSON, so every agent gets the same policy. Claude Code's hook
+  output is byte-identical: a recorded golden sequence was checked before
+  and after the move. New for agents whose hooks can't replace a tool's
+  output after it ran ("wrap mode"):
+  - `maskflow-agent exec --mask-only` runs a command unchanged, masks its
+    stdout/stderr, and restores nothing, so it needs no ticket. It refuses
+    to run when the session's guard is down.
+  - In wrap mode every shell command is rewritten into the mask-only
+    wrapper. A command already in that exact canonical form passes
+    unchanged; anything riding along with it (`; cat x`, a newline, a
+    redirect, an env prefix, another interpreter) is denied. Allowlisted
+    commands with placeholders keep the ticketed unmask path.
+  - Built-in search is denied, and a built-in file read is denied when the
+    file holds personal data. Both denials point the agent to the shell,
+    whose output is masked.
+
+- Config is also read from `<project>/.maskflow/agent.json`, which works for
+  every agent. `.claude/maskflow-agent.json` still works.
 
 ## [agent 0.1.4] - 2026-10-15
 

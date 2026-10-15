@@ -1,4 +1,4 @@
-# maskflow-agent: PII guard for Claude Code
+# maskflow-agent: PII guard for AI coding agents
 
 Use Claude Code on production data without Indian PII reaching the model.
 
@@ -116,7 +116,8 @@ settings file.
 
 ### Configuration
 
-`.claude/maskflow-agent.json` (or `~/.maskflow/agent/config.json`):
+`.maskflow/agent.json` in the project (works for every agent), or
+`.claude/maskflow-agent.json`, or `~/.maskflow/agent/config.json`:
 
 ```json
 {
