@@ -12,6 +12,18 @@ for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk
 
 ### Added
 
+- **`maskflow-agent`: OpenCode and Cline support (experimental).**
+  Install with `maskflow-agent install --agent opencode|cline`. The
+  installer writes a local JS plugin file (no npm package) that sends each
+  tool call through `maskflow-agent hook --agent <name>`.
+  - **Both:** every tool result is masked (OpenCode `tool.execute.after`,
+    Cline `afterTool`). Placeholder writes are refused, and allowlisted
+    commands get the run-time restore.
+  - **Fail closed in the plugin:** if the guard doesn't answer, the result
+    is withheld and the call refused.
+  - **Cline:** a 2.5 s budget inside Cline's 3 s hook limit, plus a
+    background start at session setup.
+  - **Tests:** the generated plugins are driven under Node.js.
 - **`maskflow-agent`: Devin Desktop (formerly Windsurf) support
   (experimental).** Install with `maskflow-agent install --agent devin`.
   Cascade's hooks can only block, so the adapter is a gate:

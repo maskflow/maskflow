@@ -27,7 +27,7 @@ import sys
 from types import ModuleType
 from typing import Any
 
-AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity", "devin")
+AGENTS = ("copilot", "cursor", "codex", "gemini", "antigravity", "devin", "opencode", "cline")
 
 STATUS: dict[str, str] = {agent: "experimental" for agent in AGENTS}
 

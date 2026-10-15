@@ -152,6 +152,8 @@ hooks are allowed to do:
 | OpenAI Codex CLI | experimental | Every tool result is masked after it runs: a blocking `PostToolUse` replaces the result with its reason, which holds the masked result. |
 | Gemini CLI | experimental | Every tool result is masked after it runs: a denying `AfterTool` replaces the result with its reason. |
 | Google Antigravity (CLI and IDE) | experimental | **Wrap mode**. `PostToolUse` can't change anything. |
+| OpenCode | experimental | Every tool result is masked after it runs (`tool.execute.after`). Installed as a local plugin file. |
+| Cline (CLI, SDK, Kanban) | experimental | Every tool result is masked after it runs (`afterTool`). Installed as a local plugin file. Cline's plugins don't run in its VS Code or JetBrains extensions. |
 | Devin Desktop (formerly Windsurf) | experimental | **Gate**: hooks can only block. Commands must run in the wrapper form, which the guard hands the agent. Cascade's built-in search has no hook, so its results are **not** masked. |
 
 *Experimental* means the adapter was built from the agent's hook
@@ -314,6 +316,32 @@ Devin-specific limits:
   can't if Python itself fails to start.
 - Every command takes one extra round: the blocked attempt, then the
   wrapped re-run.
+
+### OpenCode and Cline
+
+```bash
+maskflow-agent install --agent opencode   # .opencode/plugins/maskflow-agent.js
+maskflow-agent install --agent cline      # .cline/plugins/maskflow-agent.js
+# --scope user: ~/.config/opencode/plugins/ or ~/.cline/plugins/
+```
+
+Both agents extend through JavaScript plugins, not hook commands. The
+installer writes a small plugin file (no npm package) that sends every
+tool call through `maskflow-agent hook --agent opencode|cline`, so the
+policy is the same as for every other agent:
+
+- Every tool result is masked; if the guard doesn't answer, it is withheld.
+- Placeholder writes are refused.
+- Allowlisted commands get the run-time restore.
+
+Uninstall removes only a file the installer wrote.
+
+Cline gives each plugin hook 3 seconds and ignores one that times out,
+which would let the original result through. The plugin therefore keeps a
+2.5 s budget of its own and withholds the result when the guard misses it.
+It also starts the guard in the background when a session begins, so a
+cold start doesn't cost a result. Expect the first tool call of a cold
+session to be asked to retry.
 
 ## Limits
 
