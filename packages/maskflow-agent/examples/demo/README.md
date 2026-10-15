@@ -60,3 +60,29 @@ $FF -framerate 30 -i /tmp/frames/f%05d.png -c:v libx264 -crf 18 -pix_fmt yuv420p
 The arguments are: 26 s of video at 30 fps, with the animation played at
 0.65× speed until 14.5 s of animation time, then held. `replay.py` prints
 the same capture in a terminal, if you'd rather screen-record a terminal.
+
+## Multi-agent videos (`agents/`)
+
+`agents/` renders the nine-agent montage and one clip per agent used on
+maskflow.in/agents. Each clip pairs the **synthetic** `agents/customers.csv`
+(left) with what that agent sent to its model in a live session (right).
+`agents.json` holds, per agent, the masked row and the agent's answer, both
+copied from that agent's own session record. `source` says where to find
+it. Logos are from [Simple Icons](https://simpleicons.org) (CC0; the marks
+belong to their owners and are shown only to indicate compatibility).
+
+```bash
+D=packages/maskflow-agent/examples/demo
+python $D/agents/render_agents.py /tmp/clips          # 9 clips + intro.svg + outro.svg
+for a in claude codex cursor copilot antigravity gemini opencode cline devin; do
+  node $D/record_video.mjs /tmp/video-deps /tmp/clips/$a.svg /tmp/frames-$a 11 30 8.5 1.0
+done   # then ffmpeg each frame folder to MP4, as above
+```
+
+The montage is `intro`, then each clip's first 8.8 s at 1.6x speed, then
+`outro`, joined with ffmpeg's concat demuxer.
+
+**Evidence rule.** A clip may only show an agent whose own session record
+contains the masked row `1,Test User,<AADHAAR_1>,<PAN_1>,<INDIAN_MOBILE_1>`
+and none of the CSV's raw values. A bare `<AADHAAR_1>` isn't enough, because
+the guard's session-start message uses it as an example.

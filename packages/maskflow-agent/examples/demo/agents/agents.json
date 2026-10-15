@@ -1,0 +1,33 @@
+{
+  "_note": "Live-test footage, 2026-10-15/16. Each agent read customers.csv (SYNTHETIC: generated Verhoeff-valid Aadhaar, PAN-shaped string, random mobile). 'received' is the masked row found in the agent's own session record; 'answer' is quoted from the agent's reply. 'source' says where the evidence is.",
+  "prompt": "Run cat customers.csv, then tell me the aadhaar, pan and mobile for id 1.",
+  "agents": [
+    {"slug": "claude", "name": "Claude Code", "logo": "claude", "version": "Claude Code 2.1.300", "install": "maskflow-agent install",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "aadhaar <AADHAAR_1> · pan <PAN_1> · mobile <INDIAN_MOBILE_1>", "source": "~/.claude/projects/<dir>/<session>.jsonl"},
+    {"slug": "codex", "name": "OpenAI Codex", "logo": null, "version": "Codex CLI 0.162", "install": "maskflow-agent install --agent codex",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "For id 1, the columns contain: aadhaar <AADHAAR_1>, pan <PAN_1>, mobile <INDIAN_MOBILE_1>", "source": "~/.codex/sessions/.../rollout-*.jsonl (custom_tool_call_output)"},
+    {"slug": "cursor", "name": "Cursor", "logo": "cursor", "version": "Cursor CLI 2026.10.14", "install": "maskflow-agent install --agent cursor",
+     "mode": "shell runs through the masking wrapper", "steps": ["cat customers.csv"],
+     "answer": "For id 1, those columns are: aadhaar <AADHAAR_1>, pan <PAN_1>, mobile <INDIAN_MOBILE_1>", "source": "~/.cursor/chats/<ws>/<chat>/store.db"},
+    {"slug": "copilot", "name": "GitHub Copilot", "logo": "githubcopilot", "version": "Copilot CLI 1.0.97", "install": "maskflow-agent install --agent copilot --scope user",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "For id 1, the columns contain: Aadhaar <AADHAAR_1>, PAN <PAN_1>, Mobile <INDIAN_MOBILE_1>", "source": "~/.copilot/session-state/<id>/events.jsonl"},
+    {"slug": "antigravity", "name": "Google Antigravity", "logo": null, "version": "Antigravity CLI 1.3.5", "install": "maskflow-agent install --agent antigravity",
+     "mode": "shell runs through the masking wrapper", "steps": ["cat customers.csv"],
+     "answer": "For id 1, the columns contain: aadhaar <AADHAAR_1>, pan <PAN_1>, mobile <INDIAN_MOBILE_1>", "source": "~/.gemini/antigravity-cli/conversations/<id>.db"},
+    {"slug": "gemini", "name": "Gemini CLI", "logo": "googlegemini", "version": "Gemini CLI 0.64", "install": "maskflow-agent install --agent gemini",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "For id 1, the columns contain: aadhaar <AADHAAR_1>, pan <PAN_1>, mobile <INDIAN_MOBILE_1>", "source": "~/.gemini/tmp/<project>/chats/session-*.jsonl"},
+    {"slug": "opencode", "name": "OpenCode", "logo": "opencode", "version": "OpenCode 1.19.0", "install": "maskflow-agent install --agent opencode",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "1,Test User,<AADHAAR_1>,<PAN_1>,<INDIAN_MOBILE_1> -- a small synthetic CSV using placeholder tokens", "source": "~/.local/share/opencode/opencode.db"},
+    {"slug": "cline", "name": "Cline", "logo": "cline", "version": "Cline CLI 3.0.71", "install": "maskflow-agent install --agent cline",
+     "mode": "masks every tool result", "steps": ["cat customers.csv"],
+     "answer": "Here are the exact values for id 1: aadhaar <AADHAAR_1>, pan <PAN_1>, mobile <INDIAN_MOBILE_1>", "source": "~/.cline/data/sessions/<id>/<id>.messages.json"},
+    {"slug": "devin", "name": "Devin Desktop", "logo": "windsurf", "version": "Devin Desktop, formerly Windsurf", "install": "maskflow-agent install --agent devin",
+     "mode": "blocks raw reads, re-runs them masked", "steps": ["cat customers.csv", "BLOCKED: run it through the masking wrapper", "maskflow-agent exec --mask-only -- 'cat customers.csv'"],
+     "answer": null, "source": "~/Library/Application Support/Devin/User/acp-messages/"}
+  ]
+}
