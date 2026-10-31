@@ -22,6 +22,7 @@ jobs:
       llamaindex: ${{ steps.filter.outputs.llamaindex }}
       mcp: ${{ steps.filter.outputs.mcp }}
       cli: ${{ steps.filter.outputs.cli }}
+      audit: ${{ steps.filter.outputs.audit }}
       cli_docker: ${{ steps.filter.outputs.cli_docker }}
       detection_js: ${{ steps.filter.outputs.detection_js }}
       bench: ${{ steps.filter.outputs.bench }}
@@ -116,6 +117,14 @@ jobs:
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
               - 'pyproject.toml'
+            audit:
+              - 'packages/maskflow-audit/**'
+              - 'packages/maskflow-cli/**'
+              - 'audit-fixtures/**'
+              - 'packages/maskflow-core/**'
+              - 'packs/maskflow-pack-intl/**'
+              - 'packs/maskflow-pack-india/**'
+              - 'pyproject.toml'
             cli_docker:
               - 'packages/maskflow-cli/Dockerfile'
               - 'packages/maskflow-cli/.dockerignore'
@@ -124,6 +133,7 @@ jobs:
               - 'packages/maskflow-js/**'
             bench:
               - 'bench/**'
+              - 'audit-fixtures/**'
               - 'packages/maskflow-core/**'
               - 'packs/maskflow-pack-intl/**'
               - 'packs/maskflow-pack-india/**'
@@ -525,6 +535,59 @@ jobs:
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest packages/maskflow-cli/tests/scan -m leak -q
 
+  audit:
+    needs: changes
+    if: needs.changes.outputs.audit == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - run: uv sync --all-extras --python ${{ matrix.python-version }}
+      # Discovery is static (ast only), so no spaCy model is needed -- but
+      # the shared venv imports both packs, and pack-india's NLP layer
+      # expects the model to resolve, so install it as every other job does.
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run ruff check packages/maskflow-audit audit-fixtures
+      - run: uv run ruff format --check packages/maskflow-audit audit-fixtures
+      - run: uv run mypy packages/maskflow-audit/src --strict
+      - run: uv run pytest packages/maskflow-audit/tests -q
+      # The fixture apps are the published accuracy claim; run them through
+      # the CLI surface too, not just the library API.
+      - run: uv run pytest packages/maskflow-cli/tests/audit -q
+      # And score them, so a drop in discovery recall fails the build
+      # rather than quietly shipping a clean report for a leaking app.
+      - run: uv run ruff check bench/auditbench
+      - run: uv run ruff format --check bench/auditbench
+      - run: uv run pytest bench/auditbench/tests -q
+
+  audit-leak:
+    # Permanent leak gate for `maskflow audit`: the audit READS somebody
+    # else's source, which can contain real PII in a constant or a
+    # docstring, and writes a document a DPO is expected to retain and
+    # share. Seed a tree with synthetic identifiers in every awkward place
+    # and assert none survives into any rendered format. A distinct
+    # required check (not folded into `audit`) so a leak is unmissable --
+    # same policy as scan-fuzz above.
+    needs: changes
+    if: needs.changes.outputs.audit == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: uv run pytest packages/maskflow-audit/tests -m leak -q
+
   scan-binary:
     # The standalone `maskflow` binary (PyInstaller, spaCy excluded). Guards
     # the spec / entry point / multiprocessing-freeze regression surface
@@ -645,7 +708,7 @@ jobs:
 
   pip-audit:
     needs: changes
-    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.evidence == 'true' || needs.changes.outputs.attest == 'true' || needs.changes.outputs.agent == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true'
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.pack_intl == 'true' || needs.changes.outputs.pack_india == 'true' || needs.changes.outputs.sdk_python == 'true' || needs.changes.outputs.evidence == 'true' || needs.changes.outputs.attest == 'true' || needs.changes.outputs.agent == 'true' || needs.changes.outputs.gateway == 'true' || needs.changes.outputs.cli == 'true' || needs.changes.outputs.audit == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

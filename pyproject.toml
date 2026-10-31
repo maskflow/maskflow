@@ -27,6 +27,12 @@ dependencies = [
     # Standalone console script (`maskflow-agent`, Claude Code hooks) --
     # listed so a plain `uv sync` installs it into the shared dev venv.
     "maskflow-agent",
+    # maskflow-cli treats this as its own optional [audit] extra (so a bare
+    # `pip install maskflow-cli` doesn't require it) -- listed here directly,
+    # same as maskflow-bench above, so the shared dev/CI venv has it
+    # installed for maskflow-audit's own test suite and the CLI's
+    # tests/audit/ regardless of that extra gating.
+    "maskflow-audit",
 ]
 
 [tool.uv.sources]
@@ -44,6 +50,7 @@ maskflow-evidence = { workspace = true }
 maskflow-bench = { workspace = true }
 maskflow-attest = { workspace = true }
 maskflow-agent = { workspace = true }
+maskflow-audit = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*", "packs/*"]
@@ -107,6 +114,26 @@ llama-index = [
 # maskflow_mcp._masking has no fastmcp import.
 mcp = [
     "maskflow-mcp",
+]
+# Only for RUNNING audit-fixtures/ under the canary harness (M2). Static
+# discovery needs none of these installed -- `maskflow audit` parses source
+# with `ast` and never imports the SDKs it recognizes, which is why the
+# `audit` CI job scores all six fixtures without this group. Same policy as
+# `bench` / `litellm` / `llama-index` / `mcp` above: never pulled by
+# `uv sync --all-extras`, only by an explicit `uv sync --group
+# audit-fixtures`, so these heavy provider SDKs never tax ordinary
+# MaskFlow development. The fixtures deliberately exercise the REAL SDKs
+# rather than hand-written stubs -- an audit proven only against our own
+# idea of openai's call shapes would be proving nothing.
+audit-fixtures = [
+    "fastapi>=0.110",
+    "openai>=1.40",
+    "langchain-core>=0.3",
+    "langchain-openai>=0.2",
+    "langfuse>=2.50",
+    "chromadb>=0.5",
+    "pypdf>=4.2",
+    "psycopg[binary]>=3.1",
 ]
 
 [tool.ruff]
@@ -172,6 +199,13 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # fastmcp: maskflow-mcp runtime dep, installed only by `uv sync --group mcp`.
 module = "fastmcp.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# aiohttp: maskflow-audit's egress interceptor patches it when the audited
+# project uses it, behind a try/except ImportError -- it is never a
+# dependency of this workspace, so no environment here has its stubs.
+module = "aiohttp"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

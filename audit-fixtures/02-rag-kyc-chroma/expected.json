@@ -1,0 +1,47 @@
+{
+  "fixture": "02-rag-kyc-chroma",
+  "description": "KYC PDFs are embedded by OpenAI and their full text persisted into Chroma. Neither path is masked.",
+  "verdict": "leaks",
+  "flow_count": 2,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "openai-client",
+      "category": "llm_sdk",
+      "provider": "openai",
+      "masking_status": "unmasked",
+      "confidence": "low",
+      "payload_args": [
+        "input"
+      ],
+      "source_kinds": [
+        "unknown"
+      ],
+      "source_details": [
+        "extract"
+      ],
+      "host": "api.openai.com"
+    },
+    {
+      "file": "app.py",
+      "sink_id": "chroma-add",
+      "category": "vector_write",
+      "provider": "chroma",
+      "masking_status": "unmasked",
+      "confidence": "medium",
+      "payload_args": [
+        "documents",
+        "metadatas"
+      ],
+      "source_kinds": [
+        "parameter",
+        "unknown"
+      ],
+      "source_details": [
+        "extract",
+        "pdf_path"
+      ]
+    }
+  ],
+  "notes": "An embedding of a KYC document is still that document leaving the process -- the registry includes embeddings.create for exactly this case. Both payloads trace to `document_text`, assigned from extract(), a call this release does not follow across functions: source_kinds is therefore `unknown`, not a guessed `file_read`. Inter-procedural tracing lands with M2."
+}

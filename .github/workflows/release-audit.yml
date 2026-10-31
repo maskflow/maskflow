@@ -1,0 +1,29 @@
+name: Release Audit
+
+on:
+  push:
+    tags:
+      - "audit-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv sync --all-extras
+      # Discovery is static (stdlib `ast`), and this package's own suite
+      # never runs the fixture apps -- so unlike most release workflows
+      # this one needs no en_core_web_sm download. It does import both
+      # recognizer packs (for their entity-type registration), but only
+      # their deterministic pattern/checksum layers, not spaCy NER.
+      - run: uv run pytest packages/maskflow-audit/tests -q
+      - run: uv build --package maskflow-audit
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true

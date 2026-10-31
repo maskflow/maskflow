@@ -12,6 +12,7 @@ import maskflow_pack_india  # noqa: F401 -- import side effect registers pack-in
 import typer
 
 from .commands.agent_cmd import agent
+from .commands.audit_cmd import audit
 from .commands.bench_cmd import bench
 from .commands.config_cmd import app as config_app
 from .commands.doctor_cmd import doctor
@@ -24,6 +25,7 @@ app.command("doctor")(doctor)
 app.command("explain")(explain)
 app.command("scan")(scan)
 app.command("bench")(bench)
+app.command("audit")(audit)
 app.command(
     "agent",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},

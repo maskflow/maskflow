@@ -1,0 +1,32 @@
+{
+  "fixture": "01-fastapi-support-copilot",
+  "description": "FastAPI handler reads five PII columns from a tickets table and sends them to OpenAI with no masking step.",
+  "verdict": "leaks",
+  "flow_count": 1,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "openai-client",
+      "category": "llm_sdk",
+      "provider": "openai",
+      "masking_status": "unmasked",
+      "confidence": "high",
+      "payload_args": [
+        "messages"
+      ],
+      "source_kinds": [
+        "db_column",
+        "literal"
+      ],
+      "source_details": [
+        "aadhaar",
+        "body",
+        "customer_name",
+        "mobile",
+        "pan"
+      ],
+      "host": "api.openai.com"
+    }
+  ],
+  "notes": "The backward trace must recover all five column names through the f-string and the subscripts on the fetchone() row."
+}

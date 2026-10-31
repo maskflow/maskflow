@@ -1,0 +1,400 @@
+# The egress sink registry. Data, not code: adding a sink is an edit to this
+# file, and nothing in discovery/ hard-codes a provider name.
+#
+# Two ways a sink is matched, because SDKs come in two shapes:
+#
+#   clients + methods  the SDK hands you an object you then call. The symbol
+#                      table binds the local name to the constructor's dotted
+#                      path, so `c = OpenAI(); c.chat.completions.create(...)`
+#                      resolves to openai.OpenAI + chat.completions.create.
+#   functions          a module-level callable that egresses on its own, e.g.
+#                      litellm.completion(...).
+#
+# text_args names where the payload sits. `keywords` are keyword arguments;
+# `positional` are 0-based indices of positional arguments. The backward
+# trace follows exactly these, so a wrong entry here means a flow is found
+# but its source is not.
+#
+# factories cover the third shape: a method that hands back a *different*
+# object you then call. `chroma.get_or_create_collection()` returns a
+# Collection and it is `collection.add(...)` that egresses, so the factory's
+# `yields` must also appear in this sink's `clients`.
+#
+# hosts is what a raw-HTTP sink's URL is matched against, and what the report
+# names as the destination. It is never used to reach the network.
+
+version: 1
+
+sinks:
+  # ---------------------------------------------------------------- LLM SDKs
+  - id: openai-client
+    category: llm_sdk
+    provider: openai
+    hosts: ["api.openai.com"]
+    clients: ["openai.OpenAI", "openai.AsyncOpenAI", "openai.AzureOpenAI", "openai.AsyncAzureOpenAI"]
+    methods:
+      - "chat.completions.create"
+      - "chat.completions.parse"
+      - "completions.create"
+      - "responses.create"
+      - "responses.parse"
+      - "embeddings.create"
+      - "moderations.create"
+      - "files.create"
+    text_args:
+      keywords: ["messages", "prompt", "input", "instructions"]
+    notes: >-
+      embeddings.create is included deliberately: an embedding of a KYC
+      document is still that document leaving the process.
+
+  - id: openai-module-legacy
+    category: llm_sdk
+    provider: openai
+    hosts: ["api.openai.com"]
+    functions:
+      - "openai.ChatCompletion.create"
+      - "openai.ChatCompletion.acreate"
+      - "openai.Completion.create"
+      - "openai.Embedding.create"
+    text_args:
+      keywords: ["messages", "prompt", "input"]
+    notes: "The pre-1.0 module-level API. Still common in older codebases."
+
+  - id: anthropic-client
+    category: llm_sdk
+    provider: anthropic
+    hosts: ["api.anthropic.com"]
+    clients:
+      - "anthropic.Anthropic"
+      - "anthropic.AsyncAnthropic"
+      - "anthropic.AnthropicBedrock"
+      - "anthropic.AnthropicVertex"
+    methods:
+      - "messages.create"
+      - "messages.stream"
+      - "beta.messages.create"
+      - "completions.create"
+    text_args:
+      keywords: ["messages", "system", "prompt"]
+
+  - id: google-genai-client
+    category: llm_sdk
+    provider: google
+    hosts: ["generativelanguage.googleapis.com", "aiplatform.googleapis.com"]
+    clients: ["google.genai.Client"]
+    methods: ["models.generate_content", "models.generate_content_stream", "models.embed_content"]
+    text_args:
+      keywords: ["contents", "content"]
+
+  - id: google-generativeai-legacy
+    category: llm_sdk
+    provider: google
+    hosts: ["generativelanguage.googleapis.com"]
+    clients: ["google.generativeai.GenerativeModel", "vertexai.generative_models.GenerativeModel"]
+    methods: ["generate_content", "generate_content_async", "start_chat", "send_message"]
+    text_args:
+      positional: [0]
+      keywords: ["contents", "prompt"]
+
+  - id: litellm-module
+    category: llm_sdk
+    provider: litellm
+    functions:
+      - "litellm.completion"
+      - "litellm.acompletion"
+      - "litellm.text_completion"
+      - "litellm.embedding"
+      - "litellm.aembedding"
+    text_args:
+      keywords: ["messages", "prompt", "input"]
+    notes: >-
+      A bare litellm call is unmasked egress. The guarded form is the
+      maskflow-litellm guardrail on a LiteLLM proxy, which is a proxy-side
+      config, not a call-site change -- so this sink is reported unmasked
+      and the report says a proxy-side guardrail would not be visible here.
+
+  - id: cohere-client
+    category: llm_sdk
+    provider: cohere
+    hosts: ["api.cohere.ai", "api.cohere.com"]
+    clients: ["cohere.Client", "cohere.ClientV2", "cohere.AsyncClient", "cohere.AsyncClientV2"]
+    methods: ["chat", "chat_stream", "generate", "embed", "rerank"]
+    text_args:
+      keywords: ["message", "messages", "prompt", "texts", "documents", "query"]
+
+  - id: mistralai-client
+    category: llm_sdk
+    provider: mistralai
+    hosts: ["api.mistral.ai"]
+    clients: ["mistralai.Mistral", "mistralai.client.MistralClient"]
+    methods: ["chat.complete", "chat.stream", "embeddings.create", "fim.complete"]
+    text_args:
+      keywords: ["messages", "inputs", "prompt"]
+
+  # -------------------------------------------------------------- Frameworks
+  - id: langchain-llm-invoke
+    category: framework
+    provider: langchain
+    clients:
+      - "langchain_openai.ChatOpenAI"
+      - "langchain_openai.OpenAI"
+      - "langchain_openai.AzureChatOpenAI"
+      - "langchain_anthropic.ChatAnthropic"
+      - "langchain_google_genai.ChatGoogleGenerativeAI"
+      - "langchain_cohere.ChatCohere"
+      - "langchain_mistralai.ChatMistralAI"
+      - "langchain_community.chat_models.ChatLiteLLM"
+    methods: ["invoke", "ainvoke", "stream", "astream", "batch", "abatch", "predict", "generate"]
+    text_args:
+      positional: [0]
+      keywords: ["input", "messages"]
+
+  - id: langchain-embeddings
+    category: framework
+    provider: langchain
+    clients:
+      - "langchain_openai.OpenAIEmbeddings"
+      - "langchain_openai.AzureOpenAIEmbeddings"
+      - "langchain_cohere.CohereEmbeddings"
+      - "langchain_google_genai.GoogleGenerativeAIEmbeddings"
+    methods: ["embed_documents", "embed_query", "aembed_documents", "aembed_query"]
+    text_args:
+      positional: [0]
+      keywords: ["texts", "text"]
+
+  - id: langchain-chain-run
+    category: framework
+    provider: langchain
+    clients:
+      - "langchain.chains.LLMChain"
+      - "langchain.chains.RetrievalQA"
+      - "langchain.chains.ConversationChain"
+    methods: ["run", "invoke", "ainvoke", "apply", "__call__"]
+    text_args:
+      positional: [0]
+      keywords: ["input", "query", "question"]
+
+  - id: llamaindex-llm
+    category: framework
+    provider: llamaindex
+    clients:
+      - "llama_index.llms.openai.OpenAI"
+      - "llama_index.llms.anthropic.Anthropic"
+      - "llama_index.core.llms.LLM"
+    methods: ["complete", "acomplete", "chat", "achat", "stream_complete", "stream_chat"]
+    text_args:
+      positional: [0]
+      keywords: ["prompt", "messages"]
+
+  - id: llamaindex-query-engine
+    category: framework
+    provider: llamaindex
+    clients:
+      - "llama_index.core.VectorStoreIndex"
+      - "llama_index.core.indices.VectorStoreIndex"
+      - "llama_index.QueryEngine"
+    factories:
+      - { method: "as_query_engine", yields: "llama_index.QueryEngine" }
+      - { method: "as_chat_engine", yields: "llama_index.QueryEngine" }
+    methods: ["as_query_engine", "as_chat_engine", "query", "chat", "aquery"]
+    text_args:
+      positional: [0]
+      keywords: ["query", "message"]
+    notes: >-
+      The index build itself embeds every node, so this is egress even
+      before a query runs. The query path is the engine's own .query(),
+      reported separately when the engine is bound to a local name.
+
+  - id: llamaindex-embeddings
+    category: framework
+    provider: llamaindex
+    clients:
+      - "llama_index.embeddings.openai.OpenAIEmbedding"
+      - "llama_index.core.embeddings.BaseEmbedding"
+    methods: ["get_text_embedding", "get_text_embedding_batch", "aget_text_embedding"]
+    text_args:
+      positional: [0]
+      keywords: ["texts", "text"]
+
+  # --------------------------------------- Raw HTTP to a known provider host
+  - id: raw-http-provider
+    category: raw_http
+    provider: unknown
+    hosts:
+      - "api.openai.com"
+      - "api.anthropic.com"
+      - "generativelanguage.googleapis.com"
+      - "aiplatform.googleapis.com"
+      - "api.cohere.ai"
+      - "api.cohere.com"
+      - "api.mistral.ai"
+      - "api.groq.com"
+      - "api.together.xyz"
+      - "api.replicate.com"
+      - "openrouter.ai"
+      - "api.deepseek.com"
+      - "api.perplexity.ai"
+    functions:
+      - "requests.post"
+      - "requests.put"
+      - "requests.patch"
+      - "requests.request"
+      - "httpx.post"
+      - "httpx.put"
+      - "httpx.request"
+      - "httpx.stream"
+    clients:
+      - "httpx.Client"
+      - "httpx.AsyncClient"
+      - "aiohttp.ClientSession"
+      - "requests.Session"
+    methods: ["post", "put", "patch", "request", "stream"]
+    url_args:
+      positional: [0]
+      keywords: ["url"]
+    text_args:
+      keywords: ["json", "data", "content"]
+    notes: >-
+      Only counts as a sink when the URL resolves to one of `hosts`. A URL
+      built at runtime cannot be resolved statically, so such a call is
+      reported `unknown` rather than guessed either way.
+
+  # --------------------------------------------- Embedding / vector DB writes
+  - id: pinecone-upsert
+    category: vector_write
+    provider: pinecone
+    hosts: ["api.pinecone.io"]
+    clients: ["pinecone.Pinecone", "pinecone.Index"]
+    factories:
+      - { method: "Index", yields: "pinecone.Index" }
+      - { method: "index", yields: "pinecone.Index" }
+    methods: ["upsert", "upsert_records", "update"]
+    text_args:
+      positional: [0]
+      keywords: ["vectors", "records", "metadata"]
+    notes: "Vector metadata is where raw text usually rides along."
+
+  - id: qdrant-upsert
+    category: vector_write
+    provider: qdrant
+    clients: ["qdrant_client.QdrantClient", "qdrant_client.AsyncQdrantClient"]
+    methods: ["upsert", "upload_points", "upload_collection", "add"]
+    text_args:
+      keywords: ["points", "payload", "documents", "metadata"]
+
+  - id: chroma-add
+    category: vector_write
+    provider: chroma
+    clients:
+      - "chromadb.Client"
+      - "chromadb.PersistentClient"
+      - "chromadb.HttpClient"
+      - "chromadb.Collection"
+    factories:
+      - { method: "get_or_create_collection", yields: "chromadb.Collection" }
+      - { method: "get_collection", yields: "chromadb.Collection" }
+      - { method: "create_collection", yields: "chromadb.Collection" }
+    methods: ["add", "upsert", "update", "query"]
+    text_args:
+      keywords: ["documents", "metadatas", "query_texts"]
+    notes: >-
+      A local persistent Chroma is not third-party egress on its own, but
+      its default embedding function calls out, so the text still leaves.
+      The report distinguishes the two in the flow note.
+
+  - id: weaviate-write
+    category: vector_write
+    provider: weaviate
+    clients: ["weaviate.Client", "weaviate.WeaviateClient", "weaviate.Collection"]
+    factories:
+      - { method: "collections.get", yields: "weaviate.Collection" }
+      - { method: "collections.create", yields: "weaviate.Collection" }
+    methods:
+      - "data_object.create"
+      - "batch.add_data_object"
+      - "data.insert"
+      - "data.insert_many"
+    text_args:
+      positional: [0]
+      keywords: ["properties", "data_object", "objects"]
+
+  - id: pgvector-insert
+    category: vector_write
+    provider: pgvector
+    functions: ["sqlalchemy.insert"]
+    clients: ["sqlalchemy.orm.Session", "psycopg.Connection", "psycopg2.extensions.connection"]
+    methods: ["execute", "executemany", "add", "add_all", "bulk_save_objects"]
+    text_args:
+      positional: [0]
+      keywords: ["params", "statement"]
+    notes: >-
+      Only a sink when the statement targets a table with a vector column
+      or the embedding came from a provider call. On its own a SQL insert
+      is local, so this is reported `unknown` unless the trace reaches an
+      embedding sink -- see trace/backward.py.
+
+  # ------------------------- Observability exporters that carry the prompt
+  - id: langfuse-trace
+    category: observability
+    provider: langfuse
+    hosts: ["cloud.langfuse.com", "us.cloud.langfuse.com"]
+    clients: ["langfuse.Langfuse", "langfuse.client.Langfuse"]
+    methods: ["trace", "generation", "span", "event", "start_generation", "update_current_generation"]
+    text_args:
+      keywords: ["input", "output", "prompt", "completion", "metadata"]
+    notes: >-
+      The leak nobody looks for: the model call may be masked while the
+      tracer ships the unmasked prompt to a second vendor.
+
+  - id: langfuse-decorator
+    category: observability
+    provider: langfuse
+    functions: ["langfuse.decorators.observe", "langfuse.observe"]
+    text_args:
+      keywords: []
+    notes: >-
+      @observe captures the decorated function's arguments and return
+      value by default, so it egresses whatever that function handles.
+
+  - id: langsmith-client
+    category: observability
+    provider: langsmith
+    hosts: ["api.smith.langchain.com"]
+    clients: ["langsmith.Client"]
+    methods: ["create_run", "update_run", "create_example", "create_examples"]
+    text_args:
+      keywords: ["inputs", "outputs", "inputs_", "example"]
+
+  - id: langsmith-traceable
+    category: observability
+    provider: langsmith
+    functions: ["langsmith.traceable", "langsmith.run_helpers.traceable"]
+    text_args:
+      keywords: []
+    notes: "Same argument/return capture as @observe above."
+
+  - id: helicone-proxy
+    category: observability
+    provider: helicone
+    hosts: ["oai.helicone.ai", "gateway.helicone.ai", "api.helicone.ai"]
+    functions: []
+    text_args:
+      keywords: []
+    notes: >-
+      Helicone is used as a base_url override rather than an SDK, so it is
+      detected by discovery/masking.py's base_url inspection: a client
+      pointed at a Helicone host is egress to Helicone as well as to the
+      provider behind it.
+
+  # ------------------------------------------------------------- MCP servers
+  - id: mcp-tool-result
+    category: mcp
+    provider: mcp
+    clients: ["mcp.server.Server", "mcp.server.fastmcp.FastMCP", "fastmcp.FastMCP"]
+    methods: ["tool", "add_tool", "call_tool", "resource"]
+    text_args:
+      keywords: []
+    notes: >-
+      A tool's return value becomes model context in whatever client
+      called it. The guarded form is the maskflow-mcp proxy; a bare
+      FastMCP tool returning DB rows is unmasked egress.

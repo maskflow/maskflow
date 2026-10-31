@@ -1,4 +1,4 @@
-.PHONY: rebaseline-bench rebaseline-bench-intl rebaseline-bench-scan quality-bench quality-bench-smoke integration-parity
+.PHONY: rebaseline-bench rebaseline-bench-intl rebaseline-bench-scan rebaseline-audit quality-bench quality-bench-smoke integration-parity audit-bench
 
 rebaseline-bench:
 	uv run python -m bench.indiapii.harness rebaseline \
@@ -14,6 +14,17 @@ rebaseline-bench-scan:
 	uv run python -m bench.scanbench.harness rebaseline \
 	    --corpus bench/scanbench/data/scan-log-v1.0.jsonl --subset 400 \
 	    --out bench/baselines-scan.json
+
+rebaseline-audit:
+	uv run python -m bench.auditbench.score --rebaseline
+
+# How accurately does `maskflow audit` find and classify egress paths?
+# Scored against the six applications in audit-fixtures/. Static only --
+# add --prove to also run the canary harness (needs the audit-fixtures
+# dependency group installed).
+audit-bench:
+	uv run python -m bench.auditbench.score \
+	    --out bench/reports/auditbench-v1.0 --check
 
 # LLM-utility benchmark: does masking degrade the model's answer? Needs
 # ANTHROPIC_API_KEY. ~1200 cached calls (~$1.50 with haiku task / sonnet

@@ -6,11 +6,205 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 for each published package (`maskflow-core`, `maskflow-pack-intl`, `maskflow-sdk`,
 `maskflow-gateway`, `maskflow-litellm`, `maskflow-langchain`, `maskflow-llamaindex`,
-`maskflow-mcp`, `@maskflow/detection`).
+`maskflow-mcp`, `maskflow-audit`, `@maskflow/detection`).
 
 ## [Unreleased]
 
 ### Added
+
+- **`maskflow-audit` `0.1.0`** (new package) / `maskflow audit`.
+  "Where in my codebase does personal data reach an LLM, and can you prove
+  it?" was the first question every prospective buyer asked and the one
+  thing MaskFlow could not answer. `maskflow scan` reads logs and reports
+  what already left; nothing walked a *source tree* and reported where text
+  can leave next — let alone **proved** it.
+  - New `maskflow-audit` package: the egress-audit engine. Walks a Python
+    tree with the stdlib `ast` module — parsed, never executed — resolves
+    each call target through a per-module symbol table (import aliases,
+    names bound to constructed clients, `self.x` attributes shared across
+    methods, and factory chains like
+    `chroma.get_or_create_collection().add()`), matches it against the
+    sink registry, and classifies the flow.
+  - **The sink registry is data, not code**
+    (`sinks/registry.yaml`, 26 sinks over 6 categories): the LLM SDKs
+    (`openai` current and pre-1.0, `anthropic`, `google-genai`/`vertexai`,
+    `litellm`, `cohere`, `mistralai`), LangChain and LlamaIndex chains /
+    LLMs / embeddings, raw `requests`/`httpx`/`aiohttp` to a known provider
+    host, vector writes (Pinecone, Qdrant, Chroma, Weaviate, pgvector), the
+    observability exporters that carry the prompt (Langfuse, LangSmith,
+    Helicone), and MCP tool results. Adding a provider is a YAML edit and a
+    test, never a change to the analyser. The loader collects *every*
+    malformed-entry problem before raising, same policy as
+    `maskflow_core.config.schema`.
+  - **Five masking statuses, and `unknown` is a real answer.**
+    `masked_via_mask_call` (recognised through an f-string, a `.format()`,
+    a concatenation, a `messages=[{"content": …}]` list, or a
+    `mask_and_call()` wrapper), `masked_via_gateway_base_url`,
+    `masked_via_integration` (and only for the framework that integration
+    actually wraps — importing `maskflow-langchain` does not excuse a bare
+    `openai` call), `unmasked`, `unknown`. The gateway is deliberately
+    path-compatible and has no reserved hostname, so a bare
+    `base_url="http://localhost:8000/v1"` is **not** treated as proof of a
+    guard: it needs a corroborating MaskFlow marker in the same file, and
+    is otherwise `unknown` with the report saying to probe the host. A
+    `requests.post` to an unresolvable URL is not reported as a provider
+    call at all, rather than filling the report with every HTTP call in the
+    repo.
+  - **Backward tracing** from each payload to the DB column, request field,
+    file read, tool result or parameter it came from, with a per-flow
+    confidence level. `mask()` is transparent to the trace, so the report
+    can say "the `aadhaar` column is masked before it is sent" instead of
+    "something called `mask()`". Identifiers only — the contents of a
+    string literal are never recorded, so a hard-coded value in the
+    audited codebase cannot ride into the report.
+  - `audit.json`, versioned: `schema_version` is the first key (the
+    `maskflow-attest` convention, which `ScanSummary` lacks) so the coming
+    `--ci` baseline can refuse a file it cannot read. The report renders
+    from an `AuditSummary` and nothing else — the same PII-free data-model
+    argument `scan/report/summary.py` makes — and carries the scan
+    report's `<!-- DPDP_RULE6_APPENDIX -->` marker so the substitution
+    recipe in `docs/dpdp-rule6.md` works on both. Byte-identical across
+    runs apart from `scope.generated_at`, with a config fingerprint that
+    ignores the checkout path so CI and a laptop agree.
+  - **`--prove`: the canary harness, which is the whole point.** Seeds
+    synthetic Indian identities into the project's data, runs its own
+    command in a subprocess with the egress interceptor installed via
+    `sitecustomize`, and reports which canary reached which host from which
+    line — with the Python call stack captured at send time. A flow that
+    static analysis could only call `unknown` becomes a *confirmed* leak.
+    - Canaries are built on the **shipped** `maskflow_pack_india.surrogates`
+      / `.checksums`, not on `bench/indiapii/generator/` (which has no
+      `__init__.py` and is not a workspace member, so a distributed package
+      cannot import it). Every generated value is re-validated against the
+      pack's own `validate_*()` before use and the run **aborts** if one
+      fails — a canary MaskFlow would not detect proves nothing, and that
+      would be a generator bug masquerading as a finding.
+    - Honest about strength: only Aadhaar (Verhoeff), GSTIN (mod-36) and the
+      passport MRZ are genuinely checksum-bearing. PAN, IFSC, VOTER_ID,
+      PIN_CODE, BANK_ACCOUNT_IN, DRIVING_LICENCE and VEHICLE_REG have no
+      published checksum; ABHA_NUMBER has no validator at all. The manifest
+      records which guarantee applies per value and claims nothing more.
+    - The seed defaults to a **fresh random draw** (so no repository ever
+      accumulates a PII-shaped constant, rule 2) and is recorded, so
+      `--seed N` reproduces a run exactly.
+    - **No request reaches a provider.** `httpx`, `requests` and `aiohttp`
+      are patched at their lowest choke point and return a canned response
+      in the provider's own shape, so the project's suite keeps passing. A
+      test asserts the response is a 200 stub rather than a real 401 —
+      during development the interception context manager was being
+      garbage-collected when `install()` returned, which unwound every
+      patch and sent the requests for real. That is now impossible and
+      covered.
+    - **No payload ever reaches disk.** Escape detection runs in the child,
+      which writes only metadata: host, method, library, the stack, and
+      which canary types escaped in which form.
+    - Escapes are found raw, case-folded, separator-stripped, in all four
+      unicode normal forms, base64-decoded, and — for long digit-only
+      identifiers — as an ordered digit run, which is what catches a value
+      split across four JSON fields and reassembled on the way out. Short
+      numeric values match only at a digit boundary, so a 6-digit PIN code
+      inside a timestamp is not a fabricated "confirmed leak".
+    - Pluggable seeding adapters (environment, JSON/CSV fixtures, local
+      SQLite, a pytest fixture), each reversible, restored in a `finally`
+      so an interrupted audit leaves the tree exactly as it found it.
+    - Refuses to seed anything that looks like a real deployment
+      (`APP_ENV`, a non-local `DATABASE_URL`, a `.env` naming production)
+      unless `--allow-env` is passed. The refusal names the variable, never
+      the connection string, which carries a password.
+    - Three distinct canary verdicts, because the distinction matters:
+      `escaped`, `contained`, and `not_exercised` — a flow the run never
+      reached taught us nothing, which is **not** the same as proven safe,
+      and the report says so.
+  - **`audit.html`** — one self-contained file (inline CSS/JS, zero external
+    requests, print-clean), in the scan report's visual system, with
+    confirmed leaks first and open by default, the call stack rendered, and
+    a DPDP Rule 6 appendix whose clause column is identical to the scan
+    report's so the two read as one body of evidence.
+  - **`--baseline` / `--ci`** — the first CI gate in the CLI. Fails on a new
+    unmasked path, a path that *was* masked and no longer is, or a newly
+    confirmed leak; deliberately does **not** fail on a path that
+    disappeared, a line that moved, or a new path that is masked. The
+    asymmetry is the inverse of the bench F1 gates and the test docstring
+    says why. A missing baseline **skips** with the command to create one,
+    because a gate that fails before anyone opted in just gets deleted.
+    Emits `::error::`/`::notice::` annotations.
+  - **`--handoff`** — `maskflow-audit-tasks.md` for the user's own coding
+    agent: per-leak evidence, the three fixes that fit MaskFlow, and the
+    same four gates `--fix` enforces. No key, no network, no model.
+  - **`--fix`** — the agentic loop, model-agnostic via a
+    `(system, user) -> str` callable (the shape `mask_and_call` established,
+    so MaskFlow still depends on no provider's package and the key stays in
+    the user's own closure). Four hard gates, **evaluated by the audit and
+    never by the model**: tests pass unchanged · zero canaries escape on
+    that flow · the round trip still works · the diff adds no network
+    destination, permission or secret. A diff that touches a test file is
+    rejected before anything runs — a fix may never weaken the suite that
+    validates it — and an unverifiable gate counts as a failure, not a pass.
+    Rejected attempts are reverted so retries never stack.
+  - **`--evidence`** — metadata-only events through the existing emitters:
+    flow counts by masking status, and counts by entity type for anything a
+    canary proved. Mapped onto the existing 14-field schema rather than
+    extending it, because adding a field for one consumer weakens every
+    other consumer's metadata-only guard.
+  - **Measured against `audit-fixtures/`**: six realistic apps (a FastAPI
+    support copilot reading five PII columns; KYC PDF ingestion into
+    OpenAI embeddings and Chroma; a LangChain chain whose model call is
+    masked while its Langfuse tracer ships the raw grievance to a second
+    vendor; the copilot corrected with `mask()`; the copilot corrected via
+    the gateway; and PII split across four JSON fields sent two calls
+    deep), each with a committed `expected.json` the suite checks field by
+    field. They paid for themselves immediately: fixture 02 caught a Chroma
+    collection from `get_or_create_collection()` being invisible, fixture
+    03 caught maskedness not propagating through a prompt template's
+    `.format()`, and fixture 04 caught the trace depth bound silently
+    dropping the column names fixture 01 recovered from identical SQL. The
+    fixtures contain no identifier values at all, synthetic or otherwise —
+    a test asserts it.
+  - **`bench/auditbench`** — the audit scored against its own fixtures and
+    gated in CI like every other corpus: **100% discovery recall and 100%
+    classification accuracy over 8 expected flows**, against
+    `bench/baselines-audit.json` with the same 2-point tolerance the F1
+    gates use. `make audit-bench` / `make rebaseline-audit`. Six
+    applications is a small corpus and the docs say so: it means the audit
+    is correct on the cases we thought to write, not that it is correct in
+    general.
+  - **`packaging/audit-action/`** — a composite GitHub Action, sibling of
+    `scan-action`: runs the audit, optionally `--prove`, uploads the HTML
+    report and the task file as artifacts, exposes
+    `total`/`masked`/`unmasked`/`confirmed-leaks` as outputs, and gates the
+    build against the committed baseline.
+  - **Leak gate** (`-m leak`, its own CI job like `scan-fuzz`): the audit
+    reads someone else's source, which can hold real PII in a constant or
+    a docstring, and writes a document a DPO is expected to retain. The
+    gate audits a tree seeded with synthetic identifiers in constants,
+    dicts, parameter defaults, docstrings and comments — plus an
+    unparseable file, since a `SyntaxError`'s own message quotes the
+    offending line — and asserts none survives into any rendered format
+    under casefolding, separator stripping and all four unicode normal
+    forms. Two AST guards additionally prove the renderers cannot read a
+    value attribute or re-open a file at all.
+  - `maskflow audit PATH [--out FILE|-] [--format json] [--exclude DIR]
+    [--quiet]`, registered in `maskflow-cli` alongside
+    `doctor`/`explain`/`scan`/`bench`/`agent`. **`maskflow-cli` `0.9.0` ->
+    `0.10.0`**: new optional `[audit]` extra
+    (`maskflow-audit>=0.1.0,<0.2`), lazy-imported by `audit_cmd.py` so a
+    bare `pip install maskflow-cli` and the standalone binary are
+    unaffected — enforced by an AST test rather than assumed, because the
+    PyInstaller spec collects every `maskflow_cli` submodule.
+  - New `audit-fixtures` dependency group (fastapi/openai/langchain/
+    langfuse/chromadb/pypdf/psycopg) for *running* the fixtures under the
+    canary harness in M2. Never pulled by `uv sync --all-extras`; static
+    discovery imports none of these, which is why the `audit` CI job
+    scores all six fixtures without it. The fixtures deliberately exercise
+    the real SDKs rather than stubs — an audit proven only against our own
+    idea of `openai`'s call shapes would prove nothing.
+  - Docs: [`docs/audit.md`](docs/audit.md), including the required "what
+    audit does **not** do" section (not proven yet, Python only, no
+    inter-procedural tracing, blind to split values and to proxy-side
+    config, defeated by dynamic dispatch, never scans production, never
+    uses an LLM to detect). README section and `audit`/`audit-leak` CI
+    jobs; `release-audit.yml` on an `audit-v*` tag; added to `pip-audit`'s
+    trigger set.
 
 - **`maskflow-bench` `0.1.0`** (new package) / `maskflow bench --my-data` (#36).
   "Is it accurate on my documents?" had no answer but an argument; now it's
