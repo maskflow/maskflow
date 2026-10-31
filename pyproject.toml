@@ -58,6 +58,26 @@ exclude = ["packages/maskflow-js"]
 
 [tool.uv]
 package = false
+# Transitive-only security floors, enforced across the whole resolution
+# rather than as direct dependencies -- nothing here is imported by
+# MaskFlow. Each one is a CVE `pip-audit` flags (22 across these four, all
+# pulled in via spaCy / pre-commit / build tooling). Raise or drop an entry
+# once the package that pulls it has moved past the floor on its own.
+# The floors are marker-gated because the fixed releases dropped 3.10,
+# which this workspace still supports: an unconditional
+# `filelock>=4.2.1` makes the whole resolution unsatisfiable. On 3.10 the
+# older versions remain, so run CI's audit on a version that can take the
+# fixes (pip-audit is pinned to 3.13).
+constraint-dependencies = [
+    # CVE-2026-112907..112940 (12 advisories); 4.x requires >=3.11.
+    "filelock>=4.2.1; python_version >= '3.11'",
+    # CVE-2026-114613
+    "msgpack>=1.2.3",
+    # GHSA-xmj3-9gf7-h52w
+    "setuptools>=84.1.0; python_version >= '3.11'",
+    # CVE-2026-113714..113725 (8 advisories)
+    "virtualenv>=21.14.9; python_version >= '3.11'",
+]
 
 [dependency-groups]
 dev = [
