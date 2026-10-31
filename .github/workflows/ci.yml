@@ -481,8 +481,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       - run: uv sync --all-extras
       - name: Run the load test against a mock upstream
@@ -528,8 +533,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
@@ -581,8 +591,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       - run: uv sync --all-extras
       - run: uv run python -m spacy download en_core_web_sm
@@ -642,8 +657,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       # Only ever needs the maskflow adapter -- no presidio/mask-privacy
       # install, no Anthropic key. See bench/indiapii/harness/tests/
@@ -684,8 +704,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       - run: uv sync --all-extras --group litellm --group llama-index --group mcp
       - run: uv run python -m spacy download en_core_web_sm
@@ -712,8 +737,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Pin the interpreter: this job has no python-version matrix, so
+      # without this it takes the runner's default python3 — now 3.14 on
+      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
+      # fails before a single test runs.
       - uses: astral-sh/setup-uv@v3
         with:
+          python-version: "3.13"
           enable-cache: true
       - run: uv sync --all-extras
       - run: uv export --no-hashes --all-extras -o requirements.txt
