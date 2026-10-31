@@ -1,0 +1,150 @@
+name: "MaskFlow LLM egress audit"
+description: >-
+  Find every place this codebase sends text to an LLM provider, classify
+  whether each path is masked, optionally prove which ones leak with
+  synthetic canaries, publish a self-contained HTML report as an artifact,
+  and fail the build on a newly added unmasked path. Runs entirely on the
+  runner; nothing is transmitted.
+branding:
+  icon: search
+  color: green
+
+inputs:
+  path:
+    description: "Directory to audit."
+    required: false
+    default: "."
+  format:
+    description: "html | json -- the human report format."
+    required: false
+    default: "html"
+  output:
+    description: "Report file path."
+    required: false
+    default: "maskflow-audit-report.html"
+  exclude:
+    description: >-
+      Extra directory names to skip, space-separated (e.g. "vendor examples").
+    required: false
+    default: ""
+  prove:
+    description: >-
+      Run the canary harness: seed synthetic identities, run `flows`, and
+      confirm which paths actually leak. Requests never reach a provider.
+    required: false
+    default: "false"
+  flows:
+    description: "Command --prove should run (default: python -m pytest -q)."
+    required: false
+    default: ""
+  ci:
+    description: >-
+      Fail the job on a new unmasked path or a new confirmed leak, compared
+      against the committed baseline. A missing baseline skips, never fails.
+    required: false
+    default: "true"
+  baseline-file:
+    description: "Baseline path."
+    required: false
+    default: "maskflow-audit.baseline.json"
+  handoff:
+    description: "Also write maskflow-audit-tasks.md and upload it."
+    required: false
+    default: "false"
+  version:
+    description: "maskflow-cli version to install (default: latest)."
+    required: false
+    default: ""
+  python-version:
+    description: "Python for the runner venv."
+    required: false
+    default: "3.12"
+  upload-artifact:
+    description: "Upload the report as a workflow artifact."
+    required: false
+    default: "true"
+
+outputs:
+  total:
+    description: "Total LLM egress paths found."
+    value: ${{ steps.audit.outputs.total }}
+  masked:
+    description: "Paths that are masked."
+    value: ${{ steps.audit.outputs.masked }}
+  unmasked:
+    description: "Paths that are unmasked."
+    value: ${{ steps.audit.outputs.unmasked }}
+  confirmed-leaks:
+    description: "Paths a canary was observed escaping from."
+    value: ${{ steps.audit.outputs.confirmed_leaks }}
+  report:
+    description: "Path to the generated report."
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - shell: bash
+      run: |
+        spec="maskflow-cli[audit]"
+        if [ -n "${{ inputs.version }}" ]; then
+          spec="maskflow-cli[audit]==${{ inputs.version }}"
+        fi
+        python -m pip install --upgrade pip
+        pip install "$spec"
+    - id: audit
+      shell: bash
+      run: |
+        set -euo pipefail
+        args=()
+        for dir in ${{ inputs.exclude }}; do args+=(--exclude "$dir"); done
+        if [ "${{ inputs.prove }}" = "true" ]; then
+          args+=(--prove)
+          if [ -n "${{ inputs.flows }}" ]; then args+=(--flows "${{ inputs.flows }}"); fi
+        fi
+        if [ "${{ inputs.handoff }}" = "true" ]; then args+=(--handoff); fi
+
+        # JSON always, for the outputs and a machine-readable artifact.
+        maskflow audit "${{ inputs.path }}" "${args[@]}" \
+          --format json --out maskflow-audit.json --quiet
+
+        read -r total masked unmasked leaks < <(python -c "
+        import json
+        c = json.load(open('maskflow-audit.json'))['coverage']
+        print(c['total_flows'], c['masked'], c['unmasked'], c['confirmed_leaks'])
+        ")
+        {
+          echo "total=$total"
+          echo "masked=$masked"
+          echo "unmasked=$unmasked"
+          echo "confirmed_leaks=$leaks"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "::notice::$masked of $total LLM egress paths masked ($unmasked unmasked, $leaks proven leak(s))"
+
+        # The human report, if a different format was asked for.
+        if [ "${{ inputs.format }}" != "json" ]; then
+          maskflow audit "${{ inputs.path }}" "${args[@]}" \
+            --format "${{ inputs.format }}" --out "${{ inputs.output }}" --quiet
+        else
+          cp maskflow-audit.json "${{ inputs.output }}"
+        fi
+    - if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: maskflow-audit-report
+        path: |
+          ${{ inputs.output }}
+          maskflow-audit.json
+          maskflow-audit-tasks.md
+        if-no-files-found: ignore
+    - if: inputs.ci == 'true'
+      shell: bash
+      run: |
+        # The gate is a separate step so its ::error:: annotations land on
+        # the job even when the report upload above is skipped.
+        maskflow audit "${{ inputs.path }}" --ci \
+          --baseline-file "${{ inputs.baseline-file }}"

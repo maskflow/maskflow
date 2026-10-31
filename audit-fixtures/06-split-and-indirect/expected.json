@@ -1,0 +1,28 @@
+{
+  "fixture": "06-split-and-indirect",
+  "description": "An Aadhaar split across four JSON fields, reassembled, and sent to OpenAI from a function two calls below the request handler.",
+  "verdict": "leaks",
+  "flow_count": 1,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "openai-client",
+      "category": "llm_sdk",
+      "provider": "openai",
+      "masking_status": "unmasked",
+      "confidence": "medium",
+      "payload_args": [
+        "messages"
+      ],
+      "source_kinds": [
+        "literal",
+        "parameter"
+      ],
+      "source_details": [
+        "text"
+      ],
+      "host": "api.openai.com"
+    }
+  ],
+  "notes": "The expected M1 result, stated plainly: the flow IS found and IS classified unmasked, but its traced source is only the `text` parameter of ask_model -- not the JSON fields it ultimately came from, because the trace does not cross function boundaries in this release. The split-value reassembly is likewise invisible to static analysis. Both are exactly what the canary harness exists to catch: seeding the four fields and watching a reassembled Aadhaar reach api.openai.com proves in M2 what no amount of static reading can."
+}

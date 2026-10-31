@@ -1,0 +1,16 @@
+{
+  "version": "auditbench-v1.0",
+  "fixtures": 6,
+  "metrics": {
+    "classification_accuracy": {
+      "hits": 8,
+      "total": 8,
+      "value": 1.0
+    },
+    "discovery_recall": {
+      "hits": 8,
+      "total": 8,
+      "value": 1.0
+    }
+  }
+}

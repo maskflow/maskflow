@@ -1,6 +1,6 @@
 [project]
 name = "maskflow-cli"
-version = "0.9.0"
+version = "0.10.0"
 description = "Command-line interface for MaskFlow: .maskflowrc config validation and inspection"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -86,6 +86,15 @@ postgres = [
 bench = [
     "maskflow-bench>=0.1.0,<0.2",
 ]
+# `maskflow audit` -- static discovery of LLM egress paths plus (from M2) the
+# canary harness that proves which of them leak. Same policy as [bench] and
+# [evidence] above -- opt-in so a bare `pip install maskflow-cli` (and the
+# standalone PyInstaller binary) doesn't carry an AST analyser, a PyYAML
+# dependency, and eventually an interceptor; audit_cmd.py imports it lazily
+# and every other command runs without it.
+audit = [
+    "maskflow-audit>=0.1.0,<0.2",
+]
 # `maskflow agent install|uninstall|doctor` -- passthrough to maskflow-agent's
 # own console script (Claude Code PII guard). Lazy-imported by agent_cmd.py.
 agent = [
@@ -94,6 +103,7 @@ agent = [
 
 [tool.uv.sources]
 maskflow-agent = { workspace = true }
+maskflow-audit = { workspace = true }
 maskflow-core = { workspace = true }
 maskflow-pack-intl = { workspace = true }
 maskflow-pack-india = { workspace = true }

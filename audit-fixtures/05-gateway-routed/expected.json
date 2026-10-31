@@ -1,0 +1,32 @@
+{
+  "fixture": "05-gateway-routed",
+  "description": "Fixture 01 pointed at the MaskFlow gateway via base_url, with the session header set.",
+  "verdict": "clean",
+  "flow_count": 1,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "openai-client",
+      "category": "llm_sdk",
+      "provider": "openai",
+      "masking_status": "masked_via_gateway_base_url",
+      "confidence": "high",
+      "payload_args": [
+        "messages"
+      ],
+      "source_kinds": [
+        "db_column",
+        "literal"
+      ],
+      "source_details": [
+        "aadhaar",
+        "body",
+        "customer_name",
+        "mobile",
+        "pan"
+      ],
+      "host": "api.openai.com"
+    }
+  ],
+  "notes": "Recognition requires either a `maskflow` host or a corroborating module marker; this fixture has both. A bare localhost base_url with no marker is covered by a unit test asserting `unknown`, which is the honest answer rather than a convenient one."
+}

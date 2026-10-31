@@ -1,0 +1,50 @@
+{
+  "fixture": "03-langchain-langfuse",
+  "description": "The LangChain model call is masked; the Langfuse tracer exports the unmasked grievance and the applicant name to a second vendor.",
+  "verdict": "leaks",
+  "flow_count": 2,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "langfuse-trace",
+      "category": "observability",
+      "provider": "langfuse",
+      "masking_status": "unmasked",
+      "confidence": "medium",
+      "payload_args": [
+        "input",
+        "output",
+        "metadata"
+      ],
+      "source_kinds": [
+        "parameter",
+        "unknown"
+      ],
+      "source_details": [
+        "applicant_name",
+        "grievance_text",
+        "invoke"
+      ]
+    },
+    {
+      "file": "app.py",
+      "sink_id": "langchain-llm-invoke",
+      "category": "framework",
+      "provider": "langchain",
+      "masking_status": "masked_via_mask_call",
+      "confidence": "medium",
+      "payload_args": [
+        "arg0"
+      ],
+      "source_kinds": [
+        "parameter",
+        "unknown"
+      ],
+      "source_details": [
+        "grievance_text",
+        "prompt_template"
+      ]
+    }
+  ],
+  "notes": "The point of the fixture: one masked flow and one unmasked flow in the same function. The masked one is recognised because `rendered` carries maskedness forward from `masked_grievance` through the format() call."
+}

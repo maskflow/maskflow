@@ -1,0 +1,32 @@
+{
+  "fixture": "04-copilot-masked",
+  "description": "Fixture 01 with mask()/unmask() around the provider call.",
+  "verdict": "clean",
+  "flow_count": 1,
+  "flows": [
+    {
+      "file": "app.py",
+      "sink_id": "openai-client",
+      "category": "llm_sdk",
+      "provider": "openai",
+      "masking_status": "masked_via_mask_call",
+      "confidence": "high",
+      "payload_args": [
+        "messages"
+      ],
+      "source_kinds": [
+        "db_column",
+        "literal"
+      ],
+      "source_details": [
+        "aadhaar",
+        "body",
+        "customer_name",
+        "mobile",
+        "pan"
+      ],
+      "host": "api.openai.com"
+    }
+  ],
+  "notes": "`masked_prompt` is bound from a tuple-unpacked mask() call and then reached through a list-of-dicts message payload. All three steps have to work for this to classify clean, which is why this fixture is the direct counterpart to 01."
+}

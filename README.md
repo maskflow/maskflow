@@ -110,6 +110,48 @@ runnable 60-record synthetic example is in
 [`packages/maskflow-cli/examples/`](packages/maskflow-cli/examples/); full reference,
 including the Rule 6 mapping, in [`docs/scan.md`](docs/scan.md).
 
+## Audit: where *can* data leak, before it does
+
+`maskflow scan` reads your logs and tells you what already left. `maskflow audit` reads your
+**source** and tells you where it can leave next — every call that sends text to a provider,
+whether that path is masked, and which database column or request field feeds it. Your code is
+parsed, never executed, and nothing is transmitted.
+
+```bash
+pip install 'maskflow-cli[audit]'
+maskflow audit .
+```
+
+```
+31 of 33 LLM egress paths masked
+1 unmasked · 1 unknown · 31 masked
+```
+
+It knows the LLM SDKs, LangChain and LlamaIndex, raw HTTP to provider hosts, vector-DB writes,
+and the observability exporters that quietly ship your prompt to a second vendor. The sink
+registry is [plain YAML](packages/maskflow-audit/src/maskflow_audit/sinks/registry.yaml), so
+adding a provider is an edit, not a patch.
+
+Then it **proves** it. `--prove` seeds synthetic Indian identities into your test data, runs your
+suite, and intercepts every provider-bound request *before it leaves the process* — returning a
+canned response so your tests still pass. A canary found in an outbound payload is a confirmed
+leak, reported with the Python call stack captured at send time:
+
+```
+LEAK PROVEN   tickets/summarize.py:42  openai-client · 060723ae4c6d
+              canary AADHAAR, PERSON_NAME reached api.openai.com/v1/chat/completions (raw)
+                api.py:88 in post_summary
+                tickets/summarize.py:42 in summarize
+```
+
+Nothing reaches a provider, no API key is needed, and no canary value is written to disk or into
+the report. `--ci` fails a build when a new unmasked path appears; `--handoff` writes a gated task
+list for your own coding agent. Accuracy is scored against six realistic apps in
+[`audit-fixtures/`](audit-fixtures/) — 100% discovery recall and classification on a corpus of
+six, and the docs say exactly that. Also ships as a
+[GitHub Action](packaging/audit-action/). Full reference, including a "what audit does not do"
+section, in [`docs/audit.md`](docs/audit.md).
+
 ## Gateway: no code change at all
 
 `maskflow-gateway` is a drop-in OpenAI/Anthropic-compatible proxy. Point your existing client's
@@ -512,7 +554,8 @@ Openly not done yet, so you know what you're signing up for:
 - Evidence Cloud (hosted, paid): [maskflow.in/evidence-cloud.html](https://maskflow.in/evidence-cloud.html)
 - Docs: [`docs/configuration.md`](docs/configuration.md),
   [`docs/custom-recognizers.md`](docs/custom-recognizers.md),
-  [`docs/scan.md`](docs/scan.md), [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
+  [`docs/scan.md`](docs/scan.md), [`docs/audit.md`](docs/audit.md),
+  [`docs/dpdp-rule6.md`](docs/dpdp-rule6.md),
   [`docs/agent-sessions.md`](docs/agent-sessions.md), [`docs/logging.md`](docs/logging.md),
   [`docs/gateway.md`](docs/gateway.md),
   [`docs/litellm-guardrail.md`](docs/litellm-guardrail.md),
