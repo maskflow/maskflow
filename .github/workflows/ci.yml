@@ -481,15 +481,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       - name: Run the load test against a mock upstream
         working-directory: packages/maskflow-gateway
         run: |
@@ -533,15 +534,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest packages/maskflow-cli/tests/scan -m leak -q
 
@@ -591,15 +593,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run pytest packages/maskflow-audit/tests -m leak -q
 
@@ -657,10 +660,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
@@ -668,7 +672,7 @@ jobs:
       # Only ever needs the maskflow adapter -- no presidio/mask-privacy
       # install, no Anthropic key. See bench/indiapii/harness/tests/
       # test_ci_regression.py.
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run ruff check bench/intlpii bench/scanbench
       - run: uv run ruff format --check bench/intlpii bench/scanbench
@@ -704,15 +708,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --all-extras --group litellm --group llama-index --group mcp
+      - run: uv sync --python 3.13 --all-extras --group litellm --group llama-index --group mcp
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run ruff check bench/integrations
       - run: uv run ruff format --check bench/integrations
@@ -737,14 +742,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pin the interpreter: this job has no python-version matrix, so
-      # without this it takes the runner's default python3 — now 3.14 on
-      # ubuntu-latest, which spaCy ships no wheels for, and `uv sync`
-      # fails before a single test runs.
+      # Provision 3.13 and key the uv cache to it. Note the pin that
+      # actually matters is `--python` on the `uv sync` line below:
+      # this input alone does NOT steer uv, which otherwise takes the
+      # runner's default python3 — now 3.14 on ubuntu-latest, a version
+      # spaCy ships no wheels for.
       - uses: astral-sh/setup-uv@v3
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       - run: uv export --no-hashes --all-extras -o requirements.txt
       - run: uvx pip-audit -r requirements.txt
