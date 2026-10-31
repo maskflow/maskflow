@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       # maskflow-cli pulls in maskflow-pack-intl, which requires
       # maskflow-core[nlp] -- same as the sdk/pack-intl release workflows.
       - run: uv run python -m spacy download en_core_web_sm

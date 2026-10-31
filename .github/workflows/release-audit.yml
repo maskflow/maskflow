@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       # Discovery is static (stdlib `ast`), and this package's own suite
       # never runs the fixture apps -- so unlike most release workflows
       # this one needs no en_core_web_sm download. It does import both

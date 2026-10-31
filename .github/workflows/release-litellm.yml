@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --all-extras --group litellm
+      - run: uv sync --python 3.13 --all-extras --group litellm
       - run: uv run python -m spacy download en_core_web_sm
       - run: uv run --group litellm pytest packages/maskflow-litellm/tests -q
       - run: uv build --package maskflow-litellm

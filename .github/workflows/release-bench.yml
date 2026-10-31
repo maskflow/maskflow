@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv sync --all-extras
+      - run: uv sync --python 3.13 --all-extras
       # maskflow-bench's runtime code depends only on maskflow-core (no
       # NLP); its dev-only maskflow-pack-india dependency is deterministic
       # pattern/checksum recognizers, not spaCy NER, so unlike the other
