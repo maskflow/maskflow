@@ -147,8 +147,17 @@ class TestInterception:
         assert anthropic.json()["content"][0]["text"]
 
     def test_a_non_provider_host_is_left_alone(self) -> None:
+        """A host we do not recognise is not intercepted at all.
+
+        The assertion that matters is that nothing was captured; the
+        request really is attempted, and how it then fails is the OS's
+        business -- port 9 is refused outright on Linux and macOS
+        (ConnectError) but times out on Windows (ConnectTimeout), so this
+        catches their common base rather than pinning one platform's
+        errno.
+        """
         with intercept() as store:
-            with pytest.raises(httpx.ConnectError):
+            with pytest.raises(httpx.TransportError):
                 httpx.Client(timeout=0.01).post("http://127.0.0.1:9/nothing", json={})
         assert len(store) == 0
 
