@@ -32,9 +32,16 @@ ENV_PREFIX = "MASKFLOW_"
 # for unrelated purposes -- never swept into this config layer.
 _RESERVED_ENV_NAMES = {"MASKFLOW_HASH_KEY", "MASKFLOW_MAPPING_KEY"}
 # Sub-namespaces owned by sibling packages that legitimately prefix their
-# own settings with the brand (maskflow-gateway uses MASKFLOW_GATEWAY_*).
+# own settings with the brand (maskflow-gateway uses MASKFLOW_GATEWAY_*,
+# maskflow-audit's canary harness uses MASKFLOW_AUDIT_*).
 # These are not .maskflowrc config and must not be flagged as malformed.
-_RESERVED_ENV_SUBPREFIXES = ("MASKFLOW_GATEWAY_",)
+#
+# MASKFLOW_AUDIT_ is load-bearing, not housekeeping: `maskflow audit
+# --prove` seeds MASKFLOW_AUDIT_CANARY_<TYPE> and MASKFLOW_AUDIT_DUMP into
+# the audited process's environment. Without this entry, any application
+# that calls mask() under --prove dies in config resolution -- which is
+# every application the audit most needs to verify.
+_RESERVED_ENV_SUBPREFIXES = ("MASKFLOW_GATEWAY_", "MASKFLOW_AUDIT_")
 _TOP_LEVEL_MASKFLOW_FIELDS = {"packs", "default_strategy"}
 
 

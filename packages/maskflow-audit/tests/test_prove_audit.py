@@ -410,3 +410,59 @@ class TestHandoff:
         document = build_handoff(summary)
         assert "nothing to fix" in document.lower()
         assert "not that nothing exists" in document
+
+
+class TestTransportCoverage:
+    """`openai` >= 3.0 is built on `httpx2`, a separate distribution.
+
+    Patching only `httpx` left a hole with the worst possible shape: the
+    audit reported zero captures while the canary-laden request reached
+    the real provider. These tests pin the coverage so an SDK that moves
+    transport again fails loudly here instead of silently in the field.
+    """
+
+    def test_httpx2_is_in_the_patched_module_list(self) -> None:
+        from maskflow_audit.intercept.transport import _HTTPX_MODULES
+
+        assert "httpx" in _HTTPX_MODULES
+        assert "httpx2" in _HTTPX_MODULES
+
+    def test_every_patched_module_is_actually_patched_when_present(self) -> None:
+        import importlib
+
+        from maskflow_audit.intercept.transport import _HTTPX_MODULES
+
+        patched_at_least_one = False
+        for name in _HTTPX_MODULES:
+            try:
+                module = importlib.import_module(name)
+            except ImportError:
+                continue
+            original = module.Client.send
+            with intercept():
+                assert module.Client.send is not original, f"{name} was not patched"
+                patched_at_least_one = True
+            assert module.Client.send is original, f"{name} was not restored"
+        assert patched_at_least_one, "no httpx-shaped transport available to test"
+
+    def test_a_request_through_each_transport_is_captured_and_not_sent(self) -> None:
+        import importlib
+
+        from maskflow_audit.intercept.transport import _HTTPX_MODULES
+
+        for name in _HTTPX_MODULES:
+            try:
+                module = importlib.import_module(name)
+            except ImportError:
+                continue
+            with intercept() as store:
+                response = module.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    json={"messages": [{"content": "uid 123456789012"}]},
+                )
+            assert response.status_code == 200, name
+            # The canned body must parse as the provider's own shape.
+            assert response.json()["choices"][0]["message"], name
+            hosts = [c.host for c in store.captures]
+            assert "api.openai.com" in hosts, f"{name} request was not captured"
+            assert any(c.library == name for c in store.captures), name

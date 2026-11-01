@@ -29,6 +29,7 @@ any of the convenience wrappers is still caught exactly once.
 from __future__ import annotations
 
 import contextlib
+import importlib
 import json
 import pathlib
 import traceback
@@ -173,11 +174,33 @@ def _canned_body(host: str) -> dict[str, Any]:
     return _openai_response_body()
 
 
+#: The httpx-shaped transports we patch. `httpx2` is a SEPARATE
+#: distribution, not a version of httpx: `openai` >= 3.0 is built on it, so
+#: an audit that patches only `httpx` silently misses every modern openai
+#: call -- reporting zero captures while the request reaches the provider,
+#: the one failure this module must never have. Each name is optional; a
+#: project that has only one is handled.
+_HTTPX_MODULES: tuple[str, ...] = ("httpx", "httpx2")
+
+
 @contextlib.contextmanager
 def _patch_httpx(store: CaptureStore) -> Iterator[None]:
-    """httpx: patch Client.send / AsyncClient.send, the single choke point."""
+    """Patch every httpx-shaped transport that is importable."""
+    with contextlib.ExitStack() as stack:
+        for name in _HTTPX_MODULES:
+            stack.enter_context(_patch_httpx_module(store, name))
+        yield
+
+
+@contextlib.contextmanager
+def _patch_httpx_module(store: CaptureStore, module_name: str) -> Iterator[None]:
+    """One httpx-shaped module: patch Client.send / AsyncClient.send.
+
+    `send` is the single choke point every convenience wrapper routes
+    through, so a call is caught exactly once however it was made.
+    """
     try:
-        import httpx
+        httpx = importlib.import_module(module_name)
     except ImportError:
         yield
         return
@@ -194,7 +217,7 @@ def _patch_httpx(store: CaptureStore) -> Iterator[None]:
             method=request.method,
             url=str(request.url),
             payload=_body_to_text(getattr(request, "content", b"")),
-            library="httpx",
+            library=module_name,
             stack=_stack(),
         )
 
